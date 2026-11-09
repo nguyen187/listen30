@@ -30,6 +30,20 @@
   --bg:#0d1020; --surface:#161a2e; --sunken:#1e2340; --ink:#e7eaf7; --muted:#9aa1c2; --line:#2b3154;
   --accent:#8c9bff; --accent-ink:#0d1020; --accent-soft:#252c57;
   --amber:#f0b545; --amber-soft:#3a2e12; --good:#4cc893; --good-soft:#123527; --bad:#ff7b6f; --bad-soft:#3e1915; color-scheme:dark }
+/* accent variants: light first, then dark (higher specificity) */
+:root[data-accent="teal"]{--accent:#0f7c74;--accent-soft:#d6efec}
+:root[data-accent="violet"]{--accent:#6b3fd4;--accent-soft:#ebe3fc}
+:root[data-accent="rose"]{--accent:#c23a63;--accent-soft:#fae0e8}
+:root[data-accent="sky"]{--accent:#1d6fb8;--accent-soft:#dcebf8}
+@media (prefers-color-scheme: dark){
+ :root[data-accent="teal"]:not([data-theme="light"]){--accent:#4fd1c0;--accent-soft:#123a37}
+ :root[data-accent="violet"]:not([data-theme="light"]){--accent:#b39bff;--accent-soft:#2f2457}
+ :root[data-accent="rose"]:not([data-theme="light"]){--accent:#ff8fb0;--accent-soft:#45192a}
+ :root[data-accent="sky"]:not([data-theme="light"]){--accent:#7cc0ff;--accent-soft:#16304b}}
+:root[data-theme="dark"][data-accent="teal"]{--accent:#4fd1c0;--accent-soft:#123a37}
+:root[data-theme="dark"][data-accent="violet"]{--accent:#b39bff;--accent-soft:#2f2457}
+:root[data-theme="dark"][data-accent="rose"]{--accent:#ff8fb0;--accent-soft:#45192a}
+:root[data-theme="dark"][data-accent="sky"]{--accent:#7cc0ff;--accent-soft:#16304b}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
 .wrap{max-width:980px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 60px}
@@ -169,6 +183,11 @@ input[type=text]:focus,select:focus{border-color:var(--accent);outline:none}
 .foot{margin-top:40px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;color:var(--muted);font-size:12.5px}
 .confirm{display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--bad-soft);border-radius:8px;padding:10px 12px}
 .timer{font-family:var(--f-mono);font-size:26px;font-weight:600}
+.opt.picked{border-color:var(--accent);background:var(--accent-soft);color:var(--ink)}
+.mt-line.now{background:var(--accent-soft)}
+.nato{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:6px}
+.nato button{border:1px solid var(--line);background:var(--bg);border-radius:6px;padding:6px 8px;cursor:pointer;text-align:left;font-size:13px}
+.nato b{font-family:var(--f-mono);color:var(--accent);margin-right:6px}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 
@@ -178,11 +197,14 @@ input[type=text]:focus,select:focus{border-color:var(--accent);outline:none}
     <nav class="tabs" id="tabs" aria-label="Mục">
       <button class="tab" data-view="today">Hôm nay</button>
       <button class="tab" data-view="map">Lộ trình</button>
+      <button class="tab" data-view="work">Công việc</button>
+      <button class="tab" data-view="real">Giọng thật</button>
       <button class="tab" data-view="srs">Ôn từ</button>
       <button class="tab" data-view="gym">Luyện thêm</button>
       <button class="tab" data-view="stats">Tiến độ</button>
       <button class="tab" data-view="setup">Cài đặt</button>
     </nav>
+    <button class="btn sm ghost" id="theme-btn" title="Đổi sáng / tối" aria-label="Đổi sáng hoặc tối">Tự động</button>
   </header>
   <div class="tape" id="tape" aria-label="30 ngày"></div>
   <div class="tape-legend small muted">
@@ -608,7 +630,7 @@ const TASKS = [
 ];
 const LS_KEY = "listen30.v1";
 const today = () => { const d=new Date(); return Math.floor((d.getTime()-d.getTimezoneOffset()*60000)/86400000); };
-function blank(){ return {v:1,updatedAt:0,start:today(),days:{},cards:{},voice:{us:"",gb:"",au:""},speedAdj:0,gymLog:[]}; }
+function blank(){ return {v:1,updatedAt:0,start:today(),days:{},cards:{},voice:{},speedAdj:0,gymLog:[],work:{meet:{}}}; }
 let S = blank();
 let view="today", openDay=null;
 try{ const raw=localStorage.getItem(LS_KEY); if(raw) S=Object.assign(blank(),JSON.parse(raw)); }catch(e){}
@@ -650,17 +672,27 @@ async function initCloud(){
 /* =============================== AUDIO (TTS) =============================== */
 let voices=[];
 const hasTTS = "speechSynthesis" in window;
-function loadVoices(){ if(!hasTTS) return; voices = speechSynthesis.getVoices().filter(v=>/^en/i.test(v.lang)); if(view==="setup") render(); }
+function loadVoices(){ if(!hasTTS) return; voices = speechSynthesis.getVoices().filter(v=>/^(en|fr|de|es|hi)/i.test(v.lang)); if(view==="setup"||view==="work") render(); }
 if(hasTTS){ loadVoices(); speechSynthesis.onvoiceschanged = loadVoices; }
-const LANG = {us:"en-US",gb:"en-GB",au:"en-AU"};
-const GOOD_V = /natural|neural|premium|enhanced|google|samantha|daniel|karen|ava|allison|serena|aria|jenny|libby|sonia|natasha|william/i;
+const LANG = {us:"en-US",gb:"en-GB",au:"en-AU",in:"en-IN",fr:"fr-FR",de:"de-DE",es:"es-ES"};
+const ACC_KEYS = ["us","gb","au","in","fr","de","es"];
+const GOOD_V = /natural|neural|premium|enhanced|google|microsoft|samantha|daniel|karen|ava|allison|serena|aria|jenny|libby|sonia|natasha|william|thomas|rishi|anna|m[oó]nica|amélie|heera|ravi|hortense|hedda|helena/i;
+const langIs = (x,l) => x.lang.replace("_","-").toLowerCase()===l.toLowerCase();
+function voicesFor(acc){
+  let c = voices.filter(x=>langIs(x,LANG[acc]));
+  if(!c.length && acc==="in") c = voices.filter(x=>langIs(x,"hi-IN"));
+  if(!c.length && ["fr","de","es"].includes(acc)) c = voices.filter(x=>x.lang.toLowerCase().startsWith(acc));
+  return c;
+}
+function voiceOk(acc){ return voicesFor(acc).length>0; }
 function voiceFor(acc){
   const pref = S.voice[acc]; let v = pref && voices.find(x=>x.name===pref);
   if(v) return v;
-  const lang = LANG[acc].toLowerCase();
-  const c = voices.filter(x=>x.lang.replace("_","-").toLowerCase()===lang);
-  return c.find(x=>GOOD_V.test(x.name)) || c[0] || (acc!=="us" ? voiceFor("us") : voices[0]);
+  const c = voicesFor(acc);
+  return c.find(x=>GOOD_V.test(x.name)) || c[0] || (acc!=="us" ? voiceFor(acc==="in"?"gb":"us") : voices.find(x=>/^en/i.test(x.lang)));
 }
+const ACRO = /\b(AOG|MRO|MEL|AD|SB|MSN|NFF|MTBUR|OTP|MCC|PFR|FDM|QAR|UAT|ETA|APU|ATA|SME|PFA|KPI)\b/g;
+function speechText(t){ return t.replace(/\bACARS\b/g,"ay cars").replace(/\bETOPS\b/g,"ee tops").replace(ACRO,m=>m.split("").join(" ")); }
 let speakId=0;
 function speak(text, rate=1, acc="us"){
   return new Promise(res=>{
@@ -668,14 +700,14 @@ function speak(text, rate=1, acc="us"){
     const id=++speakId; speechSynthesis.cancel();
     setTimeout(()=>{
       if(id!==speakId){ res(); return; }
-      const u=new SpeechSynthesisUtterance(text); const v=voiceFor(acc);
+      const u=new SpeechSynthesisUtterance(speechText(text)); const v=voiceFor(acc);
       if(v){ u.voice=v; u.lang=v.lang; } else u.lang=LANG[acc];
       u.rate=Math.max(0.5,Math.min(2,rate+(S.speedAdj||0)));
       u.onend=u.onerror=()=>res(); speechSynthesis.speak(u);
     },60);
   });
 }
-const accLabel = a => ({us:"Mỹ",gb:"Anh",au:"Úc"})[a];
+const accLabel = a => ({us:"Mỹ",gb:"Anh",au:"Úc",in:"Ấn Độ",fr:"Pháp",de:"Đức",es:"Tây Ban Nha"})[a];
 
 /* =============================== TEXT MATCHING =============================== */
 const ONES="zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen".split(" ");
@@ -778,11 +810,12 @@ function addCards(n){
   DAYS[n-1].v.forEach(v=>{ if(!S.cards[v.w]) S.cards[v.w]={box:0,due:today()+1,d:n}; });
 }
 function dueCards(){ const t=today(); return Object.entries(S.cards).filter(([,c])=>c.due<=t).map(([w])=>w); }
-function wordInfo(w){ for(let i=0;i<DAYS.length;i++){ const v=DAYS[i].v.find(x=>x.w===w); if(v) return Object.assign({day:i+1},v); } return null; }
+function wordInfo(w){ for(let i=0;i<DAYS.length;i++){ const v=DAYS[i].v.find(x=>x.w===w); if(v) return Object.assign({day:i+1},v); }
+  for(const g of TERM_GROUPS){ const v=g.v.find(x=>x.w===w); if(v) return Object.assign({day:0},v); } return null; }
 
 /* =============================== VIEWS =============================== */
-const VIEWS=["today","map","srs","gym","stats","setup"];
-function go(v, n){ view=v; if(n) openDay=n; if(hasTTS) speechSynthesis.cancel(); try{ history.replaceState(null,"", v==="today"?"#day-"+(openDay||currentDay()):"#"+v); }catch(e){} render(); window.scrollTo({top:0}); }
+const VIEWS=["today","map","work","real","srs","gym","stats","setup"];
+function go(v, n){ view=v; if(n) openDay=n; playTok++; if(hasTTS) speechSynthesis.cancel(); try{ history.replaceState(null,"", v==="today"?"#day-"+(openDay||currentDay()):"#"+v); }catch(e){} render(); window.scrollTo({top:0}); }
 function readHash(){
   const h=location.hash.slice(1);
   const m=h.match(/^day-(\d+)$/); if(m){ const n=+m[1]; if(n>=1&&n<=30){ view="today"; openDay=n; return; } }
@@ -805,7 +838,7 @@ document.getElementById("tabs").addEventListener("click",e=>{ const b=e.target.c
 function render(){
   renderTape();
   const el=document.getElementById("view");
-  ({today:renderDay,map:renderMap,srs:renderSRS,gym:renderGym,stats:renderStats,setup:renderSetup})[view](el);
+  ({today:renderDay,map:renderMap,work:renderWork,real:renderReal,srs:renderSRS,gym:renderGym,stats:renderStats,setup:renderSetup})[view](el);
 }
 
 /* ---------- Day view ---------- */
@@ -1211,19 +1244,21 @@ function renderStats(el){
 /* ---------- Setup ---------- */
 let confirmReset=false;
 function renderSetup(el){
-  const opt=acc=>{ const lang=LANG[acc].toLowerCase(); const list=voices.filter(v=>v.lang.replace("_","-").toLowerCase()===lang); const cur=voiceFor(acc);
+  const opt=acc=>{ const list=voicesFor(acc); const cur=voiceFor(acc);
     return `<option value="">Tự chọn${cur?" ("+esc(cur.name)+")":""}</option>`+list.map(v=>`<option value="${esc(v.name)}" ${S.voice[acc]===v.name?"selected":""}>${esc(v.name)}</option>`).join(""); };
   el.innerHTML=`<div class="stack" style="margin-top:22px"><h2>Cài đặt</h2>
+   ${themeHTML()}
    <div class="panel stack">
     <h3>Giọng đọc</h3>
     <p class="muted small" style="margin:0">Giọng đọc lấy từ máy của bạn. Trên Mac/iPhone, vào Cài đặt hệ thống → Trợ năng → Nội dung được đọc → Giọng hệ thống để tải thêm giọng "Premium" hoặc "Enhanced" — nghe tự nhiên hơn hẳn. Chrome có sẵn giọng Google US/UK.</p>
-    ${["us","gb","au"].map(a=>`<div class="row" style="flex-wrap:nowrap"><label for="v-${a}" style="width:90px;flex:none">Giọng ${accLabel(a)}</label><select id="v-${a}">${opt(a)}</select><button class="btn sm play" data-t="${a}" aria-label="Thử"></button></div>`).join("")}
+    ${ACC_KEYS.map(a=>`<div class="row" style="flex-wrap:nowrap"><label for="v-${a}" style="width:130px;flex:none">Giọng ${accLabel(a)}</label><select id="v-${a}">${opt(a)}</select><button class="btn sm play" data-t="${a}" aria-label="Thử"></button></div>`).join("")}
     <div class="row" style="flex-wrap:nowrap"><label for="spd" style="width:90px;flex:none">Chỉnh tốc độ</label><select id="spd">${[-0.15,-0.1,-0.05,0,0.05,0.1,0.15].map(v=>`<option value="${v}" ${Math.abs((S.speedAdj||0)-v)<.001?"selected":""}>${v>0?"+":""}${v===0?"Mặc định":v}</option>`).join("")}</select></div>
     ${voices.length?"":`<div class="banner">Chưa tìm thấy giọng tiếng Anh nào. Thử tải lại trang, hoặc mở bằng Chrome.</div>`}
    </div>
    <div class="panel stack"><h3>Dữ liệu</h3><p class="muted small" style="margin:0">Tiến độ được lưu trên trình duyệt này${cloud?" và đồng bộ riêng tư vào tài khoản Claude của bạn":""}.</p>
     <div id="reset-zone">${confirmReset?`<div class="confirm"><span>Xoá toàn bộ tiến độ và từ đã học? Không hoàn tác được.</span><button class="btn" id="rs-yes" style="border-color:var(--bad);color:var(--bad)">Xoá hết</button><button class="btn ghost" id="rs-no">Huỷ</button></div>`:`<button class="btn" id="rs">Học lại từ đầu</button>`}</div></div></div>`;
-  ["us","gb","au"].forEach(a=>{ el.querySelector("#v-"+a).onchange=e=>{ S.voice[a]=e.target.value; save(); }; });
+  bindTheme(el, ()=>renderSetup(el));
+  ACC_KEYS.forEach(a=>{ el.querySelector("#v-"+a).onchange=e=>{ S.voice[a]=e.target.value; save(); }; });
   el.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>speak("I'm going to grab a coffee. Do you want one?",1,b.dataset.t));
   el.querySelector("#spd").onchange=e=>{ S.speedAdj=+e.target.value; save(); };
   const rs=el.querySelector("#rs"); if(rs) rs.onclick=()=>{ confirmReset=true; renderSetup(el); };
@@ -1231,7 +1266,450 @@ function renderSetup(el){
   const yes=el.querySelector("#rs-yes"); if(yes) yes.onclick=()=>{ const v=S.voice; S=blank(); S.voice=v; confirmReset=false; save(); go("today",1); };
 }
 
+/* =============================== WORK: AVIATION =============================== */
+const TERM_GROUPS=[
+ {t:"Bảo dưỡng & kỹ thuật",v:V(`AOG|Aircraft On Ground: máy bay nằm đất chờ sửa (đọc A-O-G)|We have an AOG in Bangkok, the part is urgent.
+MRO|Maintenance, Repair and Overhaul: bảo dưỡng sửa chữa (đọc M-R-O)|The engine is at the MRO shop for three weeks.
+MEL|Minimum Equipment List: danh mục được phép bay khi hỏng (đọc M-E-L hoặc "mel")|The defect is deferred under the MEL for ten days.
+deferred defect|lỗi được hoãn sửa|There are four deferred defects on this aircraft.
+AD|Airworthiness Directive: chỉ thị bắt buộc của nhà chức trách (đọc A-D)|The AD must be complied with before the end of the year.
+SB|Service Bulletin: thông báo kỹ thuật của nhà sản xuất (đọc S-B)|Airbus released a new service bulletin for the cargo door.
+ATA chapter|chương ATA phân loại hệ thống (32 = càng đáp)|Most of the removals are in ATA chapter thirty-two.
+MSN|Manufacturer Serial Number: số sản xuất (đọc M-S-N)|Which MSN are we talking about?
+tail number|số đăng ký máy bay|Can you give me the tail number of the aircraft?
+unscheduled removal|tháo thiết bị ngoài kế hoạch|Unscheduled removals went up by twenty percent.
+NFF|No Fault Found: tháo ra kiểm tra không thấy lỗi|Almost half of these removals are no fault found.
+MTBUR|Mean Time Between Unscheduled Removals (đọc từng chữ)|The MTBUR of this valve is below the target.
+heavy check|đợt bảo dưỡng lớn (C-check)|The aircraft is in the hangar for a heavy check.
+line maintenance|bảo dưỡng tại sân đỗ|Line maintenance found a leak during the walkaround.
+repair turnaround time|thời gian sửa xong và trả lại|The repair turnaround time is about fifteen days.`)},
+ {t:"Khai thác bay (airline ops)",v:V(`OTP|On-Time Performance: tỉ lệ đúng giờ (đọc O-T-P)|Our OTP was eighty-five percent last month.
+delay code|mã nguyên nhân chậm chuyến|Most delays were coded as technical.
+block hours|giờ khối, từ lúc rời bến tới lúc vào bến|The aircraft flew about ten block hours a day.
+flight cycles|số chu kỳ cất và hạ cánh|This part is limited by flight cycles, not hours.
+utilization|mức khai thác (giờ bay mỗi ngày)|Fleet utilization is higher in the summer.
+turnaround|quay đầu chuyến tại sân bay|We have a forty-minute turnaround in Hanoi.
+slot|khung giờ được cấp (cất hạ cánh, hangar)|We lost our slot because of the delay.
+diversion|chuyển hướng hạ cánh|The flight had a diversion to Kolkata.
+MCC|Maintenance Control Centre: trung tâm điều hành kỹ thuật|Please call MCC before releasing the aircraft.
+dispatch reliability|độ tin cậy khởi hành|Dispatch reliability is above ninety-nine percent.
+wet lease|thuê máy bay kèm tổ bay|We wet leased two aircraft for the summer peak.
+redelivery|trả máy bay khi hết hợp đồng thuê|The redelivery is planned for November.
+ETOPS|bay đường dài hai động cơ (đọc "EE-tops")|This aircraft is not ETOPS certified.
+station|sân bay hoặc trạm khai thác|We don't have an engineer at that station.
+sector|chặng bay|The aircraft flew six sectors today.`)},
+ {t:"Dữ liệu & nền tảng",v:V(`ACARS|hệ thống truyền dữ liệu máy bay và mặt đất (đọc "AY-cars")|We receive ACARS messages in near real time.
+PFR|Post Flight Report: báo cáo lỗi sau chuyến (đọc P-F-R)|Can you send me the PFR for that flight?
+fault message|thông báo lỗi hệ thống|The same fault message appears on every flight.
+FDM|Flight Data Monitoring: giám sát dữ liệu bay|The FDM data comes from the QAR every day.
+health monitoring|giám sát tình trạng thiết bị|Engine health monitoring flagged a trend shift.
+data pipeline|luồng xử lý dữ liệu|The data pipeline failed last night.
+ingestion|nạp dữ liệu vào hệ thống|Ingestion takes about twenty minutes.
+schema|cấu trúc dữ liệu|The provider changed the schema without telling us.
+backfill|nạp bù dữ liệu cũ|We need to backfill the data from last week.
+data refresh|làm mới dữ liệu|Is a daily data refresh good enough?
+lineage|truy vết nguồn gốc dữ liệu|You can see the lineage of every dataset.
+false positive|cảnh báo sai|Too many false positives and nobody trusts the alerts.
+predictive maintenance|bảo dưỡng dự đoán|Predictive maintenance can prevent AOG events.
+UAT|User Acceptance Testing: người dùng kiểm thử (đọc U-A-T)|UAT starts the week after next.
+go-live|đưa vào chạy thật|The go-live is planned for March.`)},
+ {t:"Ngôn ngữ cuộc họp",v:V(`action item|việc cần làm sau họp|Let's recap the action items.
+heads-up|báo trước|Just a quick heads-up, the server will be down tonight.
+take it offline|bàn riêng sau|Let's take this offline, it's too detailed.
+align|thống nhất|We need to align with the airline first.
+stakeholder|bên liên quan|All stakeholders should be in the loop.
+escalate|đẩy lên cấp cao hơn|If it's not fixed by Friday, we'll escalate.
+sign off|phê duyệt|The SME has to sign off on the requirements.
+blocker|vật cản|Is there any blocker on your side?
+ETA|thời gian dự kiến đến hoặc xong (đọc E-T-A)|What's the ETA for the fix?
+bandwidth|khả năng, thời gian để làm thêm|I don't have the bandwidth this week.
+ballpark|con số ước chừng|Can you give me a ballpark figure?
+revert|(Ấn Độ) phản hồi lại|Kindly revert at the earliest.
+do the needful|(Ấn Độ) làm những gì cần làm|Please do the needful and close the ticket.
+prepone|(Ấn Độ) dời sớm hơn|Can we prepone the call to ten o'clock?
+actually|(người Pháp hay dùng với nghĩa "hiện tại")|Actually, we have three aircraft in the hangar.`)}
+];
+
+const ACCENTS=[
+ {k:"in",who:"Airline Ấn Độ, MCC, đội IT và vendor",tr:[
+  "Nhịp đều từng âm tiết, ít nối âm, thường nói nhanh. Nghe theo từ khoá, đừng chờ trọng âm kiểu Mỹ.",
+  "t, d uốn lưỡi (retroflex); v và w hay lẫn: \"wery\", \"vill\".",
+  "Cách dùng riêng: do the needful (làm việc cần làm), kindly revert (vui lòng phản hồi), prepone (dời sớm), I have a doubt (tôi có câu hỏi), out of station (đi công tác), today itself (ngay trong hôm nay).",
+  "Thì tiếp diễn dùng nhiều: \"I am having one doubt\", \"we are facing an issue since morning\"."],
+  s:[["Kindly revert by end of day itself, the aircraft is AOG.","Vui lòng phản hồi ngay trong hôm nay, máy bay đang nằm đất."],["I have one doubt regarding the MEL item.","Tôi có một câu hỏi về mục MEL."],["Can we prepone the meeting to Monday?","Dời cuộc họp sớm lên thứ Hai được không?"],["Please do the needful and share the PFR.","Làm giúp việc cần làm và gửi PFR."],["The engineer is out of station today, he will join tomorrow.","Kỹ sư đi công tác hôm nay, mai sẽ tham gia."]]},
+ {k:"fr",who:"Airbus Toulouse, Air France, Safran",tr:[
+  "Bỏ âm h: \"hangar\" thành \"angar\", \"have\" thành \"ave\". Ngược lại đôi khi thêm h vào chỗ không có.",
+  "th đọc thành z hoặc s: \"the data\" thành \"ze data\", \"three\" thành \"tree\" hoặc \"sree\".",
+  "Nhấn trọng âm cuối từ: deve-lop-MENT, in-for-ma-TION. i dài và i ngắn lẫn nhau: \"ship\" và \"sheep\".",
+  "Bẫy nghĩa (false friends): actually = hiện tại (actuellement), eventually = có thể (éventuellement), planning = lịch trình, formation = đào tạo, it is not evident = không dễ, since two weeks = đã hai tuần nay."],
+  s:[["Actually, we have three aircraft in the hangar.","Hiện tại chúng tôi có ba máy bay trong hangar (không phải \"thật ra\")."],["We have this problem since two weeks.","Vấn đề này đã có từ hai tuần nay."],["Eventually, we can send you the data next week.","Có thể chúng tôi sẽ gửi dữ liệu tuần sau (không phải \"cuối cùng thì\")."],["The planning is too short for the formation of the engineers.","Lịch quá ngắn để đào tạo kỹ sư."],["It is not evident to change the schedule now.","Đổi lịch bây giờ không dễ."]]},
+ {k:"de",who:"Airbus Hamburg, Lufthansa Technik, MTU",tr:[
+  "w đọc thành v: \"we will\" thành \"ve vill\". th đọc thành s hoặc z.",
+  "Phụ âm cuối bị cứng: \"good\" nghe như \"goot\", \"bag\" như \"back\".",
+  "Nói thẳng, ngắn, ít rào đón. Đó là phong cách chứ không phải khó chịu.",
+  "Bẫy nghĩa: become = nhận được (bekommen), eventually = có thể, handy = điện thoại di động, chef = sếp."],
+  s:[["We will become the parts on Wednesday.","Chúng tôi sẽ nhận được linh kiện vào thứ Tư."],["This value is too high, we must check it.","Giá trị này quá cao, phải kiểm tra."],["Eventually we can do the check in Hamburg.","Có thể chúng ta làm đợt kiểm tra ở Hamburg."],["Please call me on my handy if there is an AOG.","Gọi di động cho tôi nếu có AOG."]]},
+ {k:"es",who:"Iberia, Airbus Getafe, airline Mỹ Latin",tr:[
+  "Thêm e trước s đầu từ: \"standard\" thành \"estandard\", \"speed\" thành \"espeed\".",
+  "b và v đọc gần giống nhau. Nguyên âm ngắn và rõ, ít âm /ə/.",
+  "Hay bỏ chủ ngữ \"it\": \"Is very important\"."],
+  s:[["The aircraft is in the hangar for the C check.","Máy bay đang trong hangar làm C-check."],["Is very important to finish before the summer.","Rất quan trọng phải xong trước mùa hè."],["We follow the standard procedure for the inspection.","Chúng tôi làm theo quy trình chuẩn để kiểm tra."]]}
+];
+const RESCUE=[["Sorry, you broke up a bit. Could you say that again?","Mạng bị rè, nói lại giúp được không?"],["Could you repeat the part number, please?","Nhắc lại part number giúp tôi."],["Just to confirm, you said fifteen, one five?","Xác nhận lại: bạn nói mười lăm, một-năm phải không?"],["Could you spell that for me?","Đánh vần giúp tôi."],["Sorry, could you slow down a little?","Nói chậm lại chút được không?"],["Could you put that in the chat?","Gõ vào khung chat giúp tôi."],["Let me make sure I understood correctly.","Để tôi chắc là mình hiểu đúng."],["So the action item on my side is to send the data by Friday, right?","Vậy việc của tôi là gửi dữ liệu trước thứ Sáu, đúng không?"],["Can we take this offline?","Mình bàn riêng sau nhé?"],["You're on mute.","Bạn đang tắt mic."],["Let me share my screen.","Để tôi chia sẻ màn hình."]];
+
+const MEETS=[
+ {id:"aog",t:"AOG ở Delhi: lỗi bơm thuỷ lực",ctx:"Airline Ấn Độ báo máy bay nằm đất, gọi với Airbus support.",sp:{Arjun:"in",Julien:"fr",Nguyen:"us"},lines:[
+  ["Arjun","Good morning everyone. So, we have an AOG in Delhi since yesterday night. MSN four eight one two, registration Victor Tango, India Delta Kilo."],
+  ["Arjun","The aircraft had a hydraulic pump failure on the green system. We have already replaced it once, but the fault is coming again."],
+  ["Julien","Okay, thank you Arjun. Actually, we have seen this on two other aircraft this month. Can you send us the PFR and the troubleshooting data?"],
+  ["Arjun","Sure, I will share it by end of day itself. But our priority is to get the part. Kindly confirm the ETA."],
+  ["Julien","The pump is in stock in Hamburg. If we ship it today, it should arrive in Delhi on Thursday morning, local time."],
+  ["Nguyen","Thursday works. I'll set up an alert in the dashboard so we can track the green system pressure after the replacement."],
+  ["Julien","Perfect. Let's have a short call again on Thursday afternoon to confirm the aircraft is back in service."]],
+  qs:[["Which system has the problem?",["Blue hydraulic system","Green hydraulic system","Yellow hydraulic system","Fuel system"],1],
+   ["Where is the spare pump now?",["Delhi","Toulouse","Hamburg","Singapore"],2],
+   ["When should the part arrive?",["Wednesday evening","Thursday morning","Thursday afternoon","Friday"],1],
+   ["What will Nguyen do?",["Ship the pump","Send the PFR","Set up a dashboard alert","Call the airline CEO"],2],
+   ["What does Arjun mean by \"by end of day itself\"?",["Today at the latest","Tomorrow","Only if possible","Next week"],0,"\"itself\" kiểu Ấn Độ dùng để nhấn mạnh: ngay trong hôm nay."]]},
+ {id:"rel",t:"Lấy yêu cầu với SME độ tin cậy",ctx:"Kỹ sư độ tin cậy người Anh mô tả dashboard họ cần.",sp:{Tom:"gb",Nguyen:"us"},lines:[
+  ["Tom","Right, so from the reliability side, what we really need is the unscheduled removal rate per ATA chapter, per month."],
+  ["Nguyen","Understood. Do you want it by fleet type, or by individual tail?"],
+  ["Tom","Both, ideally. The A320 fleet first, then the A350s. And we need MTBUR for the top twenty components."],
+  ["Tom","At the moment we're doing it all in Excel, and it takes my team about three days every month."],
+  ["Nguyen","How fresh does the data need to be? Is a daily refresh good enough?"],
+  ["Tom","Daily is fine. To be honest, weekly would already be a massive improvement."],
+  ["Tom","One more thing. We need to exclude no fault found removals, otherwise the numbers look much worse than they are."]],
+  qs:[["Which fleet does Tom want first?",["A350","A320","A330","All fleets at once"],1],
+   ["How long does the Excel process take now?",["Three hours","One day","Three days","A week"],2],
+   ["Which refresh frequency is acceptable?",["Real time only","Daily","Monthly","Quarterly"],1],
+   ["What should be excluded?",["Scheduled removals","No fault found removals","Engine removals","A350 data"],1],
+   ["How many components need MTBUR?",["Ten","Twelve","Twenty","Thirty"],2]]},
+ {id:"sb",t:"Tiến độ Service Bulletin",ctx:"Airbus (Pháp) và airline Tây Ban Nha rà soát chiến dịch SB.",sp:{Claire:"fr",Elena:"es"},lines:[
+  ["Claire","Hello everyone. Today I would like to review the status of the service bulletin campaign on the landing gear, ATA thirty-two."],
+  ["Claire","Currently, the embodiment rate is sixty-five percent on your fleet. We have eleven aircraft remaining."],
+  ["Elena","For us, the problem is the hangar slots. We can only do two aircraft per week, because of the summer schedule."],
+  ["Claire","I understand. But the airworthiness directive has a compliance date at the end of September. It is not negotiable."],
+  ["Elena","Okay. Then we will need the kits earlier. Can Airbus deliver all the kits before the fifteenth of July?"],
+  ["Claire","I will check with logistics and revert to you by Friday."]],
+  qs:[["Which system is the SB about?",["Landing gear","Engines","Doors","Navigation"],0,"ATA 32 = landing gear (càng đáp)."],
+   ["What is the current embodiment rate?",["15%","50%","65%","75%"],2],
+   ["How many aircraft remain?",["Seven","Eleven","Twelve","Seventeen"],1],
+   ["Why can the airline only do two aircraft per week?",["No kits","Limited hangar slots","No engineers","Bad weather"],1],
+   ["What is the compliance deadline?",["End of July","15 July","End of September","This Friday"],2],
+   ["What will Claire do by Friday?",["Deliver the kits","Reply after checking with logistics","Cancel the SB","Visit the hangar"],1]]},
+ {id:"otp",t:"Rà soát OTP của airline",ctx:"Phân tích chậm chuyến với đội vận hành Ấn Độ và đồng nghiệp Mỹ.",sp:{Priya:"in",Sarah:"us"},lines:[
+  ["Priya","So last month our on-time performance dropped to seventy-eight percent, from eighty-four percent in May."],
+  ["Priya","Main contributor is delay code ninety-three, that is the late arrival of the aircraft from the previous sector."],
+  ["Sarah","Got it. So it's mostly knock-on delays. Do you see a pattern by station?"],
+  ["Priya","Yes, mostly in Mumbai during the evening peak. The turnaround time there is only forty minutes, which is too tight."],
+  ["Sarah","Could we pull the data for the last ninety days and break it down by hour of the day?"],
+  ["Priya","Sure, I'll do the needful and send it across by tomorrow."]],
+  qs:[["What was OTP last month?",["84%","78%","87%","73%"],1],
+   ["What does delay code 93 mean here?",["A technical problem","Late arrival of the aircraft from the previous flight","Weather","Crew shortage"],1],
+   ["Which station has the problem?",["Delhi","Bangalore","Mumbai","Chennai"],2],
+   ["What is the turnaround time there?",["Fourteen minutes","Forty minutes","Forty-five minutes","Four hours"],1],
+   ["\"I'll do the needful\" means:",["I'll do what is necessary","I need help","I can't do it","I'll ask my boss"],0]]},
+ {id:"pdm",t:"Mô hình bảo dưỡng dự đoán APU",ctx:"Data scientist người Đức trình bày kết quả mô hình.",sp:{Markus:"de",Nguyen:"us"},lines:[
+  ["Markus","We have now tested the model on the APU data from the last two years."],
+  ["Markus","It predicts a starter failure about ten days before it happens, with a precision of around seventy percent."],
+  ["Nguyen","And what about false positives? Maintenance teams don't like alerts that turn out to be nothing."],
+  ["Markus","Yes, this is the main issue. Roughly three out of ten alerts are false positives. We want to bring this under fifteen percent."],
+  ["Markus","My proposal is a pilot with one airline, on thirty aircraft, for three months."],
+  ["Nguyen","Sounds reasonable. Let's align with the airline next week and agree on the success criteria."]],
+  qs:[["Which component does the model predict?",["Engine fan blade","APU starter","Brakes","Hydraulic pump"],1],
+   ["How early does it predict the failure?",["Ten hours","Two days","Ten days","Two years"],2],
+   ["What share of alerts are false positives now?",["About 10%","About 15%","About 30%","About 70%"],2],
+   ["What is the pilot scope?",["1 airline, 30 aircraft, 3 months","3 airlines, 10 aircraft, 1 month","1 airline, 13 aircraft, 3 weeks","All airlines, 1 year"],0]]},
+ {id:"dq",t:"Sự cố dữ liệu ACARS",ctx:"Escalation: thiếu dữ liệu từ đội tàu A321.",sp:{Sarah:"us",Arjun:"in",Nguyen:"gb"},lines:[
+  ["Sarah","Hey all, quick heads-up. Since Monday, we're missing about a third of the ACARS messages from the A321 fleet."],
+  ["Arjun","Yes, we noticed also. Our ground station provider changed the format without informing us."],
+  ["Nguyen","That explains it. The pipeline is rejecting the new messages because the schema doesn't match."],
+  ["Sarah","What's the workaround for now? The reliability team is blind on those aircraft."],
+  ["Nguyen","I can map the new fields today and backfill the missing data from Monday. It should be done by tomorrow noon."],
+  ["Sarah","Great. Arjun, can you get the provider to send us the new specification, so it doesn't happen again?"],
+  ["Arjun","Yes, I will escalate it to the vendor manager today itself."]],
+  qs:[["How much of the data is missing?",["About a quarter","About a third","About half","All of it"],1],
+   ["What is the root cause?",["Server outage","The provider changed the message format","Aircraft software bug","Expired password"],1],
+   ["When will the backfill be finished?",["Today","Tomorrow noon","Monday","Next week"],1],
+   ["What will Arjun do?",["Fix the pipeline","Escalate to the vendor manager","Call Airbus","Nothing"],1]]},
+ {id:"lease",t:"Trả máy bay thuê (redelivery)",ctx:"Airline Tây Ban Nha và quản lý hợp đồng người Anh.",sp:{Tom:"gb",Elena:"es"},lines:[
+  ["Tom","Okay, let's go through the redelivery of the A330, MSN twelve forty-five. The lease ends on the thirtieth of November."],
+  ["Elena","From our side, the main risk is the records. Some of the back to birth traceability for the landing gear is missing."],
+  ["Tom","How many parts are we talking about?"],
+  ["Elena","Around fifteen. We are searching the paper archive in Madrid, but it is slow."],
+  ["Tom","If we can't find them, the lessor may ask us to replace the parts, and that's very expensive. Let's put it on the risk register."],
+  ["Elena","Agreed. I will give you an update every Monday until the redelivery."]],
+  qs:[["Which aircraft type?",["A320","A321","A330","A350"],2],
+   ["When does the lease end?",["30 September","13 November","30 November","3 December"],2],
+   ["What is missing?",["An engine","Landing gear traceability records","Cabin seats","Pilot logbooks"],1],
+   ["How often will Elena give an update?",["Every day","Every Monday","Every month","Only once"],1]]},
+ {id:"kick",t:"Kick-off dự án dashboard đội tàu",ctx:"Airbus (Pháp), airline Ấn Độ và bạn.",sp:{Julien:"fr",Priya:"in",Nguyen:"us"},lines:[
+  ["Julien","Welcome everyone to the kick-off. The objective is to put the fleet health dashboard in production by the end of Q1."],
+  ["Julien","The scope is the A350 fleet of the airline, so twenty-two aircraft, with the engine and APU data."],
+  ["Priya","I have one doubt. Will the dashboard also cover the A320 neo fleet, or that is phase two?"],
+  ["Julien","Good question. The A320 neo is phase two. We will discuss it in the steering committee in April."],
+  ["Nguyen","On the timeline, we plan three sprints of two weeks, then two weeks of user acceptance testing."],
+  ["Priya","Okay, please share the planning so we can block the time of our engineers. Kindly add me in the invite."]],
+  qs:[["What is the go-live target?",["End of Q1","End of Q2","April","Phase two"],0],
+   ["What is in phase one?",["The A320neo fleet","22 A350 aircraft","12 A350 aircraft","All fleets"],1],
+   ["Priya says \"I have one doubt\". She means:",["She doesn't trust Julien","She has a question","She disagrees","She is confused about her job"],1],
+   ["What comes before UAT?",["Two sprints of three weeks","Three sprints of two weeks","Three months of design","Two weeks of testing"],1],
+   ["Priya asks for \"the planning\". She means:",["The schedule","A budget","A design document","A contract"],0,"\"planning\" dùng như danh từ = lịch trình, rất hay gặp với người Pháp và Ấn."]]}
+];
+
+const NATO="Alpha Bravo Charlie Delta Echo Foxtrot Golf Hotel India Juliett Kilo Lima Mike November Oscar Papa Quebec Romeo Sierra Tango Uniform Victor Whiskey X-ray Yankee Zulu".split(" ");
+const ATA={21:"Air conditioning",22:"Auto flight",23:"Communications",24:"Electrical power",25:"Equipment and furnishings",26:"Fire protection",27:"Flight controls",28:"Fuel",29:"Hydraulic power",30:"Ice and rain protection",31:"Indicating and recording",32:"Landing gear",33:"Lights",34:"Navigation",35:"Oxygen",36:"Pneumatic",38:"Water and waste",49:"APU",52:"Doors",72:"Engine"};
+const AIRLINES=[["VN","Vietnam Airlines"],["AI","Air India"],["6E","IndiGo"],["AF","Air France"],["SQ","Singapore Airlines"],["LH","Lufthansa"],["EK","Emirates"],["QR","Qatar Airways"]];
+const MONTHS="January February March April May June July August September October November December".split(" ");
+
+let workMode="meet", meetOpen=null, playTok=0;
+function renderWork(el){
+  if(!S.work) S.work={meet:{}};
+  const modes=[["meet","Họp mô phỏng"],["accent","Giọng đồng nghiệp"],["terms","Thuật ngữ ngành"],["wdict","Chép câu họp"],["alpha","Mã & số"]];
+  el.innerHTML=`<div class="stack" style="margin-top:22px">
+   <div><h2>Tiếng Anh hàng không cho công việc</h2><div class="muted small explain">Họp với SME, Airbus và các airline có người Pháp, Ấn, Đức, Tây Ban Nha. Mỗi ngày nên làm 20 phút: 1 cuộc họp mô phỏng, 10 câu chép, 10 mã số, rồi ôn thuật ngữ trong mục Ôn từ. Muốn nghe người thật thì sang tab Giọng thật.</div></div>
+   <div class="tabs" style="align-self:flex-start" id="wk-tabs">${modes.map(([k,t])=>`<button class="tab" data-w="${k}" aria-current="${workMode===k?"page":"false"}">${t}</button>`).join("")}</div>
+   <div id="wk-body" class="stack"></div></div>`;
+  el.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{ workMode=b.dataset.w; meetOpen=null; playTok++; if(hasTTS) speechSynthesis.cancel(); renderWork(el); });
+  const body=el.querySelector("#wk-body");
+  ({meet:()=>meetOpen==null?wkMeetList(body):wkMeet(body),accent:()=>wkAccent(body),terms:()=>wkTerms(body),wdict:()=>wkDict(body),alpha:()=>wkAlpha(body)})[workMode]();
+}
+function wkMeetList(body){
+  body.innerHTML=`<div class="wk-days" style="margin-top:0">${MEETS.map((m,i)=>{ const sc=S.work.meet[m.id]; return `<button class="dcell" data-m="${i}"><span class="row" style="justify-content:space-between"><span class="dn">HỌP ${i+1}</span>${sc!=null?`<span class="chip ${sc>=80?"ok":"warn"}">${sc}%</span>`:""}</span><b>${esc(m.t)}</b><span class="small muted">${Object.entries(m.sp).map(([n,a])=>esc(n)+" · "+accLabel(a)).join(", ")}</span></button>`; }).join("")}</div>`;
+  body.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{ meetOpen=+b.dataset.m; wkMeet(body); });
+}
+function wkMeet(body){
+  const m=MEETS[meetOpen]; let rate=1, picks=new Array(m.qs.length).fill(null), graded=false, score=0;
+  body.innerHTML=`<div class="panel stack">
+   <div class="row" style="justify-content:space-between"><button class="btn sm ghost" id="mt-back">← Danh sách cuộc họp</button><span class="row">${Object.entries(m.sp).map(([n,a])=>`<span class="chip acc">${esc(n)} · ${accLabel(a)}</span>`).join("")}</span></div>
+   <div><h3>${esc(m.t)}</h3><div class="muted small">${esc(m.ctx)}</div></div>
+   <div class="row"><button class="btn primary play" id="mt-play">Nghe cả cuộc họp</button><button class="btn" id="mt-stop">Dừng</button>
+     <label class="small muted" for="mt-rate">Tốc độ</label><select id="mt-rate" style="width:auto"><option>0.85</option><option selected>1</option><option>1.1</option><option>1.2</option></select>
+     <button class="btn ghost" id="mt-tx">Hiện transcript</button></div>
+   <div id="mt-now" class="small mono muted" style="min-height:1.4em">Nghe ít nhất một lần không nhìn chữ, trả lời câu hỏi, rồi mới mở transcript.</div>
+   <div id="mt-lines" class="stack" style="gap:4px" hidden>${m.lines.map(([who,t],i)=>`<div class="row mt-line" data-l="${i}" style="flex-wrap:nowrap;gap:10px;align-items:flex-start;padding:6px 8px;border-radius:6px"><button class="btn sm play" data-pl="${i}" aria-label="Nghe câu này"></button><span style="min-width:0"><b>${esc(who)}</b> <span class="muted small">(${accLabel(m.sp[who])})</span><br>${esc(t)}</span></div>`).join("")}</div>
+  </div><div class="panel stack" id="mt-quiz"></div>`;
+  const now=body.querySelector("#mt-now"), linesEl=body.querySelector("#mt-lines");
+  const mark=i=>{ body.querySelectorAll(".mt-line").forEach(x=>x.classList.toggle("now",+x.dataset.l===i)); if(i>=0){ const w=m.lines[i][0]; now.textContent=`▶ ${w} (${accLabel(m.sp[w])}) đang nói · ${i+1}/${m.lines.length}`; } else now.textContent="Hết cuộc họp. Trả lời câu hỏi bên dưới."; };
+  async function playAll(){
+    const tok=++playTok;
+    for(let i=0;i<m.lines.length;i++){
+      if(tok!==playTok) return; mark(i);
+      const [w,t]=m.lines[i]; await speak(t,rate,m.sp[w]);
+      if(tok!==playTok) return; await new Promise(r=>setTimeout(r,450));
+    }
+    if(tok===playTok) mark(-1);
+  }
+  body.querySelector("#mt-back").onclick=()=>{ playTok++; if(hasTTS) speechSynthesis.cancel(); meetOpen=null; wkMeetList(body); };
+  body.querySelector("#mt-play").onclick=playAll;
+  body.querySelector("#mt-stop").onclick=()=>{ playTok++; if(hasTTS) speechSynthesis.cancel(); now.textContent="Đã dừng."; };
+  body.querySelector("#mt-rate").onchange=e=>rate=+e.target.value;
+  body.querySelector("#mt-tx").onclick=e=>{ linesEl.hidden=!linesEl.hidden; e.target.textContent=linesEl.hidden?"Hiện transcript":"Ẩn transcript"; };
+  body.querySelectorAll("[data-pl]").forEach(b=>b.onclick=()=>{ playTok++; const i=+b.dataset.pl, [w,t]=m.lines[i]; mark(i); speak(t,rate,m.sp[w]); });
+  const qEl=body.querySelector("#mt-quiz");
+  function drawQ(){
+    qEl.innerHTML=`<div class="label">Câu hỏi nghe hiểu</div>${m.qs.map(([qq,opts,ans,ex],qi)=>`<div class="stack" style="gap:6px"><b>${qi+1}. ${esc(qq)}</b><div class="opts">${opts.map((o,oi)=>{ let c=""; if(graded){ if(oi===ans) c="right"; else if(picks[qi]===oi) c="wrong"; } else if(picks[qi]===oi) c="picked"; return `<button class="opt ${c}" data-q="${qi}" data-o="${oi}" style="font-weight:500;font-size:14px">${esc(o)}</button>`; }).join("")}</div>${graded&&ex?`<div class="small muted">${esc(ex)}</div>`:""}</div>`).join("")}
+     <div class="row">${graded?`<span class="score">${score}%</span><button class="btn" id="mt-retry">Làm lại</button><span class="small muted">${score>=80?"Tốt. Mở transcript, nhại lại các câu khó.":"Mở transcript, nghe lại từng câu ở tốc độ 0.85."}</span>`:`<button class="btn primary" id="mt-grade" ${picks.includes(null)?"disabled":""}>Chấm điểm</button>`}</div>`;
+    qEl.querySelectorAll("[data-q]").forEach(b=>b.onclick=()=>{ if(graded) return; picks[+b.dataset.q]=+b.dataset.o; drawQ(); });
+    const g=qEl.querySelector("#mt-grade"); if(g) g.onclick=()=>{ graded=true; score=Math.round(100*m.qs.filter((q,i)=>picks[i]===q[2]).length/m.qs.length); S.work.meet[m.id]=Math.max(S.work.meet[m.id]||0,score); save(); drawQ(); };
+    const r=qEl.querySelector("#mt-retry"); if(r) r.onclick=()=>{ graded=false; picks.fill(null); drawQ(); };
+  }
+  drawQ();
+}
+function wkAccent(body){
+  body.innerHTML=`<div class="banner">Giọng Pháp, Đức, Tây Ban Nha ở đây được mô phỏng bằng giọng đọc tiếng Pháp/Đức/TBN đọc câu tiếng Anh, thường nặng hơn người thật. Quen được ở đây thì gặp người thật sẽ dễ hơn. Muốn nghe người thật, xem tab Giọng thật.</div>
+  ${ACCENTS.map((a,ai)=>`<div class="panel stack"><div class="row" style="justify-content:space-between"><div><span class="label">${esc(a.who)}</span><h3>Giọng ${accLabel(a.k)}</h3></div><span class="chip ${voiceOk(a.k)?"ok":"warn"}">${voiceOk(a.k)?"Máy có giọng này":"Máy thiếu giọng, đang dùng giọng thay thế"}</span></div>
+   <ul class="explain" style="margin:0;padding-left:18px">${a.tr.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>
+   <div class="label">Câu mẫu: nghe giọng ${accLabel(a.k)} rồi so với giọng Anh chuẩn</div>
+   <div class="stack" style="gap:8px">${a.s.map(([en,vi],si)=>`<div class="sh"><div class="txt">${esc(en)}</div><div class="small muted">${esc(vi)}</div><div class="row"><button class="btn sm primary play" data-a="${ai}" data-s="${si}">Giọng ${accLabel(a.k)}</button><button class="btn sm play" data-a="${ai}" data-s="${si}" data-std="1">Giọng Anh chuẩn</button></div></div>`).join("")}</div></div>`).join("")}
+  <div class="panel stack"><h3>Câu cứu nguy khi không nghe kịp</h3><div class="muted small">Thuộc những câu này thì không bao giờ phải giả vờ hiểu trong cuộc họp.</div>
+   <div class="stack" style="gap:6px">${RESCUE.map(([en,vi],i)=>`<div class="row" style="flex-wrap:nowrap;gap:10px"><button class="btn sm play" data-r="${i}" aria-label="Nghe"></button><span style="min-width:0">${esc(en)} <span class="muted small">· ${esc(vi)}</span></span></div>`).join("")}</div></div>`;
+  body.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{ const a=ACCENTS[+b.dataset.a]; speak(a.s[+b.dataset.s][0], 1, b.dataset.std?"gb":a.k); });
+  body.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>speak(RESCUE[+b.dataset.r][0],1,"us"));
+}
+function wkTerms(body){
+  const accs=["in","fr","gb","us","de"];
+  body.innerHTML=TERM_GROUPS.map((g,gi)=>{ const added=g.v.every(v=>S.cards[v.w]); return `<div class="panel stack"><div class="row" style="justify-content:space-between"><h3>${esc(g.t)}</h3><button class="btn sm ${added?"":"primary"}" data-add="${gi}" ${added?"disabled":""}>${added?"Đã có trong Ôn từ":"Thêm "+g.v.length+" thuật ngữ vào Ôn từ"}</button></div>
+   <div class="vgrid">${g.v.map((v,i)=>`<div class="vcard"><div class="row" style="justify-content:space-between;flex-wrap:nowrap"><span class="vw">${esc(v.w)}</span><span class="row" style="flex-wrap:nowrap;gap:4px"><button class="btn sm play" data-tw="${gi}:${i}" aria-label="Nghe"></button><button class="btn sm" data-tx="${gi}:${i}">Câu</button></span></div><div class="vm">${esc(v.m)}</div><div class="vx blur" tabindex="0">${esc(v.x)}</div><span class="small muted">Câu đọc bằng giọng ${accLabel(accs[i%5])}</span></div>`).join("")}</div></div>`; }).join("");
+  body.querySelectorAll(".blur").forEach(b=>{ const f=()=>b.classList.remove("blur"); b.onclick=f; b.onkeydown=e=>{ if(e.key==="Enter") f(); }; });
+  const get=s=>{ const [g,i]=s.split(":").map(Number); return [TERM_GROUPS[g].v[i],i]; };
+  body.querySelectorAll("[data-tw]").forEach(b=>b.onclick=()=>{ const [v]=get(b.dataset.tw); speak(v.w,0.9,"us"); });
+  body.querySelectorAll("[data-tx]").forEach(b=>b.onclick=()=>{ const [v,i]=get(b.dataset.tx); speak(v.x,1,accs[i%5]); });
+  body.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{ TERM_GROUPS[+b.dataset.add].v.forEach(v=>{ if(!S.cards[v.w]) S.cards[v.w]={box:0,due:today(),d:0}; }); save(); wkTerms(body); });
+}
+function wkDict(body){
+  body.innerHTML=`<div class="panel"><div class="row" style="margin-bottom:14px"><label class="small muted" for="wd-acc">Giọng</label><select id="wd-acc" style="width:auto"><option value="mix">Trộn: Ấn, Pháp, Đức, Anh, Mỹ</option>${["in","fr","de","es","gb","us"].map(a=>`<option value="${a}">${accLabel(a)}</option>`).join("")}</select>
+   <label class="small muted" for="wd-rate">Tốc độ</label><select id="wd-rate" style="width:auto"><option>0.85</option><option selected>1</option><option>1.1</option><option>1.2</option></select></div><div id="wd-w"></div></div>`;
+  const start=()=>{
+    const acc=body.querySelector("#wd-acc").value, rate=+body.querySelector("#wd-rate").value, mix=["in","fr","de","gb","us"];
+    const pool=[...MEETS.flatMap(m=>m.lines.map(l=>l[1])), ...TERM_GROUPS.flatMap(g=>g.v.map(v=>v.x)), ...RESCUE.map(r=>r[0])];
+    mountDict(body.querySelector("#wd-w"), shuffle(pool).slice(0,10).map((t,i)=>({text:t,rate,acc:acc==="mix"?mix[i%5]:acc})), [], ()=>{}, ()=>{}, {});
+  };
+  body.querySelector("#wd-acc").onchange=start; body.querySelector("#wd-rate").onchange=start; start();
+}
+function alphaQ(){
+  const L=()=>String.fromCharCode(65+rnd(0,25)), N=()=>String(rnd(0,9)), rep=(f,n)=>Array.from({length:n},f).join("");
+  const nato=s=>s.split("").map(c=>/[A-Z]/.test(c)?NATO[c.charCodeAt(0)-65]:/\d/.test(c)?(c==="9"?"niner":c):"").filter(Boolean).join(", ");
+  const t=rnd(0,6);
+  if(t===0){ const r=[()=>"F-"+rep(L,4),()=>"VT-"+rep(L,3),()=>"9V-S"+rep(L,2),()=>"VN-A"+rep(N,3),()=>"D-A"+rep(L,3),()=>"G-"+rep(L,4),()=>"EC-"+rep(L,3),()=>"A6-E"+rep(L,2)][rnd(0,7)](); return {say:`The registration is ${nato(r)}.`,ans:r,type:"alnum",kind:"Số đăng ký (bảng chữ NATO)",hint:"Ví dụ F-HBXA"}; }
+  if(t===1){ const p=L()+rep(N,5)+"-"+rep(N,2); return {say:`The part number is ${p.split("").map(c=>c==="-"?"dash":c).join(" ")}.`,ans:p,type:"alnum",kind:"Part number",hint:"Ví dụ D23189-07"}; }
+  if(t===2){ const n=String(rnd(1000,12999)); return {say:Math.random()<.5?`It's MSN ${n.split("").join(" ")}.`:`It's MSN ${n}.`,ans:n,type:"alnum",kind:"MSN",hint:"Gõ số MSN"}; }
+  if(t===3){ const [c,name]=AIRLINES[rnd(0,AIRLINES.length-1)], n=String(rnd(1,999)); return {say:`${name} ${n.split("").join(" ")} is delayed.`,ans:c+n,type:"alnum",kind:"Số hiệu chuyến bay",hint:"Mã hãng + số, ví dụ VN254 ("+AIRLINES.map(a=>a[0]+"="+a[1]).join(", ")+")"}; }
+  if(t===4){ const keys=Object.keys(ATA), k=keys[rnd(0,keys.length-1)]; return {say:`It's an ATA ${k} issue.`,ans:k,type:"alnum",kind:"Chương ATA",hint:"Gõ số chương",note:`ATA ${k} = ${ATA[k]}`}; }
+  if(t===5){ const h=rnd(0,23), m=rnd(0,11)*5; const say=(h<10?"zero "+ONES[h]:w99(h))+" "+(m===0?"hundred":m<10?"oh "+ONES[m]:w99(m))+" Zulu"; return {say:`Estimated arrival at ${say}.`,ans:String(h).padStart(2,"0")+":"+String(m).padStart(2,"0"),type:"time",kind:"Giờ UTC (Zulu)",hint:"Ví dụ 14:30"}; }
+  const d=rnd(1,28), mo=rnd(0,11), suf=d===1||d===21?"st":d===2||d===22?"nd":d===3||d===23?"rd":"th";
+  return {say:`The deadline is the ${d}${suf} of ${MONTHS[mo]}.`,ans:String(d).padStart(2,"0")+"/"+String(mo+1).padStart(2,"0"),type:"date",kind:"Ngày kiểu châu Âu",hint:"dd/mm, ví dụ 03/07"};
+}
+function alphaMatch(u,q){
+  if(q.type==="alnum") return u.toUpperCase().replace(/[^A-Z0-9]/g,"")===q.ans.replace(/[^A-Z0-9]/g,"");
+  if(q.type==="time"){ let d=u.replace(/\D/g,""); if(d.length===3) d="0"+d; return d===q.ans.replace(":",""); }
+  const a=u.split(/\D+/).filter(Boolean).map(Number), b=q.ans.split("/").map(Number); return a.length>=2&&a[0]===b[0]&&a[1]===b[1];
+}
+function wkAlpha(body){
+  body.innerHTML=`<div class="panel stack"><h3>Bảng chữ cái NATO</h3><div class="muted small">Dùng để đọc số đăng ký, mã sân bay, part number. Bấm để nghe.</div>
+   <div class="nato">${NATO.map((w,i)=>`<button data-n="${i}"><b>${String.fromCharCode(65+i)}</b>${w}</button>`).join("")}</div></div>
+   <div class="panel" id="al-drill"></div>`;
+  body.querySelectorAll("[data-n]").forEach(b=>b.onclick=()=>speak(NATO[+b.dataset.n],0.9,"us"));
+  const el=body.querySelector("#al-drill"); let q=alphaQ(), i=0, right=0, phase="in"; const total=10, accs=["us","in","fr","gb","de"];
+  function draw(){
+    if(i>=total){ el.innerHTML=`<div class="row" style="justify-content:space-between"><div><div class="label">Kết quả</div><div class="score">${right}/${total}</div></div><button class="btn" id="al-again">Làm thêm 10 câu</button></div>`; el.querySelector("#al-again").onclick=()=>{ i=0; right=0; q=alphaQ(); draw(); }; return; }
+    const acc=accs[i%5];
+    el.innerHTML=`<div class="stack" style="gap:10px"><div class="row" style="justify-content:space-between"><span class="label">Câu ${i+1}/${total} · ${esc(q.kind)}</span><span class="row"><span class="chip acc">Giọng ${accLabel(acc)}</span><span class="chip mono">${right} đúng</span></span></div>
+      <div class="row"><button class="btn primary play" id="al-play">Nghe</button><button class="btn" id="al-slow">Chậm</button></div>
+      <input type="text" class="big-input mono" id="al-in" placeholder="${esc(q.hint)}" autocomplete="off" autocapitalize="characters" spellcheck="false">
+      <div id="al-res" class="small" style="min-height:1.5em"></div></div>`;
+    const inp=el.querySelector("#al-in");
+    el.querySelector("#al-play").onclick=()=>{ speak(q.say,1,acc); inp.focus(); };
+    el.querySelector("#al-slow").onclick=()=>{ speak(q.say,0.7,acc); inp.focus(); };
+    inp.onkeydown=e=>{ if(e.key!=="Enter") return; e.preventDefault();
+      if(phase==="in"){ const ok=alphaMatch(inp.value,q); if(ok) right++; phase="res"; inp.readOnly=true;
+        el.querySelector("#al-res").innerHTML=`<span class="chip ${ok?"ok":""}" style="${ok?"":"background:var(--bad-soft);color:var(--bad)"}">${ok?"Đúng":"Sai"}</span> Đáp án: <b class="mono">${esc(q.ans)}</b>${q.note?" · "+esc(q.note):""} · “${esc(q.say)}” · <span class="muted">Enter để tiếp</span>`; }
+      else { phase="in"; i++; q=alphaQ(); draw(); const ni=el.querySelector("#al-in"); if(ni){ ni.focus({preventScroll:true}); setTimeout(()=>speak(q.say,1,accs[i%5]),120); } }
+    };
+  }
+  draw();
+}
+
+/* =============================== REAL VOICES =============================== */
+const REAL_SRC=[
+ {t:"Đời thường, người thật từ nhiều nước",items:[
+  ["ELLLO","Hơn 3.000 đoạn hội thoại của người thật từ nhiều quốc gia (Ấn, Pháp, Đức…), có transcript và câu hỏi.","https://elllo.org/"],
+  ["Easy English","Phỏng vấn ngẫu nhiên trên đường phố, nói tự nhiên, có phụ đề.","https://www.youtube.com/results?search_query=Easy+English+street+interview"],
+  ["BBC 6 Minute English","Hai người dẫn nói chuyện tự nhiên 6 phút, có transcript.","https://www.bbc.co.uk/learningenglish/english/features/6-minute-english"]]},
+ {t:"Hàng không, giọng thật",items:[
+  ["LiveATC Delhi","Liên lạc không lưu trực tiếp ở Delhi: giọng Ấn, số hiệu chuyến, NATO.","https://www.liveatc.net/search/?icao=VIDP"],
+  ["LiveATC Paris CDG","Không lưu Paris: phi công và kiểm soát viên giọng Pháp.","https://www.liveatc.net/search/?icao=LFPG"],
+  ["LiveATC Frankfurt","Không lưu Frankfurt: giọng Đức.","https://www.liveatc.net/search/?icao=EDDF"],
+  ["Airbus Skywise (YouTube)","Video và webinar của Airbus, kỹ sư Pháp nói tiếng Anh.","https://www.youtube.com/results?search_query=Airbus+Skywise"],
+  ["Hội thảo MRO (YouTube)","Panel thảo luận ngành bảo dưỡng: nhiều giọng, nói tự nhiên như họp.","https://www.youtube.com/results?search_query=MRO+conference+panel+discussion"],
+  ["Mentour Pilot","Phi công giải thích sự cố hàng không, tiếng Anh rõ, giọng Bắc Âu.","https://www.youtube.com/results?search_query=Mentour+Pilot"]]},
+ {t:"Theo giọng",items:[
+  ["Kỹ sư Ấn Độ trình bày","Tìm video kỹ sư, IT Ấn Độ thuyết trình bằng tiếng Anh.","https://www.youtube.com/results?search_query=Indian+aviation+engineer+presentation+english"],
+  ["Người Pháp nói tiếng Anh","Phỏng vấn kỹ sư, lãnh đạo Airbus và Safran.","https://www.youtube.com/results?search_query=Airbus+engineer+interview+english"],
+  ["Người Đức nói tiếng Anh","Lufthansa Technik giới thiệu dịch vụ và công nghệ.","https://www.youtube.com/results?search_query=Lufthansa+Technik"]]}
+];
+let realPlayer=null, realLoop={a:null,b:null}, realTick=null, ytReady=null;
+function loadYT(){
+  if(ytReady) return ytReady;
+  ytReady=new Promise((res,rej)=>{
+    if(window.YT&&window.YT.Player){ res(); return; }
+    window.onYouTubeIframeAPIReady=()=>res();
+    const s=document.createElement("script"); s.src="https://www.youtube.com/iframe_api"; s.onerror=()=>{ ytReady=null; rej(new Error("blocked")); };
+    document.head.appendChild(s); setTimeout(()=>rej(new Error("timeout")),8000);
+  });
+  return ytReady;
+}
+function ytId(u){ const m=u.match(/(?:v=|youtu\.be\/|shorts\/|embed\/|live\/)([A-Za-z0-9_-]{11})/); return m?m[1]:(/^[A-Za-z0-9_-]{11}$/.test(u.trim())?u.trim():null); }
+function fmtT(s){ s=Math.max(0,s||0); return Math.floor(s/60)+":"+String(Math.floor(s%60)).padStart(2,"0"); }
+function renderReal(el){
+  el.innerHTML=`<div class="stack" style="margin-top:22px">
+   <div><h2>Giọng thật</h2><div class="muted small explain">Giọng máy giúp luyện quy tắc, nhưng tai chỉ thật sự quen khi nghe người thật: ngập ngừng, nói chồng, mạng rè, giọng địa phương. Tải lên bản ghi cuộc họp của bạn (Teams, Zoom) hoặc dán link YouTube, rồi luyện từng đoạn ngắn.</div></div>
+   <div class="panel stack">
+    <h3>Máy nghe luyện tập</h3>
+    <div class="row"><label class="btn" for="rl-file">Tải file audio/video</label><input type="file" id="rl-file" accept="audio/*,video/*" hidden>
+     <span class="muted small">hoặc</span><input type="text" id="rl-yt" placeholder="Dán link YouTube…" style="flex:1;min-width:180px;width:auto"><button class="btn" id="rl-yt-go">Mở</button></div>
+    <div id="rl-msg" class="small muted">File chỉ mở trên máy bạn, không tải lên đâu cả.</div>
+    <div id="rl-stage" style="max-width:100%"></div>
+    <div id="rl-ctrl" class="stack" style="gap:10px" hidden>
+     <div class="row"><button class="btn primary" id="rl-pp">Phát / Dừng <span class="kbd">K</span></button><button class="btn" id="rl-back">−3 giây <span class="kbd">J</span></button><button class="btn" id="rl-fwd">+3 giây <span class="kbd">L</span></button>
+      <label class="small muted" for="rl-rate">Tốc độ</label><select id="rl-rate" style="width:auto">${[0.5,0.75,0.85,1,1.25].map(r=>`<option ${r===1?"selected":""}>${r}</option>`).join("")}</select><span class="mono small" id="rl-time">0:00</span></div>
+     <div class="row"><button class="btn" id="rl-a">Đặt A <span class="kbd">A</span></button><button class="btn" id="rl-b">Đặt B <span class="kbd">B</span></button><button class="btn ghost" id="rl-clear">Bỏ lặp</button><span class="chip" id="rl-loop">Chưa lặp đoạn</span></div>
+     <div class="small muted">Cách luyện: chọn đoạn 5–10 giây (A rồi B), nghe lặp đến khi gõ ra được từng chữ, rồi dán transcript gốc để so.</div>
+     <div class="row" style="align-items:stretch"><div style="flex:1;min-width:220px" class="stack"><label class="label" for="rl-mine">Bạn nghe được</label><textarea id="rl-mine" rows="4"></textarea></div><div style="flex:1;min-width:220px" class="stack"><label class="label" for="rl-ref">Transcript gốc (nếu có)</label><textarea id="rl-ref" rows="4"></textarea></div></div>
+     <div class="row"><button class="btn" id="rl-cmp">So sánh</button></div><div id="rl-diff"></div>
+    </div>
+   </div>
+   <div class="panel stack"><h3>Nghe một cụm từ do nhiều người thật nói</h3><div class="muted small">YouGlish tìm cụm từ trong hàng nghìn video thật, lọc theo giọng.</div>
+    <div class="row"><input type="text" id="yg-q" value="aircraft on ground" style="flex:1;min-width:180px;width:auto"><select id="yg-acc" style="width:auto"><option value="us">Mỹ</option><option value="uk">Anh</option><option value="aus">Úc</option><option value="">Mọi giọng</option></select><a class="btn primary" id="yg-go" target="_blank" rel="noopener" href="#">Mở YouGlish ↗</a></div></div>
+   ${REAL_SRC.map(g=>`<div class="panel stack"><h3>${esc(g.t)}</h3><div class="vgrid">${g.items.map(([t,d,u])=>`<a class="vcard" href="${u}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><b>${esc(t)} ↗</b><span class="small muted">${esc(d)}</span></a>`).join("")}</div></div>`).join("")}
+  </div>`;
+  const yg=()=>{ const q=el.querySelector("#yg-q").value.trim()||"aircraft on ground", a=el.querySelector("#yg-acc").value; el.querySelector("#yg-go").href=`https://youglish.com/pronounce/${encodeURIComponent(q)}/english${a?"/"+a:""}`; };
+  el.querySelector("#yg-q").oninput=yg; el.querySelector("#yg-acc").onchange=yg; yg();
+  const stage=el.querySelector("#rl-stage"), msg=el.querySelector("#rl-msg"), ctrl=el.querySelector("#rl-ctrl");
+  function attach(p){
+    realPlayer=p; realLoop={a:null,b:null}; ctrl.hidden=false; showLoop();
+    clearInterval(realTick);
+    realTick=setInterval(()=>{ if(!document.body.contains(stage)){ clearInterval(realTick); return; } const t=p.time(); el.querySelector("#rl-time").textContent=fmtT(t)+" / "+fmtT(p.dur()); if(realLoop.a!=null&&realLoop.b!=null&&t>=realLoop.b) p.seek(realLoop.a); },150);
+    p.rate(+el.querySelector("#rl-rate").value);
+  }
+  function showLoop(){ const l=el.querySelector("#rl-loop"); l.textContent= realLoop.a==null?"Chưa lặp đoạn": `A ${fmtT(realLoop.a)}`+(realLoop.b!=null?` → B ${fmtT(realLoop.b)} (đang lặp)`:" → chọn B"); l.className="chip "+(realLoop.b!=null?"acc":""); }
+  el.querySelector("#rl-file").onchange=e=>{
+    const f=e.target.files[0]; if(!f) return;
+    const isV=f.type.startsWith("video"); const m=document.createElement(isV?"video":"audio");
+    m.src=URL.createObjectURL(f); m.controls=true; m.style.width="100%"; if(isV) m.style.maxHeight="360px";
+    stage.innerHTML=""; stage.appendChild(m); msg.textContent=f.name;
+    attach({play:()=>m.play(),pause:()=>m.pause(),paused:()=>m.paused,time:()=>m.currentTime,dur:()=>m.duration||0,seek:t=>{m.currentTime=t;},rate:r=>{m.playbackRate=r;}});
+  };
+  el.querySelector("#rl-yt-go").onclick=async()=>{
+    const id=ytId(el.querySelector("#rl-yt").value); if(!id){ msg.textContent="Link YouTube không hợp lệ. Dán link dạng youtube.com/watch?v=… hoặc youtu.be/…"; return; }
+    msg.textContent="Đang mở video…";
+    try{ await loadYT(); }catch(e){ msg.innerHTML=`Trang này không nhúng được YouTube. Mở bản web tại <a href="https://nguyen187.github.io/listen30/#real" target="_blank" rel="noopener">nguyen187.github.io/listen30</a> để dùng tính năng này, hoặc tải file audio lên.`; return; }
+    stage.innerHTML='<div id="rl-ytbox" style="aspect-ratio:16/9;max-width:100%;width:640px"></div>';
+    const yp=new YT.Player("rl-ytbox",{videoId:id,width:"100%",height:"100%",playerVars:{rel:0,playsinline:1},events:{onReady:()=>{ msg.textContent="Sẵn sàng."; attach({play:()=>yp.playVideo(),pause:()=>yp.pauseVideo(),paused:()=>yp.getPlayerState()!==1,time:()=>yp.getCurrentTime(),dur:()=>yp.getDuration(),seek:t=>yp.seekTo(t,true),rate:r=>yp.setPlaybackRate(r)}); }}});
+  };
+  const P=()=>realPlayer;
+  const act={pp:()=>P()&&(P().paused()?P().play():P().pause()),back:()=>P()&&P().seek(Math.max(0,P().time()-3)),fwd:()=>P()&&P().seek(P().time()+3),
+    a:()=>{ if(!P()) return; realLoop={a:P().time(),b:null}; showLoop(); }, b:()=>{ if(!P()||realLoop.a==null) return; const t=P().time(); if(t>realLoop.a){ realLoop.b=t; P().seek(realLoop.a); } showLoop(); },
+    clear:()=>{ realLoop={a:null,b:null}; showLoop(); }};
+  ["pp","back","fwd","a","b","clear"].forEach(k=>el.querySelector("#rl-"+k).onclick=act[k]);
+  el.querySelector("#rl-rate").onchange=e=>P()&&P().rate(+e.target.value);
+  el.querySelector("#rl-cmp").onclick=()=>{ const ref=el.querySelector("#rl-ref").value.trim(), mine=el.querySelector("#rl-mine").value; if(!ref){ el.querySelector("#rl-diff").innerHTML='<div class="small muted">Dán transcript gốc vào ô bên phải để so sánh. Video YouTube thường có transcript ở nút "…" → "Hiện bản chép lời".</div>'; return; } const r=diffWords(ref,mine); el.querySelector("#rl-diff").innerHTML=`<div class="diff">${r.html}</div><div class="score" style="margin-top:6px">${r.score}%</div>`; };
+  realKeys=act;
+}
+let realKeys=null;
+document.addEventListener("keydown",e=>{
+  if(view!=="real"||!realKeys||!realPlayer) return;
+  const tag=(e.target.tagName||"").toLowerCase(); if(tag==="input"||tag==="textarea"||tag==="select"||e.metaKey||e.ctrlKey||e.altKey) return;
+  const k={k:"pp",j:"back",l:"fwd",a:"a",b:"b"}[e.key.toLowerCase()]; if(k){ e.preventDefault(); realKeys[k](); }
+});
+
+/* =============================== THEME =============================== */
+const ACCENT_COLORS=[["cobalt","Xanh cobalt","#2f45cf"],["teal","Xanh mòng két","#0f7c74"],["violet","Tím","#6b3fd4"],["rose","Hồng đất","#c23a63"],["sky","Xanh trời","#1d6fb8"]];
+function applyTheme(){
+  const r=document.documentElement;
+  if(S.theme==="light"||S.theme==="dark") r.setAttribute("data-theme",S.theme); else if(S.theme==="system") r.removeAttribute("data-theme");
+  if(S.accent&&S.accent!=="cobalt") r.setAttribute("data-accent",S.accent); else r.removeAttribute("data-accent");
+  r.style.fontSize=""; document.body.style.fontSize = S.fsize==="lg"?"17px":S.fsize==="sm"?"14px":"";
+  const b=document.getElementById("theme-btn"); if(b) b.textContent = S.theme==="dark"?"Tối":S.theme==="light"?"Sáng":"Tự động";
+}
+function themeHTML(){
+  return `<div class="panel stack"><h3>Giao diện</h3>
+   <div class="row"><span style="width:130px">Chế độ</span>${[["system","Tự động theo máy"],["light","Sáng"],["dark","Tối"]].map(([k,t])=>`<button class="btn sm ${ (S.theme||"system")===k?"primary":""}" data-th="${k}">${t}</button>`).join("")}</div>
+   <div class="row"><span style="width:130px">Màu nhấn</span>${ACCENT_COLORS.map(([k,t,c])=>`<button class="btn sm ${(S.accent||"cobalt")===k?"primary":""}" data-ac="${k}"><i class="sw" style="background:${c};border-radius:50%"></i>${t}</button>`).join("")}</div>
+   <div class="row"><span style="width:130px">Cỡ chữ</span>${[["sm","Nhỏ"],["md","Vừa"],["lg","Lớn"]].map(([k,t])=>`<button class="btn sm ${(S.fsize||"md")===k?"primary":""}" data-fs="${k}">${t}</button>`).join("")}</div></div>`;
+}
+function bindTheme(el, rerender){
+  el.querySelectorAll("[data-th]").forEach(b=>b.onclick=()=>{ S.theme=b.dataset.th; save(); applyTheme(); rerender(); });
+  el.querySelectorAll("[data-ac]").forEach(b=>b.onclick=()=>{ S.accent=b.dataset.ac; save(); applyTheme(); rerender(); });
+  el.querySelectorAll("[data-fs]").forEach(b=>b.onclick=()=>{ S.fsize=b.dataset.fs; save(); applyTheme(); rerender(); });
+}
+document.getElementById("theme-btn").onclick=()=>{
+  const dark = S.theme==="dark" || (S.theme!=="light" && (document.documentElement.getAttribute("data-theme")==="dark" || (!document.documentElement.getAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches)));
+  S.theme = dark?"light":"dark"; save(); applyTheme(); if(view==="setup") render();
+};
+
 /* =============================== BOOT =============================== */
+applyTheme();
 if(!hasTTS) document.getElementById("tts-warn").hidden=false;
 readHash();
 if(view==="today" && !openDay) openDay=currentDay();
