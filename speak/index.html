@@ -1,0 +1,683 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Talk Shop</title>
+<meta name="description" content="Luyện nói tiếng Anh cho công việc ngành hàng không: câu mẫu, nhập vai cuộc họp, trình bày, phát âm. Có thu âm và chấm bằng nhận dạng giọng nói.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Be+Vietnam+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a cockpit-style "annunciator" strip of 30 days on top, then a single working column; the record button is the instrument everything revolves around. */
+:root{
+  --bg:#eef1f0; --surface:#ffffff; --sunken:#e1e6e4; --ink:#13201d; --muted:#55645e; --line:#cdd6d2;
+  --accent:#b35f00; --accent-ink:#ffffff; --accent-soft:#fbe7cb;
+  --good:#16855a; --good-soft:#d8f1e4; --bad:#c23b2e; --bad-soft:#f9dfdb; --rec:#d6312b;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Be Vietnam Pro",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --r:10px; color-scheme:light;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0e1513; --surface:#16201d; --sunken:#1d2a26; --ink:#e4ece9; --muted:#93a39d; --line:#2a3833;
+  --accent:#ffb43a; --accent-ink:#1a1206; --accent-soft:#3a2a10;
+  --good:#4bd18f; --good-soft:#123426; --bad:#ff7d70; --bad-soft:#3f1a16; --rec:#ff5a4f; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#0e1513; --surface:#16201d; --sunken:#1d2a26; --ink:#e4ece9; --muted:#93a39d; --line:#2a3833;
+  --accent:#ffb43a; --accent-ink:#1a1206; --accent-soft:#3a2a10;
+  --good:#4bd18f; --good-soft:#123426; --bad:#ff7d70; --bad-soft:#3f1a16; --rec:#ff5a4f; color-scheme:dark }
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+[hidden]{display:none!important}
+.wrap{max-width:960px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 60px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.1;letter-spacing:.01em}
+h1{font-size:34px;font-weight:700;text-transform:uppercase}
+h2{font-size:28px;font-weight:700}
+h3{font-size:21px;font-weight:600}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)} .small{font-size:13px}
+.label{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+a{color:var(--accent)}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px 20px}
+.brand{display:flex;align-items:center;gap:12px}
+.lamp{width:14px;height:14px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.tabs{display:flex;gap:4px;flex-wrap:wrap;background:var(--sunken);padding:4px;border-radius:8px}
+.tab{border:0;background:transparent;padding:7px 12px;border-radius:6px;cursor:pointer;font-weight:600;font-size:14px;color:var(--muted)}
+.tab[aria-current="page"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.1)}
+.strip{margin-top:16px;display:grid;grid-template-columns:repeat(30,minmax(0,1fr));gap:3px}
+.strip button{border:0;height:30px;border-radius:3px;background:var(--sunken);cursor:pointer;font-family:var(--f-mono);font-size:10px;color:var(--muted)}
+.strip button.done{background:var(--accent);color:var(--accent-ink)}
+.strip button.part{background:var(--accent-soft);color:var(--ink)}
+.strip button.cur{outline:2px solid var(--ink);outline-offset:1px}
+@media (max-width:620px){.strip{grid-template-columns:repeat(15,minmax(0,1fr))}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px 20px}
+.stack{display:flex;flex-direction:column;gap:14px}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.btn{border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;display:inline-flex;align-items:center;gap:6px;text-decoration:none;color:var(--ink)}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.play::before{content:"";width:0;height:0;border-left:8px solid currentColor;border-top:5px solid transparent;border-bottom:5px solid transparent}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;background:var(--sunken);color:var(--muted)}
+.chip.ok{background:var(--good-soft);color:var(--good)} .chip.warn{background:var(--accent-soft);color:var(--accent)} .chip.bad{background:var(--bad-soft);color:var(--bad)}
+select,textarea,input[type=text]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.explain{max-width:68ch}
+.banner{background:var(--accent-soft);border:1px solid var(--accent);border-radius:8px;padding:10px 14px;font-size:14px}
+
+/* the speak instrument */
+.speak{display:flex;flex-direction:column;gap:10px}
+.rec{width:64px;height:64px;border-radius:50%;border:3px solid var(--rec);background:var(--surface);cursor:pointer;display:grid;place-items:center;flex:none}
+.rec i{width:24px;height:24px;border-radius:50%;background:var(--rec);transition:border-radius .15s,width .15s,height .15s}
+.rec[aria-pressed="true"] i{width:20px;height:20px;border-radius:4px}
+.rec[aria-pressed="true"]{animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 var(--bad-soft)}50%{box-shadow:0 0 0 10px var(--bad-soft)}}
+.live{min-height:1.6em;font-size:16px;padding:10px 12px;border-radius:8px;background:var(--bg);border:1px dashed var(--line)}
+.live.empty{color:var(--muted);font-size:14px}
+.diff{font-size:17px;line-height:1.9}
+.diff .ok{color:var(--good)} .diff .miss{background:var(--bad-soft);color:var(--bad);border-radius:4px;padding:1px 4px;font-weight:600} .diff .extra{text-decoration:line-through;color:var(--muted)}
+.score{font-family:var(--f-display);font-weight:700;font-size:34px;line-height:1}
+.meter{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.meter div{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+.meter b{display:block;font-family:var(--f-display);font-size:24px;line-height:1.1}
+.target{font-size:18px;font-weight:500}
+.vi{color:var(--muted);font-size:14px}
+.track{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.track>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:32px 1fr auto;gap:12px;align-items:center;padding:14px 18px}
+.track>summary::-webkit-details-marker{display:none}
+.track .tno{font-family:var(--f-mono);width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--sunken);color:var(--muted);font-size:13px;font-weight:600}
+.track.isdone .tno{background:var(--good);color:var(--surface)}
+.track .tbody{padding:0 18px 20px 62px}
+@media (max-width:560px){.track .tbody{padding:0 14px 18px 14px}}
+.cats{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
+.cell{border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:var(--surface);cursor:pointer;text-align:left;display:flex;flex-direction:column;gap:3px}
+.cell:hover{border-color:var(--accent)} .cell[aria-current="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.turn{border-left:3px solid var(--line);padding:4px 0 4px 14px}
+.turn.p{border-color:var(--muted)} .turn.y{border-color:var(--accent)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
+.kpi b{display:block;font-family:var(--f-display);font-size:32px;font-weight:700;line-height:1.1}
+.timer{font-family:var(--f-mono);font-size:22px;font-weight:600}
+.foot{margin-top:40px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;color:var(--muted);font-size:12.5px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span class="lamp" aria-hidden="true"></span><div><h1>Talk Shop</h1><div class="muted small">Luyện nói tiếng Anh cho công việc · hàng không & dữ liệu</div></div></div>
+    <div class="row">
+      <nav class="tabs" id="tabs" aria-label="Mục">
+        <button class="tab" data-view="mentor">Mentor</button>
+        <button class="tab" data-view="today">Hôm nay</button>
+        <button class="tab" data-view="phr">Câu mẫu</button>
+        <button class="tab" data-view="role">Nhập vai</button>
+        <button class="tab" data-view="talk">Trình bày</button>
+        <button class="tab" data-view="pron">Phát âm</button>
+        <button class="tab" data-view="prog">Tiến độ</button>
+      </nav>
+      <button class="btn sm ghost" id="theme-btn">Sáng / Tối</button>
+      <a class="btn sm ghost" href="../">Listen 30 ↗</a>
+    </div>
+  </header>
+  <div class="strip" id="strip" aria-label="30 ngày"></div>
+  <div id="warn" class="banner" style="margin-top:14px" hidden></div>
+  <main id="view" style="margin-top:18px"></main>
+  <footer class="foot"><span>Ghi âm và nhận dạng chạy trong trình duyệt. Tiến độ lưu trên máy này.</span><span>Nên dùng Chrome hoặc Edge, đeo tai nghe có micro.</span></footer>
+</div>
+
+<script>
+/* =============================== CONTENT =============================== */
+const PHRASES=[
+ {t:"Mở đầu họp & small talk",p:[
+  ["Hi everyone, thanks for joining. Can you all hear me okay?","Chào mọi người, cảm ơn đã tham gia. Mọi người nghe rõ không?"],
+  ["Let's give it a minute for others to join.","Đợi thêm một phút cho mọi người vào."],
+  ["How was your weekend?","Cuối tuần thế nào?"],
+  ["How's the weather in Toulouse today?","Hôm nay thời tiết ở Toulouse thế nào?"],
+  ["The purpose of today's call is to agree on the scope for phase one.","Mục đích cuộc gọi hôm nay là chốt phạm vi giai đoạn một."],
+  ["We have thirty minutes, so let's go through the agenda quickly.","Mình có 30 phút, nên đi nhanh qua chương trình."],
+  ["Before we start, does anyone want to add anything to the agenda?","Trước khi bắt đầu, ai muốn thêm gì vào chương trình không?"]]},
+ {t:"Cập nhật tiến độ",p:[
+  ["Yesterday I finished the ingestion pipeline for the ACARS data.","Hôm qua tôi xong pipeline nạp dữ liệu ACARS."],
+  ["Today I'm working on the reliability dashboard.","Hôm nay tôi làm dashboard reliability."],
+  ["I'm blocked on access to the maintenance data.","Tôi đang vướng quyền truy cập dữ liệu bảo dưỡng."],
+  ["We're on track for the release next Friday.","Chúng ta vẫn kịp release thứ Sáu tới."],
+  ["We're slightly behind schedule, about two days.","Mình đang chậm một chút, khoảng hai ngày."],
+  ["The main risk is the data quality from the tech logs.","Rủi ro chính là chất lượng dữ liệu từ tech log."],
+  ["I'll have a first version ready for review by Wednesday.","Tôi sẽ có bản đầu để review trước thứ Tư."]]},
+ {t:"Hỏi lại & làm rõ",p:[
+  ["Sorry, could you repeat that last part?","Xin lỗi, nhắc lại đoạn cuối giúp tôi?"],
+  ["Could you spell the part number for me, please?","Đánh vần part number giúp tôi."],
+  ["Just to make sure I understand, you mean block hours, not flight hours?","Để chắc là tôi hiểu đúng: ý bạn là block hours, không phải flight hours?"],
+  ["When you say daily, do you mean every calendar day?","Khi bạn nói hằng ngày, ý là mọi ngày lịch?"],
+  ["Could you give me an example?","Cho tôi một ví dụ được không?"],
+  ["Sorry, the line is breaking up. Could you type it in the chat?","Xin lỗi, mạng bị rè. Gõ vào chat giúp tôi?"],
+  ["What would success look like for you?","Với bạn, thế nào là thành công?"]]},
+ {t:"Đề xuất & thuyết phục",p:[
+  ["I'd suggest we start with the A320 fleet and add the A350 later.","Tôi đề xuất bắt đầu với đội A320, thêm A350 sau."],
+  ["What if we refreshed the data daily instead of weekly?","Hay là mình làm mới dữ liệu hằng ngày thay vì hằng tuần?"],
+  ["One option would be to exclude no fault found removals.","Một phương án là loại các lần tháo NFF."],
+  ["The main benefit is that your team saves three days every month.","Lợi ích chính là đội bạn tiết kiệm ba ngày mỗi tháng."],
+  ["I think it makes sense to run a pilot first.","Tôi nghĩ nên chạy thử nghiệm trước."],
+  ["Would it work for you if we delivered it in two phases?","Giao làm hai giai đoạn thì có ổn với bạn không?"],
+  ["Based on the data, I'd recommend raising the alert level.","Dựa trên dữ liệu, tôi đề nghị nâng ngưỡng cảnh báo."]]},
+ {t:"Không đồng ý lịch sự",p:[
+  ["I see your point, but I'm not sure the data supports that.","Tôi hiểu ý bạn, nhưng chưa chắc dữ liệu ủng hộ điều đó."],
+  ["That's a fair concern. However, the timeline is very tight.","Lo ngại đó hợp lý. Tuy nhiên tiến độ rất gấp."],
+  ["I'd push back a little on that.","Tôi xin phản biện một chút về điểm đó."],
+  ["I'm afraid that won't be possible by Friday.","E là không kịp trước thứ Sáu."],
+  ["I understand the urgency, but we need the data first.","Tôi hiểu là gấp, nhưng mình cần dữ liệu trước."],
+  ["Could we look at it from a different angle?","Mình nhìn vấn đề từ góc khác được không?"],
+  ["I agree in principle, but I have some concerns about the scope.","Về nguyên tắc tôi đồng ý, nhưng còn lo về phạm vi."]]},
+ {t:"Giải thích dữ liệu & biểu đồ",p:[
+  ["As you can see on this chart, the removal rate went up sharply in September.","Như trên biểu đồ, removal rate tăng mạnh vào tháng Chín."],
+  ["The x-axis shows the months, and the y-axis shows removals per thousand flight hours.","Trục hoành là tháng, trục tung là số lần tháo trên một nghìn giờ bay."],
+  ["This line is the alert level, and we've been above it for three months.","Đường này là ngưỡng cảnh báo, ta đã vượt nó ba tháng."],
+  ["Most of the increase comes from just two tail numbers.","Phần lớn mức tăng chỉ đến từ hai máy bay."],
+  ["If we exclude no fault found, the trend is much flatter.","Nếu loại NFF, xu hướng phẳng hơn nhiều."],
+  ["The numbers are roughly in line with the other operators.","Số liệu gần tương đương các hãng khác."],
+  ["This is a correlation, not necessarily a cause.","Đây là tương quan, chưa chắc là nguyên nhân."]]},
+ {t:"Sự cố & xin lỗi",p:[
+  ["Sorry for the inconvenience, we had an issue with the pipeline last night.","Xin lỗi vì sự bất tiện, tối qua pipeline gặp sự cố."],
+  ["The root cause was a change in the message format.","Nguyên nhân gốc là định dạng message bị đổi."],
+  ["We've already fixed it and backfilled the missing data.","Chúng tôi đã sửa và nạp bù dữ liệu thiếu."],
+  ["To prevent this from happening again, we've added an automatic check.","Để không lặp lại, chúng tôi đã thêm kiểm tra tự động."],
+  ["I'll send a short incident report by the end of the day.","Cuối ngày tôi sẽ gửi báo cáo sự cố ngắn."],
+  ["Thanks for your patience while we sorted it out.","Cảm ơn đã kiên nhẫn trong lúc chúng tôi xử lý."],
+  ["Let me know if you still see any gaps in the data.","Nếu còn thấy thiếu dữ liệu thì báo tôi."]]},
+ {t:"Chốt họp & action items",p:[
+  ["Let me quickly recap the action items.","Để tôi tóm tắt nhanh các việc cần làm."],
+  ["Tom will send the list of top removers by Monday.","Tom sẽ gửi danh sách thiết bị bị tháo nhiều nhất trước thứ Hai."],
+  ["On my side, I'll update the dashboard and share the link.","Phía tôi sẽ cập nhật dashboard và gửi link."],
+  ["Let's schedule a follow-up for next Thursday.","Hẹn họp tiếp vào thứ Năm tới."],
+  ["Did I miss anything?","Tôi có bỏ sót gì không?"],
+  ["Thanks everyone, that was really helpful.","Cảm ơn mọi người, buổi họp rất hữu ích."],
+  ["I'll send the minutes after the call.","Sau cuộc gọi tôi sẽ gửi biên bản."]]}
+];
+
+const ROLES=[
+ {t:"Daily stand-up",who:"Sarah, Scrum master",acc:"us",ctx:"Báo cáo nhanh trong buổi stand-up hằng ngày.",turns:[
+  {p:"Morning! Let's do the stand-up. Nguyen, do you want to go first?"},
+  {y:"Nói hôm qua bạn xong gì và hôm nay làm gì: xong pipeline ACARS, hôm nay làm dashboard reliability.",m:"Sure. Yesterday I finished the ACARS ingestion pipeline. Today I'm working on the reliability dashboard.",k:["yesterday","finished","today","dashboard"]},
+  {p:"Great. Any blockers?"},
+  {y:"Nói đang vướng: chưa có quyền truy cập dữ liệu bảo dưỡng của airline, nhờ Sarah giúp đẩy.",m:"Yes, one blocker. I still don't have access to the airline's maintenance data. Could you help me escalate it?",k:["blocker","access","maintenance data","escalate|help"]},
+  {p:"Sure, I'll ping their IT team after this call. Anything else?"},
+  {y:"Nói không còn gì, và vẫn kịp release thứ Sáu.",m:"No, that's all from me. We're still on track for Friday's release.",k:["that's all|that is all","on track","friday"]}]},
+ {t:"Lấy yêu cầu với SME",who:"Tom, kỹ sư reliability",acc:"gb",ctx:"SME muốn một dashboard theo dõi độ tin cậy linh kiện.",turns:[
+  {p:"So, I'd like a dashboard to track our component reliability. Where do we start?"},
+  {y:"Hỏi chỉ số quan trọng nhất là gì, và ai dùng dashboard hằng ngày.",m:"Good question. What's the most important metric for you, and who will use the dashboard day to day?",k:["metric","who","use"]},
+  {p:"Mainly the unscheduled removal rate. The reliability engineers would use it every morning."},
+  {y:"Hỏi rõ: theo đội tàu hay từng máy bay, và dữ liệu cần mới tới mức nào.",m:"Okay. Do you need it by fleet or by individual aircraft? And how fresh does the data need to be?",k:["fleet","aircraft","fresh|daily|refresh"]},
+  {p:"Both views, and daily would be fine."},
+  {y:"Tóm tắt yêu cầu và hẹn gửi mockup vào thứ Tư.",m:"Great. So to summarize: the unscheduled removal rate, by fleet and by aircraft, refreshed daily. I'll send you a mockup by Wednesday.",k:["removal rate","daily","mockup|design","wednesday"]}]},
+ {t:"Cuộc gọi AOG",who:"Arjun, MCC airline",acc:"in",ctx:"Airline gọi gấp vì máy bay nằm đất, cần lịch sử kỹ thuật.",turns:[
+  {p:"Hello, this is Arjun from MCC. We have an AOG in Mumbai, and we need the history of this aircraft urgently."},
+  {y:"Hỏi số đăng ký và MSN của máy bay.",m:"Hi Arjun, sorry to hear that. Could you give me the tail number and the MSN, please?",k:["tail|registration","msn|serial"]},
+  {p:"Tail is Victor Tango, India Kilo Lima. MSN is five five two one."},
+  {y:"Nhắc lại để xác nhận VT-IKL, MSN 5521, rồi hỏi hệ thống nào lỗi.",m:"Let me confirm: VT-IKL, MSN five five two one. Which system has the fault?",k:["confirm","five five two one|5521","system|fault"]},
+  {p:"It's the APU. The starter failed this morning."},
+  {y:"Hứa gửi lịch sử tháo APU starter 12 tháng qua trong vòng 30 phút.",m:"Understood. I'll send you the APU starter removal history for the last twelve months within thirty minutes.",k:["history","twelve months|12 months","thirty minutes|30 minutes"]}]},
+ {t:"Demo dashboard cho Airbus",who:"Julien, Airbus",acc:"fr",ctx:"Bạn trình diễn dashboard sức khoẻ đội tàu.",turns:[
+  {p:"Okay, I'm ready. Can you show us the new fleet health dashboard?"},
+  {y:"Chia sẻ màn hình, giới thiệu 3 phần: tổng quan đội tàu, cảnh báo, chi tiết từng máy bay.",m:"Sure, let me share my screen. The dashboard has three parts: a fleet overview, the active alerts, and a detailed view per aircraft.",k:["share","screen","three","overview","alerts"]},
+  {p:"Interesting. Where does the alert data come from?"},
+  {y:"Giải thích cảnh báo lấy từ ACARS và post flight report, cập nhật mỗi giờ.",m:"The alerts come from the ACARS messages and the post flight reports. The data is refreshed every hour.",k:["acars|messages","post flight|report","hour"]},
+  {p:"And actually, can the airline export the data?"},
+  {y:"Trả lời: có, xuất ra Excel hoặc qua API.",m:"Yes, they can export it to Excel, or access it through the API.",k:["export","excel","api|a p i"]}]},
+ {t:"Từ chối deadline gấp",who:"Priya, quản lý dự án",acc:"in",ctx:"Khách muốn có dashboard ngay thứ Sáu này.",turns:[
+  {p:"Nguyen, the client wants the dashboard by this Friday itself. Can we do it?"},
+  {y:"Nói thứ Sáu rất gấp vì dữ liệu utilization chưa sạch; đề xuất giao bản đầu chỉ phần reliability.",m:"Honestly, Friday is very tight, because the utilization data isn't clean yet. What I can do is deliver a first version with only the reliability part by Friday.",k:["tight|difficult","utilization","first version|phase","reliability"]},
+  {p:"Okay. And when can you deliver the full version?"},
+  {y:"Bản đầy đủ thứ Năm tuần sau, với điều kiện airline gửi tech log trước thứ Hai.",m:"The full version by next Thursday, as long as the airline sends us the tech log data before Monday.",k:["thursday","as long as|if","tech log","monday"]},
+  {p:"Fine, I'll communicate that to the client."},
+  {y:"Cảm ơn, và sẽ gửi email xác nhận để mọi người cùng thống nhất.",m:"Thanks, Priya. I'll also send a short email to confirm the plan, so everyone is aligned.",k:["email","confirm","aligned|align|same page"]}]},
+ {t:"Nghe không rõ: hỏi lại",who:"Markus, Lufthansa Technik",acc:"de",ctx:"Đối tác đọc part number nhanh và dùng \"become\" với nghĩa nhận được.",turns:[
+  {p:"The part number is D two three one eight nine, dash zero seven. We will become it on Wednesday."},
+  {y:"Xin đánh vần lại part number.",m:"Sorry, could you spell the part number again, please?",k:["spell|repeat","part number"]},
+  {p:"Sure. D, as in Delta, two three one eight nine, dash zero seven."},
+  {y:"Nhắc lại part number và hỏi lại: ý là nhận được vào thứ Tư?",m:"Thanks. So D two three one eight nine, dash zero seven. And just to confirm, you will receive it on Wednesday?",k:["two three one eight nine|23189","receive","wednesday"]},
+  {p:"Yes, exactly, we receive it Wednesday."},
+  {y:"Cảm ơn và nói sẽ cập nhật ETA trên dashboard.",m:"Perfect, thank you. I'll update the ETA on the dashboard.",k:["update","eta|e t a|arrival","dashboard"]}]},
+ {t:"Small talk đầu cuộc họp",who:"Elena, Iberia",acc:"es",ctx:"Vài phút trò chuyện trước khi vào việc.",turns:[
+  {p:"Hi Nguyen! How are you? Is it very hot in Vietnam now?"},
+  {y:"Trả lời về thời tiết và hỏi lại về Madrid.",m:"Hi Elena! I'm good, thanks. Yes, it's really hot and humid here. How about Madrid?",k:["good|fine|well","hot|humid","madrid|you"]},
+  {p:"Very hot also, thirty-eight degrees yesterday! Did you do anything nice at the weekend?"},
+  {y:"Kể ngắn cuối tuần (cà phê với bạn, xem phim) rồi chuyển sang công việc.",m:"Not much, I had coffee with some friends and watched a movie. Anyway, shall we get started?",k:["friends|movie|coffee","get started|start|begin"]}]},
+ {t:"Giải thích sự cố dữ liệu",who:"Sarah, product owner",acc:"us",ctx:"Dashboard trống từ sáng, đội reliability đang hỏi.",turns:[
+  {p:"Hey, the reliability team says the dashboard has been empty since this morning. What happened?"},
+  {y:"Xin lỗi, giải thích: pipeline lỗi vì nhà cung cấp đổi định dạng message.",m:"Sorry about that. The pipeline failed last night because the data provider changed the message format.",k:["sorry","pipeline","format|changed"]},
+  {p:"Okay. When will it be back?"},
+  {y:"Nói đã sửa, đang nạp bù, trước 2 giờ chiều sẽ đủ.",m:"We've already fixed it and we're backfilling the data now. Everything should be back before two p.m.",k:["fixed","backfill|reload","two|2"]},
+  {p:"Good. How do we avoid this next time?"},
+  {y:"Đề xuất thêm kiểm tra schema tự động và cảnh báo qua email.",m:"We'll add an automatic schema check, and an email alert if the format changes again.",k:["schema|format","check","alert|email"]}]}
+];
+
+const TALKS=[
+ {t:"Giới thiệu bản thân và vai trò",sec:60,st:"Tên → vai trò → dự án đang làm → bạn mong muốn gì từ người nghe",k:["data","platform","airline","dashboard"],m:"Hi, I'm Nguyen. I'm a data engineer on the fleet analytics platform. I mainly work on the data pipelines and dashboards for reliability and maintenance. Right now I'm working with two airlines to bring their tech log data into the platform. From this group, I'd really like to understand which metrics matter most to you."},
+ {t:"Stand-up: hôm qua, hôm nay, vướng gì",sec:45,st:"Hôm qua → hôm nay → vướng mắc → cần ai giúp",k:["yesterday","today","blocker|blocked"],m:"Yesterday I fixed the duplicate records in the utilization dataset. Today I'm going to add the A350 fleet to the reliability dashboard. I'm blocked on one thing: I still need read access to the maintenance data, so I'd appreciate some help from the airline's IT team."},
+ {t:"Giải thích biểu đồ: removal rate tăng 40% trong Q3",sec:90,st:"Nhìn chung → chi tiết → nguyên nhân → đề xuất",k:["removal rate","alert level","increase|increased|went up","because","recommend|suggest"],m:"Overall, the removal rate for the pack valve went up by about forty percent in the third quarter. Looking at the details, we've been above the alert level since July. Most of the increase comes from three aircraft, and half of the removals were no fault found. So I'd recommend reviewing the troubleshooting procedure before we contact the supplier."},
+ {t:"Vì sao giờ bay trên dashboard khác tech log",sec:60,st:"Hiện tượng → nguyên nhân → cách sửa",k:["block time","airborne time","taxi","difference"],m:"The difference comes from how we count the time. The dashboard uses block time, from out to in, while your tech log uses airborne time, from off to on. The gap is basically the taxi time, which is more than an hour a day at busy hubs. We'll switch the dashboard to airborne time so the numbers match."},
+ {t:"Đề xuất loại NFF khỏi MTBUR",sec:60,st:"Đề xuất → lý do → lợi ích → bước tiếp theo",k:["suggest|propose|recommend","no fault found","mtbur|m t b u r","benefit"],m:"I'd like to propose excluding no fault found removals from the MTBUR calculation. Right now they make the components look much less reliable than they really are. The benefit is that the engineers can focus on real failures. As a next step, I can show both versions side by side at the next review."},
+ {t:"Báo rủi ro trễ deadline",sec:60,st:"Tình hình → tác động → phương án → cần quyết định gì",k:["risk","delay","impact","option"],m:"I want to flag a risk on the timeline. The airline hasn't sent the tech log data yet, so we might be delayed by about a week. The impact is that the utilization part won't be ready for the demo. One option is to demo the reliability part only and add utilization later. I need a decision on that by Thursday."},
+ {t:"Mô tả pipeline ACARS đến dashboard",sec:90,st:"Nguồn → xử lý → lưu trữ → hiển thị → giám sát",k:["ingestion|ingest","pipeline","schema","refresh","dashboard"],m:"The ACARS messages arrive from the ground station provider every few minutes. Our ingestion job parses them and checks the schema. Valid messages are stored in the raw dataset, then cleaned and joined with the aircraft data. The dashboard is refreshed every hour, and we get an alert if the volume drops or the schema changes."},
+ {t:"Tóm tắt action items cuối họp",sec:45,st:"Ai → làm gì → hạn khi nào → họp lại khi nào",k:["action items","will","by","follow-up|follow up"],m:"Let me quickly recap the action items. Tom will send the list of top removers by Monday. Elena will check the missing records in Madrid. On my side, I'll update the dashboard by Wednesday. And we'll have a follow-up call next Thursday."},
+ {t:"Báo cáo sự cố dữ liệu",sec:60,st:"Chuyện gì xảy ra → nguyên nhân gốc → đã làm gì → phòng ngừa",k:["root cause","fixed","prevent"],m:"Last night the dashboard stopped updating for about six hours. The root cause was a format change from our data provider. We've fixed the parser and backfilled the missing data. To prevent this, we've added an automatic schema check and an email alert."},
+ {t:"Giải thích dữ liệu configuration in parts",sec:90,st:"Dữ liệu là gì → mỗi dòng → khoá ghép → lưu ý",k:["msn|m s n","part number","serial number","installed","position"],m:"The configuration in parts dataset tells you which part is installed where. Each row is one installed part, with the MSN, the position, the part number, the serial number and the install date. We usually join on MSN and FIN. One thing to watch out for is superseded part numbers, so always check the IPC for interchangeability."}
+];
+
+const PRON=[
+ {t:"Âm cuối (người Việt hay nuốt)",d:"-s, -ed, -t, -k, -ks, -sts ở cuối từ. Máy không nghe thấy âm cuối thì sẽ hiểu thành từ khác.",items:[
+  ["We fixed it last week.","fixed → /fɪkst/"],["She asked for the reports.","asked → /æskt/, reports → /rɪˈpɔːrts/"],["It costs six thousand dollars.","costs → /kɒsts/, six → /sɪks/"],["The tasks were completed on time.","tasks → /tæsks/"],["He worked on the requests.","worked → /wɜːrkt/, requests"],["Both aircraft passed the tests.","both, passed → /pæst/, tests"],["We checked the logs this morning.","checked → /tʃekt/, logs → /lɒɡz/"]]},
+ {t:"Trọng âm từ dài",d:"Nhấn sai trọng âm khiến người nghe không nhận ra từ. Chữ in hoa là âm tiết được nhấn.",items:[
+  ["Reliability is our main priority.","re-li-a-BIL-i-ty"],["The analysis is almost finished.","a-NAL-y-sis"],["We use analytics to find trends.","an-a-LYT-ics"],["Maintenance costs went down this year.","MAIN-te-nance"],["This component fails too often.","com-PO-nent"],["Predictive maintenance saves money.","pre-DIC-tive"],["The algorithm flags early failures.","AL-go-rithm"],["We need to determine the root cause.","de-TER-mine"],["The data is not accurate yet.","AC-cu-rate"],["Airworthiness always comes first.","AIR-wor-thi-ness"]]},
+ {t:"th, v / w, r / l, s / z",d:"Những âm không có trong tiếng Việt hoặc dễ lẫn.",items:[
+  ["Three thousand three hundred and thirty-three.","th lưỡi giữa hai răng"],["The data on Thursday was worth it.","the, Thursday, worth"],["The vendor values our workflow.","v môi dưới chạm răng trên, w tròn môi"],["The real rate is lower than last year.","r không chạm lưỡi, l chạm lưỡi"],["This is the last release before the review.","release, review"],["We use these tools every day.","use, these: âm z"],["The schedule is very tight this month.","schedule, very, month"]]},
+ {t:"Số, mã và tên máy bay",d:"Nói số rõ ràng, nhấn đúng teen và ty, đọc tên máy bay theo cách người trong ngành đọc.",items:[
+  ["The A320 and the A350 fleets.","A three twenty, A three fifty"],["Fifteen, not fifty.","fif-TEEN vs FIF-ty"],["Thirty-two percent of the fleet.","THIR-ty two PER-cent"],["The meeting is at a quarter past three.","quarter past three"],["We have nineteen aircraft in the hangar.","nine-TEEN"],["The deadline is the thirteenth of March.","thir-TEENTH"]]}
+];
+
+/* =============================== STATE =============================== */
+const LS="talkshop.v1";
+const today=()=>{ const d=new Date(); return Math.floor((d.getTime()-d.getTimezoneOffset()*60000)/86400000); };
+function blank(){ return {days:{},talks:[],phr:{},pron:{},role:{},theme:null,voice:{},recLang:"en-US",secs:0}; }
+let S=blank(); try{ const r=localStorage.getItem(LS); if(r) S=Object.assign(blank(),JSON.parse(r)); }catch(e){}
+function save(){ try{ localStorage.setItem(LS,JSON.stringify(S)); }catch(e){} }
+const TASKS=[["warm","Khởi động: câu mẫu","Nói 5 câu theo chủ đề hôm nay"],["pron","Phát âm","4 câu luyện âm khó"],["role","Nhập vai cuộc họp","Đối đáp với đồng nghiệp ảo"],["talk","Trình bày tự do","Nói liền một mạch có bấm giờ"]];
+function D(n){ if(!S.days[n]) S.days[n]={t:{},c:{}}; return S.days[n]; }
+function prog(n){ const d=S.days[n]; return d?TASKS.filter(([k])=>d.t[k]).length:0; }
+function curDay(){ for(let n=1;n<=30;n++) if(prog(n)<TASKS.length) return n; return 30; }
+function mark(n,k){ const d=D(n); if(d.t[k]) return; d.t[k]=true; save(); renderStrip(); const tr=document.getElementById("tr-"+k); if(tr){ tr.classList.add("isdone"); const c=tr.querySelector(".tstate"); c.className="chip ok tstate"; c.textContent="Xong"; } }
+const plan=n=>({phr:(n-1)%PHRASES.length, pron:(n-1)%PRON.length, role:(n-1)%ROLES.length, talk:(n-1)%TALKS.length});
+
+/* =============================== TTS =============================== */
+let voices=[]; const hasTTS="speechSynthesis" in window;
+const LANG={us:"en-US",gb:"en-GB",in:"en-IN",fr:"fr-FR",de:"de-DE",es:"es-ES"};
+const ACCL={us:"Mỹ",gb:"Anh",in:"Ấn Độ",fr:"Pháp",de:"Đức",es:"Tây Ban Nha"};
+const GOOD=/natural|neural|premium|enhanced|google|microsoft|samantha|daniel|karen|ava|serena|aria|jenny|libby|sonia|thomas|rishi|anna|m[oó]nica/i;
+function loadVoices(){ if(hasTTS) voices=speechSynthesis.getVoices().filter(v=>/^(en|fr|de|es|hi)/i.test(v.lang)); }
+if(hasTTS){ loadVoices(); speechSynthesis.onvoiceschanged=loadVoices; }
+const langIs=(v,l)=>v.lang.replace("_","-").toLowerCase()===l.toLowerCase();
+function voiceFor(a){ if(S.voice[a]){ const v=voices.find(x=>x.name===S.voice[a]); if(v) return v; }
+  let c=voices.filter(x=>langIs(x,LANG[a])); if(!c.length&&a==="in") c=voices.filter(x=>langIs(x,"hi-IN")); if(!c.length&&LANG[a].length) c=voices.filter(x=>x.lang.toLowerCase().startsWith(a)&&a!=="us"&&a!=="gb"&&a!=="in");
+  return c.find(x=>GOOD.test(x.name))||c[0]||(a!=="us"?voiceFor(a==="in"?"gb":"us"):voices.find(x=>/^en/i.test(x.lang))); }
+const ACRO=/\b(AOG|MRO|MEL|MSN|NFF|MTBUR|OTP|MCC|PFR|UAT|ETA|APU|ATA|SME|FH|FC|IPC|LLP|FIN|API)\b/g;
+let sid=0;
+function speak(text,rate=1,acc="us"){ return new Promise(res=>{ if(!hasTTS){res();return;} const id=++sid; speechSynthesis.cancel();
+  setTimeout(()=>{ if(id!==sid){res();return;} const u=new SpeechSynthesisUtterance(text.replace(/\bACARS\b/g,"ay cars").replace(/\bVT-IKL\b/g,"V T, I K L").replace(ACRO,m=>m.split("").join(" "))); const v=voiceFor(acc); if(v){u.voice=v;u.lang=v.lang;} else u.lang=LANG[acc]; u.rate=rate; u.onend=u.onerror=()=>res(); speechSynthesis.speak(u); },60); }); }
+
+/* =============================== TEXT MATCH =============================== */
+const ONES="zero one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen sixteen seventeen eighteen nineteen".split(" ");
+const TENS="  twenty thirty forty fifty sixty seventy eighty ninety".split(" ");
+const w99=n=>n<20?ONES[n]:TENS[Math.floor(n/10)]+(n%10?" "+ONES[n%10]:"");
+const w999=n=>n<100?w99(n):ONES[Math.floor(n/100)]+" hundred"+(n%100?" "+w99(n%100):"");
+function numWords(s){ const n=parseInt(s,10); if(isNaN(n)) return s; if(s.length===4&&n>=1100&&n<2000&&n%100) return w99(Math.floor(n/100))+" "+w99(n%100); if(n<1000) return w999(n); if(n<1000000) return w999(Math.floor(n/1000))+" thousand"+(n%1000?" "+w999(n%1000):""); return s; }
+const SLANG={gonna:"going to",wanna:"want to",gotta:"got to",kinda:"kind of",ok:"okay",im:"i am",dont:"do not",cant:"can not",isnt:"is not",were:"were",thats:"that is",whats:"what is",ill:"i will",ive:"i have",youre:"you are",weve:"we have",theyre:"they are",lets:"let us",fifteenth:"fifteenth"};
+function norm(text){
+  let t=" "+text.toLowerCase().replace(/[’‘`]/g,"'")+" ";
+  t=t.replace(/\ba[- ]?(\d)(\d\d)\b/g,(m,a,b)=>" a "+ONES[+a]+" "+w99(+b)+" ");
+  t=t.replace(/%/g," percent").replace(/\$/g," ").replace(/&/g," and ").replace(/(\d)\.(\d)/g,"$1 point $2").replace(/(\d+):(\d+)/g," $1 $2 ").replace(/(\d),(\d)/g,"$1$2");
+  t=t.replace(/(\d+)(st|nd|rd|th)\b/g,"$1");
+  t=t.replace(/\bwon't\b/g,"will not").replace(/\bcan't\b/g,"can not").replace(/\bcannot\b/g,"can not").replace(/n't\b/g," not").replace(/'m\b/g," am").replace(/'re\b/g," are").replace(/'ll\b/g," will").replace(/'ve\b/g," have").replace(/'d\b/g," would").replace(/\blet's\b/g,"let us").replace(/\bthat's\b/g,"that is").replace(/\bwhat's\b/g,"what is");
+  t=t.replace(/[-–—\/]/g," ").replace(/[^a-z0-9' ]/g," ").replace(/'/g,"");
+  const out=[]; for(const w of t.split(/\s+/).filter(Boolean)){ if(/^\d+$/.test(w)){ out.push(...numWords(w).split(" ")); continue; } const s=SLANG[w]; if(s&&s!==w) out.push(...s.split(" ")); else out.push(w); }
+  return out;
+}
+function esc(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]); }
+function diffWords(target,input){
+  const disp=target.split(/\s+/), tn=[], owner=[]; disp.forEach((w,i)=>norm(w).forEach(x=>{tn.push(x);owner.push(i);}));
+  const un=norm(input), n=tn.length, m=un.length, L=Array.from({length:n+1},()=>new Uint16Array(m+1));
+  for(let i=n-1;i>=0;i--) for(let j=m-1;j>=0;j--) L[i][j]=tn[i]===un[j]?L[i+1][j+1]+1:Math.max(L[i+1][j],L[i][j+1]);
+  const ok=new Array(n).fill(false); let i=0,j=0; while(i<n&&j<m){ if(tn[i]===un[j]){ok[i]=true;i++;j++;} else if(L[i+1][j]>=L[i][j+1]) i++; else j++; }
+  const matched=ok.filter(Boolean).length;
+  const html=disp.map((w,wi)=>{ const idx=owner.map((o,k)=>o===wi?k:-1).filter(k=>k>=0); const good=idx.length===0||idx.every(k=>ok[k]); return `<span class="${good?"ok":"miss"}">${esc(w)}</span>`; }).join(" ");
+  return {html,score:Math.round(100*matched/Math.max(n,1))};
+}
+function keyHits(keys,text){ const t=" "+norm(text).join(" ")+" "; return keys.map(k=>({k:k.split("|")[0],hit:k.split("|").some(a=>t.includes(" "+norm(a).join(" ")+" "))})); }
+const FILLERS=/\b(um+|uh+|erm*|ah+|hmm+|you know|i mean|basically|kind of|sort of)\b/g;
+
+/* =============================== MIC ENGINE =============================== */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+let micStream=null, active=null;
+async function getMic(){ if(micStream&&micStream.active) return micStream; micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}); return micStream; }
+/* mountSpeak: one record button + live transcript + result.
+   opts: target (sentence to compare), keys (keywords), continuous, maxSec, onResult(res) */
+function mountSpeak(el,opts={}){
+  const id="s"+Math.random().toString(36).slice(2,7);
+  el.innerHTML=`<div class="speak">
+   <div class="row" style="gap:14px;flex-wrap:nowrap"><button class="rec" id="${id}-rec" aria-pressed="false" aria-label="Bấm để nói"><i></i></button>
+    <div style="min-width:0;flex:1"><div class="small muted" id="${id}-hint">${opts.continuous?"Bấm nút đỏ để bắt đầu, bấm lần nữa để dừng.":"Bấm nút đỏ rồi nói. Ngừng nói là máy tự dừng."}</div><div class="timer" id="${id}-t" ${opts.continuous?"":"hidden"}>0:00</div></div></div>
+   <div class="live empty" id="${id}-live">Máy nghe được gì sẽ hiện ở đây</div>
+   <div id="${id}-res"></div>
+   <audio id="${id}-aud" controls hidden style="width:100%"></audio></div>`;
+  const btn=el.querySelector("#"+id+"-rec"), live=el.querySelector("#"+id+"-live"), resEl=el.querySelector("#"+id+"-res"), aud=el.querySelector("#"+id+"-aud"), tEl=el.querySelector("#"+id+"-t");
+  let run=null;
+  async function start(){
+    if(active&&active!==stop) active();
+    if(hasTTS) speechSynthesis.cancel();
+    let stream=null; try{ stream=await getMic(); }catch(e){ live.classList.add("empty"); live.textContent="Không mở được micro. Hãy cho phép trang dùng micro (biểu tượng ổ khoá trên thanh địa chỉ) rồi thử lại."; return; }
+    const chunks=[]; let rec=null; try{ rec=new MediaRecorder(stream); rec.ondataavailable=e=>e.data.size&&chunks.push(e.data); rec.start(); }catch(e){}
+    let finalT="", interim="", stopped=false, err=null, t0=Date.now(), recog=null, timer=null;
+    run={rec,chunks,t0};
+    btn.setAttribute("aria-pressed","true"); live.classList.remove("empty"); live.textContent="Đang nghe…"; resEl.innerHTML="";
+    if(opts.continuous){ timer=setInterval(()=>{ const s=Math.floor((Date.now()-t0)/1000); tEl.textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0")+(opts.maxSec?" / "+Math.floor(opts.maxSec/60)+":"+String(opts.maxSec%60).padStart(2,"0"):""); if(opts.maxSec&&s>=opts.maxSec) stop(); },250); }
+    const finish=()=>{ clearInterval(timer); btn.setAttribute("aria-pressed","false"); active=null;
+      const dur=(Date.now()-t0)/1000; S.secs=(S.secs||0)+dur; save();
+      const done=()=>{ if(chunks.length){ aud.src=URL.createObjectURL(new Blob(chunks,{type:chunks[0].type||"audio/webm"})); aud.hidden=false; } };
+      if(rec&&rec.state!=="inactive"){ rec.onstop=done; rec.stop(); } else done();
+      const text=(finalT+" "+interim).trim();
+      if(!text){ live.classList.add("empty"); live.textContent= SR? (err==="not-allowed"?"Trình duyệt chặn nhận dạng giọng nói. Hãy cho phép micro rồi thử lại.":"Máy chưa nghe được gì. Nói to, rõ hơn, gần micro hơn.") : "Trình duyệt này không có nhận dạng giọng nói. Hãy nghe lại bản ghi của bạn và so với mẫu, hoặc mở bằng Chrome/Edge để được chấm."; }
+      else live.textContent=text;
+      const res={text,dur,words:norm(text).length};
+      res.wpm=dur>3?Math.round(res.words/(dur/60)):0;
+      res.fillers=(text.toLowerCase().match(FILLERS)||[]).length;
+      if(opts.target&&text){ const d=diffWords(opts.target,text); res.score=d.score; res.html=d.html; }
+      if(opts.keys&&text){ res.hits=keyHits(opts.keys,text); res.cover=Math.round(100*res.hits.filter(h=>h.hit).length/res.hits.length); }
+      opts.onResult&&opts.onResult(res,resEl);
+    };
+    function stopInner(){ if(stopped) return; stopped=true; if(recog){ try{recog.stop();}catch(e){} setTimeout(finish,700); } else finish(); }
+    stop=stopInner;
+    active=stopInner;
+    if(SR){
+      const startRecog=()=>{ recog=new SR(); recog.lang=S.recLang||"en-US"; recog.interimResults=true; recog.continuous=!!opts.continuous; recog.maxAlternatives=1;
+        recog.onresult=e=>{ interim=""; for(let i=e.resultIndex;i<e.results.length;i++){ const tr=e.results[i][0].transcript; if(e.results[i].isFinal) finalT+=tr+" "; else interim+=tr; } live.textContent=(finalT+interim).trim()||"Đang nghe…"; };
+        recog.onerror=e=>{ err=e.error; };
+        recog.onend=()=>{ if(!stopped&&opts.continuous&&err!=="not-allowed"){ try{ startRecog(); }catch(e){} return; } if(!stopped){ stopped=true; finish(); } else finish2(); };
+        try{ recog.start(); }catch(e){} };
+      const finish2=()=>{};
+      startRecog();
+    } else if(!opts.continuous){ setTimeout(()=>{ if(!stopped) stopInner(); }, 8000); }
+  }
+  let stop=()=>{};
+  btn.onclick=()=>{ btn.getAttribute("aria-pressed")==="true"?stop():start(); };
+}
+
+/* =============================== VIEWS =============================== */
+let view="mentor", openDay=null, sel={phr:0,role:0,talk:0,pron:0};
+const VIEWS=["mentor","today","phr","role","talk","pron","prog"];
+function go(v,n){ view=v; if(n) openDay=n; if(hasTTS) speechSynthesis.cancel(); if(active) active(); try{ history.replaceState(null,"",v==="today"?"#day-"+(openDay||curDay()):"#"+v); }catch(e){} render(); window.scrollTo({top:0}); }
+function readHash(){ const h=location.hash.slice(1), m=h.match(/^day-(\d+)$/); if(m&&+m[1]>=1&&+m[1]<=30){ view="today"; openDay=+m[1]; } else if(VIEWS.includes(h)) view=h; }
+window.addEventListener("hashchange",()=>{ readHash(); render(); });
+document.getElementById("tabs").onclick=e=>{ const b=e.target.closest("[data-view]"); if(b){ if(b.dataset.view==="today") openDay=curDay(); go(b.dataset.view); } };
+function renderStrip(){
+  const cur=view==="today"?(openDay||curDay()):0;
+  document.getElementById("strip").innerHTML=Array.from({length:30},(_,i)=>{ const n=i+1,p=prog(n); return `<button class="${p===TASKS.length?"done":p?"part":""} ${n===cur?"cur":""}" data-d="${n}" aria-label="Ngày ${n}">${n}</button>`; }).join("");
+  document.querySelectorAll("#tabs .tab").forEach(b=>b.setAttribute("aria-current",b.dataset.view===view?"page":"false"));
+}
+document.getElementById("strip").onclick=e=>{ const b=e.target.closest("[data-d]"); if(b) go("today",+b.dataset.d); };
+function render(){ renderStrip(); const el=document.getElementById("view"); ({mentor:rMentor,today:rToday,phr:rPhr,role:rRole,talk:rTalk,pron:rPron,prog:rProg})[view](el); }
+
+/* reusable: say-after-me card list */
+function sayList(el,items,{acc="us",onEach,key}={}){
+  el.innerHTML=items.map((it,i)=>`<div class="panel stack" style="padding:14px 16px;background:var(--bg)"><div class="row" style="justify-content:space-between;flex-wrap:nowrap;align-items:flex-start"><div style="min-width:0"><div class="target">${esc(it[0])}</div><div class="vi">${esc(it[1])}</div></div><div class="row" style="flex-wrap:nowrap"><span class="chip mono" data-best="${i}">${key&&S[key[0]][key[1]+":"+i]!=null?S[key[0]][key[1]+":"+i]+"%":"–"}</span><button class="btn sm play" data-pl="${i}" aria-label="Nghe mẫu"></button><button class="btn sm play" data-sl="${i}">Chậm</button></div></div><div data-sp="${i}"></div></div>`).join("");
+  el.querySelectorAll("[data-pl]").forEach(b=>b.onclick=()=>speak(items[+b.dataset.pl][0],1,acc));
+  el.querySelectorAll("[data-sl]").forEach(b=>b.onclick=()=>speak(items[+b.dataset.sl][0],0.75,acc));
+  el.querySelectorAll("[data-sp]").forEach(box=>{ const i=+box.dataset.sp; mountSpeak(box,{target:items[i][0],onResult:(r,resEl)=>{
+    if(r.html){ resEl.innerHTML=`<div class="row" style="gap:14px;align-items:flex-start;flex-wrap:nowrap"><span class="score ${r.score>=85?"":""}" style="color:${r.score>=85?"var(--good)":r.score>=60?"var(--accent)":"var(--bad)"}">${r.score}%</span><div class="diff" style="min-width:0">${r.html}</div></div><div class="small muted">${r.score>=85?"Rõ ràng, máy hiểu gần hết.":"Chữ đỏ là chỗ máy không nhận ra: thường là âm cuối hoặc trọng âm. Bấm Chậm, nghe mẫu rồi nói lại."}</div>`;
+      if(key){ const k=key[1]+":"+i; S[key[0]][k]=Math.max(S[key[0]][k]||0,r.score); save(); el.querySelector(`[data-best="${i}"]`).textContent=S[key[0]][k]+"%"; } }
+    onEach&&onEach(i,r); }}); });
+}
+
+/* ---------- Today ---------- */
+function rToday(el){
+  const n=openDay||curDay(); openDay=n; const p=plan(n), d=D(n);
+  const first=TASKS.findIndex(([k])=>!d.t[k]);
+  el.innerHTML=`<div class="row" style="justify-content:space-between;align-items:flex-end"><div><div class="label">Ngày ${n} / 30 · khoảng 25 phút</div><h2>${esc(ROLES[p.role].t)} · ${esc(PHRASES[p.phr].t)}</h2></div><div class="row"><span class="score mono">${prog(n)}/4</span>${n>1?`<button class="btn sm ghost" data-go="${n-1}">← ${n-1}</button>`:""}${n<30?`<button class="btn sm ghost" data-go="${n+1}">${n+1} →</button>`:""}</div></div>
+  <p class="muted small explain">Nói to, như đang họp thật. Đừng đọc thầm. Máy chấm dựa trên những gì nó nghe được: nếu máy hiểu, đồng nghiệp người Ấn, Pháp, Đức cũng sẽ hiểu.</p>
+  <div class="stack">${TASKS.map(([k,t,s],i)=>`<details class="track ${d.t[k]?"isdone":""}" id="tr-${k}" ${i===first?"open":""}><summary><span class="tno">${i+1}</span><span><b>${t}</b><div class="small muted">${s}</div></span><span class="chip tstate ${d.t[k]?"ok":""}">${d.t[k]?"Xong":"Chưa"}</span></summary><div class="tbody" id="tb-${k}"></div></details>`).join("")}</div>`;
+  el.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>go("today",+b.dataset.go));
+  const said=new Set(); const ph=PHRASES[p.phr].p.slice(0,5);
+  sayList(document.getElementById("tb-warm"),ph,{key:["phr",p.phr],onEach:(i,r)=>{ if(r.text){ said.add(i); if(said.size>=5) mark(n,"warm"); } }});
+  const pr=PRON[p.pron], items=pr.items.slice((n%2)*2,(n%2)*2+4), said2=new Set();
+  const tbp=document.getElementById("tb-pron"); tbp.innerHTML=`<p class="small muted explain">${esc(pr.t)}: ${esc(pr.d)}</p><div></div>`;
+  sayList(tbp.lastElementChild,items,{key:["pron",p.pron+"d"+n],onEach:(i,r)=>{ if(r.text){ said2.add(i); if(said2.size>=items.length) mark(n,"pron"); } }});
+  roleWidget(document.getElementById("tb-role"),p.role,()=>mark(n,"role"));
+  talkWidget(document.getElementById("tb-talk"),p.talk,()=>mark(n,"talk"));
+}
+
+/* ---------- Phrases ---------- */
+function rPhr(el){
+  el.innerHTML=`<div class="stack"><div><h2>Câu mẫu theo tình huống</h2><div class="muted small">Nghe mẫu, rồi tự nói. Thuộc những câu này là có sẵn "khung" để nói trong mọi cuộc họp.</div></div>
+   <div class="cats">${PHRASES.map((c,i)=>`<button class="cell" data-c="${i}" aria-current="${sel.phr===i}"><b>${esc(c.t)}</b><span class="small muted">${c.p.length} câu</span></button>`).join("")}</div><div id="ph-list" class="stack"></div></div>`;
+  el.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{ sel.phr=+b.dataset.c; rPhr(el); });
+  sayList(el.querySelector("#ph-list"),PHRASES[sel.phr].p,{key:["phr",sel.phr]});
+}
+
+/* ---------- Role-play ---------- */
+function rRole(el){
+  el.innerHTML=`<div class="stack"><div><h2>Nhập vai cuộc họp</h2><div class="muted small">Đồng nghiệp ảo nói trước. Bạn đọc gợi ý tiếng Việt rồi tự nói bằng tiếng Anh theo cách của bạn. Máy kiểm tra bạn có nói đủ ý chính, sau đó bạn nghe câu mẫu để so.</div></div>
+   <div class="cats">${ROLES.map((r,i)=>`<button class="cell" data-r="${i}" aria-current="${sel.role===i}"><b>${esc(r.t)}</b><span class="small muted">${esc(r.who)} · ${ACCL[r.acc]}</span>${S.role[i]!=null?`<span class="chip ${S.role[i]>=75?"ok":"warn"}">${S.role[i]}% ý chính</span>`:""}</button>`).join("")}</div><div class="panel" id="rl"></div></div>`;
+  el.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{ sel.role=+b.dataset.r; rRole(el); });
+  roleWidget(el.querySelector("#rl"),sel.role);
+}
+function roleWidget(el,ri,onDone){
+  const R=ROLES[ri]; let step=0; const covers=[];
+  const ys=R.turns.filter(t=>t.y).length;
+  function draw(){
+    const shown=R.turns.slice(0,step+1);
+    el.innerHTML=`<div class="stack"><div class="row" style="justify-content:space-between"><div><b>${esc(R.t)}</b> <span class="muted small">· ${esc(R.who)} (giọng ${ACCL[R.acc]})</span><div class="small muted">${esc(R.ctx)}</div></div><button class="btn sm ghost" id="rl-restart">Làm lại</button></div>
+     <div class="stack" style="gap:10px">${shown.map((t,i)=>t.p?`<div class="turn p"><div class="label">${esc(R.who.split(",")[0])}</div><div class="row" style="flex-wrap:nowrap;align-items:flex-start;gap:8px"><button class="btn sm play" data-pp="${i}" aria-label="Nghe"></button><span class="${i===step?"":"muted"}" data-txt="${i}">${i===step?'<span class="muted small">(Nghe trước, bấm "Hiện chữ" nếu cần)</span> <button class="btn sm ghost" data-show="'+i+'">Hiện chữ</button>':esc(t.p)}</span></div></div>`
+       :`<div class="turn y"><div class="label">Bạn</div><div class="vi" style="color:var(--ink)">${esc(t.y)}</div>${i<step?`<div class="small muted" style="margin-top:4px">Mẫu: ${esc(t.m)}</div>`:`<div id="rl-sp" style="margin-top:8px"></div>`}</div>`).join("")}</div>
+     ${step>=R.turns.length?`<div class="banner" style="background:var(--good-soft);border-color:var(--good)">Xong cuộc hội thoại. Trung bình ${Math.round(covers.reduce((a,b)=>a+b,0)/Math.max(1,covers.length))}% ý chính. Làm lại lần hai và cố nói không cần nhìn gợi ý.</div>`:""}</div>`;
+    el.querySelector("#rl-restart").onclick=()=>{ step=0; covers.length=0; draw(); };
+    el.querySelectorAll("[data-pp]").forEach(b=>b.onclick=()=>speak(R.turns[+b.dataset.pp].p,1,R.acc));
+    el.querySelectorAll("[data-show]").forEach(b=>b.onclick=()=>{ const i=+b.dataset.show; el.querySelector(`[data-txt="${i}"]`).textContent=R.turns[i].p; });
+    const cur=R.turns[step];
+    if(cur&&cur.p){ speak(cur.p,1,R.acc).then(()=>{ if(R.turns[step]===cur){ step++; if(step<R.turns.length) draw(); else finish(); } }); }
+    if(cur&&cur.y){ const box=el.querySelector("#rl-sp"); mountSpeak(box,{keys:cur.k,onResult:(r,resEl)=>{
+      const hits=r.hits||cur.k.map(k=>({k:k.split("|")[0],hit:false})), cover=r.cover||0;
+      resEl.innerHTML=`<div class="stack" style="gap:8px"><div class="row"><span class="label">Ý chính</span>${hits.map(h=>`<span class="chip ${h.hit?"ok":"bad"}">${h.hit?"✓":"✗"} ${esc(h.k)}</span>`).join("")}</div>
+        <div class="row"><span class="small muted">Câu mẫu:</span> <span>${esc(cur.m)}</span></div>
+        <div class="row"><button class="btn sm play" id="rl-model">Nghe mẫu</button><button class="btn sm" id="rl-again">Nói lại</button><button class="btn sm primary" id="rl-next">Tiếp →</button></div></div>`;
+      resEl.querySelector("#rl-model").onclick=()=>speak(cur.m,1,"us");
+      resEl.querySelector("#rl-again").onclick=()=>draw();
+      resEl.querySelector("#rl-next").onclick=()=>{ covers.push(cover); step++; if(step>=R.turns.length) finish(); else draw(); };
+    }}); }
+  }
+  function finish(){ const avg=Math.round(covers.reduce((a,b)=>a+b,0)/Math.max(1,covers.length)); S.role[ri]=Math.max(S.role[ri]||0,avg); save(); step=R.turns.length; draw(); onDone&&onDone(avg); }
+  draw();
+}
+
+/* ---------- Free talk ---------- */
+function rTalk(el){
+  el.innerHTML=`<div class="stack"><div><h2>Trình bày tự do</h2><div class="muted small">Nói liền một mạch theo khung gợi ý. Máy đo tốc độ nói, số từ đệm và các thuật ngữ bạn dùng. Sau đó nghe bài mẫu và nói lại lần hai.</div></div>
+   <div class="cats">${TALKS.map((t,i)=>`<button class="cell" data-t="${i}" aria-current="${sel.talk===i}"><b>${esc(t.t)}</b><span class="small muted">${t.sec} giây</span></button>`).join("")}</div><div class="panel" id="tk"></div></div>`;
+  el.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{ sel.talk=+b.dataset.t; rTalk(el); });
+  talkWidget(el.querySelector("#tk"),sel.talk);
+}
+function talkWidget(el,ti,onDone){
+  const T=TALKS[ti];
+  el.innerHTML=`<div class="stack"><div><h3>${esc(T.t)}</h3><div class="row" style="margin-top:6px"><span class="label">Khung</span><span>${esc(T.st)}</span></div>
+    <div class="row" style="margin-top:6px"><span class="label">Nên dùng</span>${T.k.map(k=>`<span class="chip">${esc(k.split("|")[0])}</span>`).join("")}</div></div>
+    <div class="small muted">Chuẩn bị 30 giây trong đầu, rồi bấm nút đỏ và nói khoảng ${T.sec} giây.</div>
+    <div id="tk-sp"></div>
+    <details><summary class="small" style="cursor:pointer">Xem và nghe bài mẫu</summary><div class="stack" style="margin-top:8px"><p class="explain" style="margin:0">${esc(T.m)}</p><div class="row"><button class="btn sm play" id="tk-m">Nghe mẫu</button><button class="btn sm" id="tk-ms">Chậm</button></div></div></details></div>`;
+  el.querySelector("#tk-m").onclick=()=>speak(T.m,1,"us"); el.querySelector("#tk-ms").onclick=()=>speak(T.m,0.8,"us");
+  mountSpeak(el.querySelector("#tk-sp"),{continuous:true,maxSec:T.sec+30,keys:T.k,onResult:(r,resEl)=>{
+    if(!r.text){ return; }
+    const wpmNote=r.wpm<90?"hơi chậm, cứ nói tiếp đừng dừng để tìm từ":r.wpm>170?"hơi nhanh, chậm lại để người nghe kịp":"tốc độ tốt cho cuộc họp";
+    resEl.innerHTML=`<div class="stack" style="gap:10px"><div class="meter">
+      <div><span class="label">Thời gian</span><b class="mono">${Math.round(r.dur)}s</b></div>
+      <div><span class="label">Số từ</span><b class="mono">${r.words}</b></div>
+      <div><span class="label">Tốc độ</span><b class="mono">${r.wpm}</b><span class="small muted">từ/phút</span></div>
+      <div><span class="label">Từ đệm</span><b class="mono">${r.fillers}</b></div>
+      <div><span class="label">Thuật ngữ</span><b class="mono">${r.cover||0}%</b></div></div>
+      <div class="row">${(r.hits||[]).map(h=>`<span class="chip ${h.hit?"ok":"bad"}">${h.hit?"✓":"✗"} ${esc(h.k)}</span>`).join("")}</div>
+      <div class="small muted">Tốc độ ${r.wpm} từ/phút: ${wpmNote}. Người bản xứ trong họp thường nói 120–150 từ/phút. Máy nhận dạng hay bỏ qua "um, uh", nên số từ đệm thật thường cao hơn: nghe lại bản ghi để tự đếm.</div>
+      <div class="small"><b>Tự đánh giá khi nghe lại:</b> Có câu mở đầu nói rõ chủ đề không? Có đi đúng khung không? Có câu kết không?</div></div>`;
+    S.talks.push({d:today(),i:ti,wpm:r.wpm,f:r.fillers,dur:Math.round(r.dur),w:r.words,c:r.cover||0}); save();
+    if(r.dur>=Math.min(30,T.sec/2)) onDone&&onDone();
+  }});
+}
+
+/* ---------- Pronunciation ---------- */
+function rPron(el){
+  el.innerHTML=`<div class="stack"><div><h2>Phát âm</h2><div class="muted small">Nói từng câu. Chữ đỏ là chỗ máy không nhận ra, thường do âm cuối hoặc trọng âm. Mục tiêu: 100% liên tục ba lần.</div></div>
+   <div class="cats">${PRON.map((p,i)=>`<button class="cell" data-p="${i}" aria-current="${sel.pron===i}"><b>${esc(p.t)}</b><span class="small muted">${p.items.length} câu</span></button>`).join("")}</div>
+   <p class="small muted explain" style="margin:0">${esc(PRON[sel.pron].d)}</p><div id="pr-list" class="stack"></div></div>`;
+  el.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{ sel.pron=+b.dataset.p; rPron(el); });
+  sayList(el.querySelector("#pr-list"),PRON[sel.pron].items,{key:["pron",sel.pron]});
+}
+
+/* ---------- Progress & settings ---------- */
+function rProg(el){
+  const done=Array.from({length:30},(_,i)=>prog(i+1)===TASKS.length).filter(Boolean).length;
+  const tl=S.talks.slice(-20), avgW=tl.length?Math.round(tl.reduce((a,b)=>a+b.wpm,0)/tl.length):0;
+  const ph=Object.values(S.phr).concat(Object.values(S.pron)), avgP=ph.length?Math.round(ph.reduce((a,b)=>a+b,0)/ph.length):0;
+  const W=640,H=180,pl=34,pb=22,pt=10, y=v=>pt+(H-pt-pb)*(1-Math.min(v,200)/200), bw=tl.length?(W-pl-10)/tl.length:0;
+  const recLangs=[["en-US","Tiếng Anh Mỹ"],["en-GB","Tiếng Anh Anh"],["en-IN","Tiếng Anh Ấn"]];
+  el.innerHTML=`<div class="stack"><h2>Tiến độ</h2>
+   <div class="kpis"><div class="kpi"><span class="label">Ngày hoàn thành</span><b class="mono">${done}/30</b></div><div class="kpi"><span class="label">Tổng thời gian nói</span><b class="mono">${Math.round((S.secs||0)/60)} phút</b></div><div class="kpi"><span class="label">Tốc độ TB (20 bài gần nhất)</span><b class="mono">${avgW}</b><span class="small muted">từ/phút</span></div><div class="kpi"><span class="label">Độ rõ TB (câu mẫu, phát âm)</span><b class="mono">${avgP}%</b></div></div>
+   <div class="panel"><div class="label">Tốc độ nói qua các bài trình bày (từ/phút)</div>${tl.length?`<div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:420px;display:block;margin-top:8px" role="img" aria-label="Tốc độ nói">
+     ${[0,120,150,200].map(v=>`<line x1="${pl}" x2="${W-6}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" ${v===120||v===150?'stroke-dasharray="4 4"':""}/><text x="${pl-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="JetBrains Mono,monospace">${v}</text>`).join("")}
+     ${tl.map((t,i)=>`<rect x="${pl+i*bw+2}" y="${y(t.wpm)}" width="${Math.max(2,bw-4)}" height="${y(0)-y(t.wpm)}" rx="2" fill="${t.wpm>=120&&t.wpm<=160?"var(--good)":"var(--accent)"}"><title>${t.wpm} từ/phút, ${t.f} từ đệm</title></rect>`).join("")}
+    </svg></div><div class="small muted">Vùng giữa hai vạch đứt (120–150) là tốc độ họp tự nhiên.</div>`:`<p class="muted small">Chưa có bài trình bày nào. Làm phần Trình bày để thấy biểu đồ.</p>`}</div>
+   <div class="panel stack"><h3>Cài đặt</h3>
+    <div class="row"><label for="st-rec" style="width:200px">Máy nhận dạng giọng của bạn theo</label><select id="st-rec">${recLangs.map(([v,t])=>`<option value="${v}" ${S.recLang===v?"selected":""}>${t}</option>`).join("")}</select></div>
+    <div class="small muted">Để "Tiếng Anh Mỹ" nếu muốn chấm khắt khe nhất. Đeo tai nghe để micro không thu lại giọng đọc mẫu.</div>
+    <div class="row"><span style="width:200px">Giọng đồng nghiệp ảo</span>${Object.keys(ACCL).map(a=>{ const v=voiceFor(a); return `<span class="chip">${ACCL[a]}: ${esc(v?v.name:"không có")}</span>`; }).join("")}</div>
+    <div class="row"><button class="btn sm" id="st-mic">Kiểm tra micro</button><span class="small muted" id="st-mic-r"></span></div>
+   </div></div>`;
+  el.querySelector("#st-rec").onchange=e=>{ S.recLang=e.target.value; save(); };
+  el.querySelector("#st-mic").onclick=async()=>{ const r=el.querySelector("#st-mic-r"); try{ await getMic(); r.textContent="Micro hoạt động. "+(SR?"Có nhận dạng giọng nói.":"Trình duyệt không có nhận dạng giọng nói, hãy dùng Chrome hoặc Edge."); }catch(e){ r.textContent="Không mở được micro: hãy cho phép trang dùng micro."; } };
+}
+
+/* =============================== MENTOR =============================== */
+const SITS=[
+ ["standup","Daily stand-up / báo tiến độ",{role:0,talk:1,phr:1}],
+ ["sme","Lấy yêu cầu với SME",{role:1,talk:2,phr:2}],
+ ["demo","Demo, trình bày dashboard",{role:3,talk:6,phr:5}],
+ ["aog","Cuộc gọi gấp, AOG, hỏi số liệu",{role:2,talk:3,phr:2}],
+ ["deadline","Thương lượng deadline, phạm vi",{role:4,talk:5,phr:4}],
+ ["incident","Báo cáo sự cố dữ liệu",{role:7,talk:8,phr:6}],
+ ["small","Small talk với đối tác",{role:6,talk:0,phr:0}],
+ ["close","Chốt họp, giao việc",{role:5,talk:7,phr:7}]];
+const LEVELS=[
+ ["a2","Cơ bản","Nói được câu ngắn quen thuộc, hay phải dừng để nghĩ từ."],
+ ["b1","Trung bình","Nói được ý chính nhưng chậm, ít khi tự tin trong họp."],
+ ["b2","Khá","Họp được, nhưng gặp giọng lạ hoặc nói nhanh thì đuối, diễn đạt chưa gọn."],
+ ["c1","Tốt","Giao tiếp ổn, muốn nói tự nhiên, thuyết phục và chính xác hơn."]];
+const PAINS=[
+ ["listen","Nghe không kịp, nhất là giọng Ấn, Pháp"],
+ ["words","Biết ý nhưng không nghĩ ra cách nói"],
+ ["pron","Nói ra người khác không hiểu, phải nhắc lại"],
+ ["fear","Ngại nói, im lặng trong họp"],
+ ["slow","Nói chậm, ậm ừ nhiều"]];
+const LEVEL_FOCUS={
+ a2:"Ưu tiên câu mẫu và phát âm. Thuộc khung câu trước, chưa cần nói dài.",
+ b1:"Ưu tiên nhập vai: tập phản xạ trả lời đủ ý trong 1–2 câu, rồi mới nói dài.",
+ b2:"Ưu tiên trình bày liền mạch theo khung, tăng tốc độ lên 120–150 từ/phút, dùng đúng thuật ngữ.",
+ c1:"Ưu tiên nói gọn, thuyết phục: đề xuất, phản biện lịch sự, tóm tắt. Luyện giọng lạ để không bị động."};
+const PAIN_TIPS={
+ listen:["Trước họp, đọc agenda và đoán trước 10 từ khoá sẽ xuất hiện.","Khi không nghe kịp, đừng đoán: dùng câu \"Just to confirm, you said…\" để xác nhận.","Mỗi ngày nghe 1 cuộc họp mô phỏng giọng Ấn hoặc Pháp trong Listen 30."],
+ words:["Đừng dịch từ tiếng Việt. Học thuộc khung câu theo tình huống (tab Câu mẫu).","Không nhớ từ thì nói vòng: \"the thing that…\", \"the process where we…\".","Trước họp, viết sẵn 3 câu bạn chắc chắn sẽ cần nói."],
+ pron:["Âm cuối quan trọng hơn giọng: nói rõ -s, -ed, -t thì người nghe hiểu ngay.","Nói chậm hơn 10% và nhấn đúng trọng âm từ dài (reLIability, aNALysis).","Thu âm và nghe lại mỗi ngày: chỗ nào máy không nhận ra là chỗ người nghe cũng khó hiểu."],
+ fear:["Đặt mục tiêu nhỏ: nói 1 câu trong 5 phút đầu mỗi cuộc họp (chào, hỏi một câu).","Chuẩn bị sẵn câu hỏi làm rõ. Hỏi là cách tham gia dễ nhất và được đánh giá cao.","Lỗi ngữ pháp không ai nhớ, nhưng im lặng thì ai cũng thấy."],
+ slow:["Nói theo khung (Hôm qua → Hôm nay → Vướng gì) để không phải nghĩ cấu trúc khi đang nói.","Thay \"um\" bằng một khoảng lặng ngắn: nghe tự tin hơn.","Nói lại cùng một bài trình bày 3 lần liên tiếp, mỗi lần nhanh hơn và ít ngập ngừng hơn."]};
+function readL30(){ try{ return JSON.parse(localStorage.getItem("listen30.v1")||"null"); }catch(e){ return null; } }
+const avg=a=>a.length?Math.round(a.reduce((x,y)=>x+y,0)/a.length):null;
+function analyze(){
+  const P=S.profile||{}; const mins=P.mins||25;
+  const pronAvg=PRON.map((g,gi)=>avg(Object.entries(S.pron).filter(([k])=>k.split(/[:d]/)[0]===String(gi)).map(([,v])=>v)));
+  const phrAvg=PHRASES.map((c,ci)=>avg(Object.entries(S.phr).filter(([k])=>k.split(":")[0]===String(ci)).map(([,v])=>v)));
+  const tl=S.talks.slice(-10), wpm=avg(tl.map(t=>t.wpm)), fill=avg(tl.map(t=>t.f)), term=avg(tl.map(t=>t.c));
+  const roleAvg=avg(Object.values(S.role));
+  const L=readL30(); let l30=null;
+  if(L){ const days=Object.entries(L.days||{}); const dict=days.flatMap(([,d])=>(d.dict||[]).filter(x=>x!=null));
+    const t=today(); const due=Object.values(L.cards||{}).filter(c=>c.due<=t).length;
+    const done=days.filter(([,d])=>d.doneAt).length; let next=1; for(let n=1;n<=30;n++){ const d=L.days?.[n]; if(!d||!d.doneAt){ next=n; break; } }
+    l30={done,dictAvg:avg(dict),due,next,meet:L.work?.meet||{}}; }
+  const sits=(P.sits&&P.sits.length?P.sits:["standup","sme"]).map(k=>SITS.find(s=>s[0]===k)).filter(Boolean);
+  const acts=[], diag=[];
+  // pronunciation
+  const pw=pronAvg.map((v,i)=>({v,i})).sort((a,b)=>(a.v??-1)-(b.v??-1))[0];
+  if(pw.v==null) acts.push({p:P.pain==="pron"?92:72,m:5,t:`Phát âm: ${PRON[pw.i].t}`,why:"Chưa có dữ liệu phát âm nhóm này. Làm để mentor biết điểm yếu của bạn.",go:()=>{sel.pron=pw.i;go("pron");}});
+  else if(pw.v<85) acts.push({p:(P.pain==="pron"?95:75)+(85-pw.v)/5,m:5,t:`Phát âm: ${PRON[pw.i].t}`,why:`Độ rõ nhóm này mới ${pw.v}%, thấp nhất trong các nhóm.`,go:()=>{sel.pron=pw.i;go("pron");}});
+  pronAvg.forEach((v,i)=>{ if(v!=null) diag.push([v>=85?"ok":v>=65?"warn":"bad",`Phát âm · ${PRON[i].t}`,`${v}%`]); });
+  // speaking fluency
+  if(wpm==null) acts.push({p:80,m:5,t:`Trình bày: ${TALKS[sits[0][2].talk].t}`,why:"Chưa đo tốc độ nói. Một bài 45–60 giây cho mentor số liệu đầu tiên.",go:()=>{sel.talk=sits[0][2].talk;go("talk");}});
+  else{
+    diag.push([wpm>=120&&wpm<=160?"ok":wpm>=100?"warn":"bad","Tốc độ nói",`${wpm} từ/phút`]);
+    diag.push([fill<=2?"ok":fill<=5?"warn":"bad","Từ đệm mỗi bài",`${fill}`]);
+    diag.push([term>=70?"ok":term>=40?"warn":"bad","Dùng đúng thuật ngữ",`${term}%`]);
+    const ti=sits[Math.floor(Math.random()*sits.length)][2].talk;
+    if(wpm<115) acts.push({p:(P.pain==="slow"?92:76),m:6,t:`Trình bày lặp 2 lần: ${TALKS[ti].t}`,why:`Tốc độ trung bình ${wpm} từ/phút, cần lên 120+. Nói lại cùng bài lần hai sẽ nhanh và trôi hơn.`,go:()=>{sel.talk=ti;go("talk");}});
+    else if(fill>3) acts.push({p:70,m:5,t:`Trình bày không ậm ừ: ${TALKS[ti].t}`,why:`Trung bình ${fill} từ đệm mỗi bài. Lần này thay "um" bằng khoảng lặng.`,go:()=>{sel.talk=ti;go("talk");}});
+    else if(term<60) acts.push({p:62,m:5,t:`Trình bày dùng đủ thuật ngữ: ${TALKS[ti].t}`,why:`Mới dùng ${term}% thuật ngữ gợi ý. Đọc danh sách "Nên dùng" trước khi nói.`,go:()=>{sel.talk=ti;go("talk");}});
+  }
+  // role-play matching their situations
+  const rc=sits.map(s=>s[2].role).map(i=>({i,v:S.role[i]})).sort((a,b)=>(a.v??-1)-(b.v??-1))[0];
+  acts.push({p:(P.pain==="words"?90:70)+(rc.v==null?5:(80-rc.v)/5),m:8,t:`Nhập vai: ${ROLES[rc.i].t}`,why: rc.v==null?`Tình huống bạn hay gặp, chưa tập lần nào.`:`Lần trước nói được ${rc.v}% ý chính. Làm lại, cố không nhìn gợi ý.`,go:()=>{sel.role=rc.i;go("role");}});
+  if(roleAvg!=null) diag.push([roleAvg>=75?"ok":roleAvg>=50?"warn":"bad","Nói đủ ý khi nhập vai",`${roleAvg}%`]);
+  // phrases
+  const pc=sits.map(s=>s[2].phr).map(i=>({i,v:phrAvg[i]})).sort((a,b)=>(a.v??-1)-(b.v??-1))[0];
+  acts.push({p:(P.pain==="fear"||P.pain==="words"?85:60)+(pc.v==null?5:0),m:5,t:`Câu mẫu: ${PHRASES[pc.i].t}`,why:pc.v==null?"Thuộc khung câu cho tình huống bạn hay gặp.":`Độ rõ ${pc.v}%. Nói lại đến khi trên 85%.`,go:()=>{sel.phr=pc.i;go("phr");}});
+  // listening (Listen 30)
+  if(l30){
+    if(l30.dictAvg!=null) diag.push([l30.dictAvg>=85?"ok":l30.dictAvg>=65?"warn":"bad","Nghe chép chính tả (Listen 30)",`${l30.dictAvg}%`]);
+    if(l30.due>0) acts.push({p:58,m:5,t:`Ôn ${l30.due} thẻ từ vựng đến hạn`,why:"Thẻ đến hạn mà không ôn sẽ quên. Mất 5 phút.",href:"../#srs"});
+    const accs=P.accs||[]; if(accs.length){ const ids={in:["aog","otp","dq","kick","relrev","utg"],fr:["aog","sb","kick","smp"],de:["pdm","cfg"],es:["sb","lease","smp"]};
+      const want=[...new Set(accs.flatMap(a=>ids[a]||[]))]; const weak=want.filter(id=>(l30.meet[id]??0)<80);
+      if(weak.length) acts.push({p:P.pain==="listen"?93:64,m:8,t:`Nghe họp mô phỏng giọng ${accs.map(a=>ACCL[a]).join(", ")}`,why:`${weak.length} cuộc họp có giọng đồng nghiệp của bạn chưa đạt 80%.`,href:"../#work"}); }
+    acts.push({p:P.pain==="listen"?88:50,m:15,t:`Listen 30: ngày ${l30.next}, phần chép chính tả`,why:l30.dictAvg==null?"Chưa có điểm nghe. Nghe tốt thì mới nói đúng lúc trong họp.":`Đã xong ${l30.done}/30 ngày.`,href:"../#day-"+l30.next});
+  } else acts.push({p:P.pain==="listen"?90:45,m:15,t:"Bắt đầu Listen 30 ngày 1",why:"Chưa có dữ liệu nghe. Nghe và nói cần đi cùng nhau.",href:"../#day-1"});
+  acts.sort((a,b)=>b.p-a.p);
+  const pickd=[]; let used=0; for(const a of acts){ if(used+a.m<=mins+3||pickd.length<2){ pickd.push(a); used+=a.m; } if(pickd.length>=5) break; }
+  return {P,acts:pickd,used,diag,l30,wpm};
+}
+let mentorEdit=false;
+function rMentor(el){
+  const P=S.profile;
+  if(!P||mentorEdit){ return mentorSetup(el); }
+  const A=analyze();
+  el.innerHTML=`<div class="stack">
+   <div class="row" style="justify-content:space-between;align-items:flex-end"><div><div class="label">Mentor · ${new Date().toLocaleDateString("vi-VN",{weekday:"long",day:"numeric",month:"numeric"})}</div><h2>Hôm nay bạn nên làm ${A.acts.length} việc, khoảng ${A.used} phút</h2></div><button class="btn sm ghost" id="mt-edit">Sửa hồ sơ</button></div>
+   <div class="panel stack"><div class="small muted">Thứ tự dưới đây đã xếp theo mức ưu tiên, dựa trên mục tiêu và kết quả luyện tập của bạn. Làm từ trên xuống.</div>
+    ${A.acts.map((a,i)=>`<div class="row" style="flex-wrap:nowrap;align-items:flex-start;gap:14px;border-top:1px solid var(--line);padding-top:12px"><span class="score mono" style="font-size:26px;min-width:28px">${i+1}</span><div style="flex:1;min-width:0"><b>${esc(a.t)}</b> <span class="chip mono">${a.m} phút</span><div class="small muted">${esc(a.why)}</div></div>${a.href?`<a class="btn sm primary" href="${a.href}">Mở ↗</a>`:`<button class="btn sm primary" data-a="${i}">Làm ngay</button>`}</div>`).join("")}</div>
+   <div class="panel stack"><h3>Chẩn đoán</h3>${A.diag.length?`<div class="stack" style="gap:6px">${A.diag.map(([s,t,v])=>`<div class="row" style="justify-content:space-between;flex-wrap:nowrap"><span>${esc(t)}</span><span class="chip ${s} mono">${esc(v)}</span></div>`).join("")}</div>`:`<p class="muted small" style="margin:0">Chưa đủ dữ liệu. Làm các việc ở trên vài ngày, mentor sẽ chỉ ra điểm yếu cụ thể bằng số liệu.</p>`}
+    <div class="small muted">Trình độ bạn chọn: ${esc(LEVELS.find(l=>l[0]===A.P.level)?.[1]||"")}. ${esc(LEVEL_FOCUS[A.P.level]||"")}</div></div>
+   <div class="panel stack"><h3>Lời khuyên cho vấn đề của bạn</h3><div class="small muted">${esc(PAINS.find(p=>p[0]===A.P.pain)?.[1]||"")}</div><ul class="explain" style="margin:0;padding-left:18px">${(PAIN_TIPS[A.P.pain]||[]).map(t=>`<li>${esc(t)}</li>`).join("")}</ul></div>
+   <div class="panel stack"><h3>Chuẩn bị trước cuộc họp</h3><div class="small muted">Sắp vào họp? Chọn loại họp, mentor đưa bạn 5 câu nên chuẩn bị sẵn và bài nhập vai tương ứng.</div>
+    <div class="row">${SITS.map((s,i)=>`<button class="btn sm" data-prep="${i}">${esc(s[1])}</button>`).join("")}</div><div id="prep"></div></div></div>`;
+  el.querySelector("#mt-edit").onclick=()=>{ mentorEdit=true; rMentor(el); };
+  el.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>A.acts[+b.dataset.a].go());
+  el.querySelectorAll("[data-prep]").forEach(b=>b.onclick=()=>{ const s=SITS[+b.dataset.prep], ph=PHRASES[s[2].phr], R=ROLES[s[2].role];
+    el.querySelector("#prep").innerHTML=`<div class="stack" style="gap:8px;margin-top:6px"><div class="label">${esc(ph.t)}</div>${ph.p.slice(0,5).map(([en,vi],i)=>`<div class="row" style="flex-wrap:nowrap;gap:10px"><button class="btn sm play" data-pp="${i}" aria-label="Nghe"></button><span style="min-width:0">${esc(en)} <span class="vi">· ${esc(vi)}</span></span></div>`).join("")}
+     <div class="small muted">Thêm 3 câu hỏi làm rõ (tab Câu mẫu → Hỏi lại & làm rõ) và 1 câu chốt việc. Sau đó tập nhanh:</div><div class="row"><button class="btn sm primary" id="prep-role">Nhập vai: ${esc(R.t)}</button><button class="btn sm" id="prep-phr">Luyện nói 7 câu này</button></div></div>`;
+    el.querySelectorAll("#prep [data-pp]").forEach(x=>x.onclick=()=>speak(ph.p[+x.dataset.pp][0],1,"us"));
+    el.querySelector("#prep-role").onclick=()=>{ sel.role=s[2].role; go("role"); };
+    el.querySelector("#prep-phr").onclick=()=>{ sel.phr=s[2].phr; go("phr"); };
+  });
+}
+function mentorSetup(el){
+  const P=Object.assign({sits:["standup","sme"],accs:["in","fr"],level:"b1",pain:"listen",mins:25,role:""},S.profile||{});
+  const chk=(name,val,on,label)=>`<label class="btn sm" style="cursor:pointer"><input type="checkbox" name="${name}" value="${val}" ${on?"checked":""}> ${esc(label)}</label>`;
+  const rad=(name,val,on,label,sub)=>`<label class="cell" style="cursor:pointer;flex-direction:row;gap:8px;align-items:flex-start"><input type="radio" name="${name}" value="${val}" ${on?"checked":""} style="margin-top:4px"><span><b>${esc(label)}</b>${sub?`<br><span class="small muted">${esc(sub)}</span>`:""}</span></label>`;
+  el.innerHTML=`<form class="stack" id="mf"><div><h2>Để mentor hiểu bạn</h2><div class="muted small">6 câu hỏi, 1 phút. Mentor dùng câu trả lời và kết quả luyện tập (cả Listen 30) để chọn đúng bài cho bạn mỗi ngày.</div></div>
+   <div class="panel stack"><label class="label" for="mf-role">1. Công việc của bạn</label><input type="text" id="mf-role" name="role" value="${esc(P.role)}" placeholder="Ví dụ: data engineer cho nền tảng dữ liệu đội tàu"></div>
+   <div class="panel stack"><span class="label">2. Bạn hay gặp những cuộc họp nào?</span><div class="row">${SITS.map(s=>chk("sits",s[0],P.sits.includes(s[0]),s[1])).join("")}</div></div>
+   <div class="panel stack"><span class="label">3. Đồng nghiệp, đối tác nói giọng gì?</span><div class="row">${["in","fr","de","es","gb","us"].map(a=>chk("accs",a,P.accs.includes(a),ACCL[a])).join("")}</div></div>
+   <div class="panel stack"><span class="label">4. Trình độ nói hiện tại</span><div class="cats">${LEVELS.map(l=>rad("level",l[0],P.level===l[0],l[1],l[2])).join("")}</div></div>
+   <div class="panel stack"><span class="label">5. Khó khăn lớn nhất</span><div class="cats">${PAINS.map(p=>rad("pain",p[0],P.pain===p[0],p[1])).join("")}</div></div>
+   <div class="panel stack"><span class="label">6. Mỗi ngày bạn có bao nhiêu phút?</span><div class="row">${[15,25,40,60].map(m=>rad("mins",m,P.mins===m,m+" phút")).join("")}</div></div>
+   <div class="row"><button class="btn primary" type="submit">Lưu và xem kế hoạch hôm nay</button>${S.profile?'<button class="btn ghost" type="button" id="mf-cancel">Huỷ</button>':""}</div></form>`;
+  const f=el.querySelector("#mf");
+  f.onsubmit=e=>{ e.preventDefault(); const fd=new FormData(f);
+    S.profile={role:fd.get("role")||"",sits:fd.getAll("sits"),accs:fd.getAll("accs"),level:fd.get("level")||"b1",pain:fd.get("pain")||"listen",mins:+(fd.get("mins")||25)}; save(); mentorEdit=false; rMentor(el); window.scrollTo({top:0}); };
+  const c=el.querySelector("#mf-cancel"); if(c) c.onclick=()=>{ mentorEdit=false; rMentor(el); };
+}
+
+/* =============================== THEME & BOOT =============================== */
+function applyTheme(){ if(S.theme) document.documentElement.setAttribute("data-theme",S.theme); }
+document.getElementById("theme-btn").onclick=()=>{ const dark=S.theme?S.theme==="dark":matchMedia("(prefers-color-scheme: dark)").matches; S.theme=dark?"light":"dark"; save(); applyTheme(); };
+applyTheme();
+const warn=[]; if(!SR) warn.push("Trình duyệt này không có nhận dạng giọng nói, nên chỉ ghi âm được mà không chấm được. Hãy mở bằng Chrome hoặc Edge.");
+if(!navigator.mediaDevices||!window.MediaRecorder) warn.push("Trình duyệt không hỗ trợ ghi âm.");
+if(warn.length){ const w=document.getElementById("warn"); w.textContent=warn.join(" "); w.hidden=false; }
+readHash(); if(view==="today"&&!openDay) openDay=curDay(); render();
+</script>
+</body>
+</html>
