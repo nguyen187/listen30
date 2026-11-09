@@ -106,8 +106,8 @@ select,textarea,input[type=text]{font:inherit;color:var(--ink);background:var(--
 @media (max-width:620px){
   h1{font-size:28px}
   .top{gap:10px}
-  .top>.row{width:100%;flex-wrap:nowrap;min-width:0}
-  .tabs{flex-wrap:nowrap;overflow-x:auto;min-width:0;flex:1;scrollbar-width:none}
+  .top>.row{width:100%;min-width:0}
+  .tabs{flex-wrap:nowrap;overflow-x:auto;min-width:0;flex:1 1 100%;scrollbar-width:none}
   .tabs::-webkit-scrollbar{display:none}
   .tab{white-space:nowrap;flex:none}
   .top>.row>.btn{flex:none}
@@ -115,6 +115,8 @@ select,textarea,input[type=text]{font:inherit;color:var(--ink);background:var(--
   .cats.pick>.cell{flex:0 0 70%;scroll-snap-align:start}
   .panel{padding:14px}
   .score{font-size:28px}
+  .sayhead{flex-direction:column;flex-wrap:wrap!important}
+  .sayhead>.row{align-self:flex-end}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -430,7 +432,7 @@ function render(){ renderStrip(); const el=document.getElementById("view"); ({me
 
 /* reusable: say-after-me card list */
 function sayList(el,items,{acc="us",onEach,key}={}){
-  el.innerHTML=items.map((it,i)=>`<div class="panel stack" style="padding:14px 16px;background:var(--bg)"><div class="row" style="justify-content:space-between;flex-wrap:nowrap;align-items:flex-start"><div style="min-width:0"><div class="target">${esc(it[0])}</div><div class="vi">${esc(it[1])}</div></div><div class="row" style="flex-wrap:nowrap"><span class="chip mono" data-best="${i}">${key&&S[key[0]][key[1]+":"+i]!=null?S[key[0]][key[1]+":"+i]+"%":"–"}</span><button class="btn sm play" data-pl="${i}" aria-label="Nghe mẫu"></button><button class="btn sm play" data-sl="${i}">Chậm</button></div></div><div data-sp="${i}"></div></div>`).join("");
+  el.innerHTML=items.map((it,i)=>`<div class="panel stack" style="padding:14px 16px;background:var(--bg)"><div class="row sayhead" style="justify-content:space-between;flex-wrap:nowrap;align-items:flex-start"><div style="min-width:0"><div class="target">${esc(it[0])}</div><div class="vi">${esc(it[1])}</div></div><div class="row" style="flex-wrap:nowrap"><span class="chip mono" data-best="${i}">${key&&S[key[0]][key[1]+":"+i]!=null?S[key[0]][key[1]+":"+i]+"%":"–"}</span><button class="btn sm play" data-pl="${i}" aria-label="Nghe mẫu"></button><button class="btn sm play" data-sl="${i}">Chậm</button></div></div><div data-sp="${i}"></div></div>`).join("");
   el.querySelectorAll("[data-pl]").forEach(b=>b.onclick=()=>speak(items[+b.dataset.pl][0],1,acc));
   el.querySelectorAll("[data-sl]").forEach(b=>b.onclick=()=>speak(items[+b.dataset.sl][0],0.75,acc));
   el.querySelectorAll("[data-sp]").forEach(box=>{ const i=+box.dataset.sp; mountSpeak(box,{target:items[i][0],onResult:(r,resEl)=>{
