@@ -103,6 +103,19 @@ select,textarea,input[type=text]{font:inherit;color:var(--ink);background:var(--
 .kpi b{display:block;font-family:var(--f-display);font-size:32px;font-weight:700;line-height:1.1}
 .timer{font-family:var(--f-mono);font-size:22px;font-weight:600}
 .foot{margin-top:40px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;color:var(--muted);font-size:12.5px}
+@media (max-width:620px){
+  h1{font-size:28px}
+  .top{gap:10px}
+  .top>.row{width:100%;flex-wrap:nowrap;min-width:0}
+  .tabs{flex-wrap:nowrap;overflow-x:auto;min-width:0;flex:1;scrollbar-width:none}
+  .tabs::-webkit-scrollbar{display:none}
+  .tab{white-space:nowrap;flex:none}
+  .top>.row>.btn{flex:none}
+  .cats.pick{display:flex;overflow-x:auto;padding-bottom:6px;scroll-snap-type:x proximity;scrollbar-width:thin}
+  .cats.pick>.cell{flex:0 0 70%;scroll-snap-align:start}
+  .panel{padding:14px}
+  .score{font-size:28px}
+}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -413,7 +426,7 @@ function renderStrip(){
   document.querySelectorAll("#tabs .tab").forEach(b=>b.setAttribute("aria-current",b.dataset.view===view?"page":"false"));
 }
 document.getElementById("strip").onclick=e=>{ const b=e.target.closest("[data-d]"); if(b) go("today",+b.dataset.d); };
-function render(){ renderStrip(); const el=document.getElementById("view"); ({mentor:rMentor,today:rToday,phr:rPhr,role:rRole,talk:rTalk,pron:rPron,prog:rProg})[view](el); }
+function render(){ renderStrip(); const el=document.getElementById("view"); ({mentor:rMentor,today:rToday,phr:rPhr,role:rRole,talk:rTalk,pron:rPron,prog:rProg})[view](el); document.querySelector('#tabs [aria-current="page"]')?.scrollIntoView({block:'nearest',inline:'nearest'}); }
 
 /* reusable: say-after-me card list */
 function sayList(el,items,{acc="us",onEach,key}={}){
@@ -446,7 +459,7 @@ function rToday(el){
 /* ---------- Phrases ---------- */
 function rPhr(el){
   el.innerHTML=`<div class="stack"><div><h2>Câu mẫu theo tình huống</h2><div class="muted small">Nghe mẫu, rồi tự nói. Thuộc những câu này là có sẵn "khung" để nói trong mọi cuộc họp.</div></div>
-   <div class="cats">${PHRASES.map((c,i)=>`<button class="cell" data-c="${i}" aria-current="${sel.phr===i}"><b>${esc(c.t)}</b><span class="small muted">${c.p.length} câu</span></button>`).join("")}</div><div id="ph-list" class="stack"></div></div>`;
+   <div class="cats pick">${PHRASES.map((c,i)=>`<button class="cell" data-c="${i}" aria-current="${sel.phr===i}"><b>${esc(c.t)}</b><span class="small muted">${c.p.length} câu</span></button>`).join("")}</div><div id="ph-list" class="stack"></div></div>`;
   el.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{ sel.phr=+b.dataset.c; rPhr(el); });
   sayList(el.querySelector("#ph-list"),PHRASES[sel.phr].p,{key:["phr",sel.phr]});
 }
@@ -472,7 +485,7 @@ function rRole(el){
     <div class="stack" style="margin-top:10px;gap:10px"><div class="small muted">Mô tả cuộc họp sắp tới: họp với ai, về việc gì, bạn cần đạt được gì. Mentor sẽ viết kịch bản để bạn tập trước.</div>
      <textarea id="gen-desc" rows="3" placeholder="Ví dụ: Thứ Năm họp với Julien (Airbus) để thống nhất cách tính MTBUR cho đội A350, tôi muốn đề xuất loại bỏ NFF và xin thêm dữ liệu shop findings."></textarea>
      <div class="row"><label class="small muted" for="gen-acc">Giọng đối tác</label><select id="gen-acc"><option value="">Mentor tự chọn</option>${Object.keys(ACCL).map(a=>`<option value="${a}">${ACCL[a]}</option>`).join("")}</select><button class="btn primary" id="gen-go">Tạo kịch bản</button><span class="small" id="gen-msg"></span></div></div></details>
-   <div class="cats">${R.map((r,i)=>{ const b=roleBest(i); return `<button class="cell" data-r="${i}" aria-current="${sel.role===i}"><b>${esc(r.t)}</b><span class="small muted">${esc(r.who)} · ${ACCL[r.acc]||""}</span><span class="row" style="gap:4px">${i>=ROLES.length?'<span class="chip warn">Của bạn</span>':""}${b!=null?`<span class="chip ${b>=75?"ok":"warn"}">${b}% ý chính</span>`:""}</span></button>`; }).join("")}</div>
+   <div class="cats pick">${R.map((r,i)=>{ const b=roleBest(i); return `<button class="cell" data-r="${i}" aria-current="${sel.role===i}"><b>${esc(r.t)}</b><span class="small muted">${esc(r.who)} · ${ACCL[r.acc]||""}</span><span class="row" style="gap:4px">${i>=ROLES.length?'<span class="chip warn">Của bạn</span>':""}${b!=null?`<span class="chip ${b>=75?"ok":"warn"}">${b}% ý chính</span>`:""}</span></button>`; }).join("")}</div>
    <div class="panel" id="rl"></div>${sel.role>=ROLES.length?`<div class="row"><button class="btn sm ghost" id="rl-del">Xoá bài nhập vai này</button></div>`:""}</div>`;
   el.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{ sel.role=+b.dataset.r; rRole(el); });
   const del=el.querySelector("#rl-del"); if(del) del.onclick=()=>{ S.customRoles.splice(sel.role-ROLES.length,1); sel.role=0; save(); rRole(el); };
@@ -529,7 +542,7 @@ function roleWidget(el,ri,onDone){
 /* ---------- Free talk ---------- */
 function rTalk(el){
   el.innerHTML=`<div class="stack"><div><h2>Trình bày tự do</h2><div class="muted small">Nói liền một mạch theo khung gợi ý. Máy đo tốc độ nói, số từ đệm và các thuật ngữ bạn dùng. Sau đó nghe bài mẫu và nói lại lần hai.</div></div>
-   <div class="cats">${TALKS.map((t,i)=>`<button class="cell" data-t="${i}" aria-current="${sel.talk===i}"><b>${esc(t.t)}</b><span class="small muted">${t.sec} giây</span></button>`).join("")}</div><div class="panel" id="tk"></div></div>`;
+   <div class="cats pick">${TALKS.map((t,i)=>`<button class="cell" data-t="${i}" aria-current="${sel.talk===i}"><b>${esc(t.t)}</b><span class="small muted">${t.sec} giây</span></button>`).join("")}</div><div class="panel" id="tk"></div></div>`;
   el.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{ sel.talk=+b.dataset.t; rTalk(el); });
   talkWidget(el.querySelector("#tk"),sel.talk);
 }
@@ -563,7 +576,7 @@ function talkWidget(el,ti,onDone){
 /* ---------- Pronunciation ---------- */
 function rPron(el){
   el.innerHTML=`<div class="stack"><div><h2>Phát âm</h2><div class="muted small">Nói từng câu. Chữ đỏ là chỗ máy không nhận ra, thường do âm cuối hoặc trọng âm. Mục tiêu: 100% liên tục ba lần.</div></div>
-   <div class="cats">${PRON.map((p,i)=>`<button class="cell" data-p="${i}" aria-current="${sel.pron===i}"><b>${esc(p.t)}</b><span class="small muted">${p.items.length} câu</span></button>`).join("")}</div>
+   <div class="cats pick">${PRON.map((p,i)=>`<button class="cell" data-p="${i}" aria-current="${sel.pron===i}"><b>${esc(p.t)}</b><span class="small muted">${p.items.length} câu</span></button>`).join("")}</div>
    <p class="small muted explain" style="margin:0">${esc(PRON[sel.pron].d)}</p><div id="pr-list" class="stack"></div></div>`;
   el.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{ sel.pron=+b.dataset.p; rPron(el); });
   sayList(el.querySelector("#pr-list"),PRON[sel.pron].items,{key:["pron",sel.pron]});
@@ -927,6 +940,10 @@ function chatUI(el){
   }
   draw();
 }
+
+/* keep the selected item of a horizontal picker in view after re-render (phone layout) */
+function fixPick(el){ el.querySelectorAll('.cats.pick [aria-current="true"]').forEach(c=>{ const p=c.parentElement; p.scrollLeft=Math.max(0,c.offsetLeft-p.offsetLeft-8); }); }
+for(const name of ["rPhr","rRole","rTalk","rPron"]){ const f=window[name]; window[name]=el=>{ f(el); fixPick(el); }; }
 
 /* =============================== THEME & BOOT =============================== */
 function applyTheme(){ if(S.theme) document.documentElement.setAttribute("data-theme",S.theme); }
