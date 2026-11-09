@@ -682,7 +682,7 @@ function voiceFor(acc){
   const c = voicesFor(acc);
   return c.find(x=>GOOD_V.test(x.name)) || c[0] || (acc!=="us" ? voiceFor(acc==="in"?"gb":"us") : voices.find(x=>/^en/i.test(x.lang)));
 }
-const ACRO = /\b(AOG|MRO|MEL|AD|SB|MSN|NFF|MTBUR|OTP|MCC|PFR|FDM|QAR|UAT|ETA|APU|ATA|SME|PFA|KPI)\b/g;
+const ACRO = /\b(AOG|MRO|MEL|AD|SB|MSN|NFF|MTBUR|MTBF|OTP|MCC|PFR|FDM|QAR|UAT|ETA|APU|ATA|SME|PFA|KPI|MPD|AMP|FH|FC|TSN|CSN|TSO|IPC|LLP|LLPs|NHA|OOOI|FIN)\b/g;
 function speechText(t){ return t.replace(/\bACARS\b/g,"ay cars").replace(/\bETOPS\b/g,"ee tops").replace(ACRO,m=>m.split("").join(" ")); }
 let speakId=0;
 function speak(text, rate=1, acc="us"){
@@ -1318,7 +1318,57 @@ ballpark|con số ước chừng|Can you give me a ballpark figure?
 revert|(Ấn Độ) phản hồi lại|Kindly revert at the earliest.
 do the needful|(Ấn Độ) làm những gì cần làm|Please do the needful and close the ticket.
 prepone|(Ấn Độ) dời sớm hơn|Can we prepone the call to ten o'clock?
-actually|(người Pháp hay dùng với nghĩa "hiện tại")|Actually, we have three aircraft in the hangar.`)}
+actually|(người Pháp hay dùng với nghĩa "hiện tại")|Actually, we have three aircraft in the hangar.`)},
+ {t:"Dữ liệu Reliability",v:V(`removal rate|tỉ lệ tháo thiết bị (thường tính trên 1000 FH)|The removal rate is two point five per thousand flight hours.
+alert level|ngưỡng cảnh báo độ tin cậy|The pack valve is above the alert level for the third month.
+MTBF|Mean Time Between Failures: thời gian trung bình giữa hai lần hỏng|We use MTBF only for confirmed failures.
+confirmed failure|hỏng được xác nhận khi sửa ở xưởng|Only sixty percent of the removals were confirmed failures.
+shop findings|kết quả kiểm tra ở xưởng sửa chữa|We are still waiting for the shop findings from the vendor.
+pilot report|báo cáo lỗi của phi công (PIREP)|Pilot reports on ATA twenty-one doubled this month.
+maintenance report|báo cáo lỗi do kỹ thuật viên phát hiện (MAREP)|Maintenance reports are entered in the tech log.
+repetitive defect|lỗi lặp lại trên cùng máy bay|This is a repetitive defect, the third time in ten days.
+chronic defect|lỗi mãn tính, sửa mãi không dứt|The airline flagged it as a chronic defect.
+top removers|các thiết bị bị tháo nhiều nhất|Let's start with the top ten removers.
+technical delay|chậm chuyến do kỹ thuật|Technical delays per hundred departures went down.
+reliability review|cuộc họp rà soát độ tin cậy hằng tháng|We'll present the dashboard at the next reliability review.`)},
+ {t:"Bảo dưỡng theo kế hoạch",v:V(`MPD|Maintenance Planning Document: tài liệu kế hoạch bảo dưỡng của Airbus|The new MPD revision changes thirty task intervals.
+AMP|Aircraft Maintenance Programme: chương trình bảo dưỡng của airline|Each airline adapts the MPD into its own AMP.
+task card|phiếu công việc bảo dưỡng|The task card shows the access panels and the tools.
+interval|chu kỳ lặp của một task|The interval is six hundred flight hours or four months.
+threshold|ngưỡng lần thực hiện đầu tiên|The first inspection is at a threshold of twelve thousand cycles.
+whichever comes first|cái nào đến trước thì tính|Do it every two years or three thousand cycles, whichever comes first.
+due list|danh sách task sắp đến hạn|Can you export the due list for the next thirty days?
+A-check|đợt kiểm tra nhẹ định kỳ|The A-check is every seven hundred fifty flight hours.
+work package|gói công việc cho một lần vào hangar|The work package has three hundred task cards.
+ground time|thời gian máy bay nằm đất để bảo dưỡng|We only have eight hours of ground time tonight.
+interval escalation|kéo dài chu kỳ task dựa trên dữ liệu|We want to justify the interval escalation with three years of findings.
+hard time|thay thế bắt buộc theo giờ hoặc chu kỳ|This component is hard time, it must be replaced at the limit.`)},
+ {t:"Utilization (giờ bay & chu kỳ)",v:V(`FH|Flight Hours: giờ bay (đọc F-H hoặc "flight hours")|The aircraft did eleven FH yesterday.
+FC|Flight Cycles: chu kỳ bay (đọc F-C)|We record one FC per take-off and landing.
+FH to FC ratio|tỉ lệ giờ bay trên chu kỳ (độ dài chặng)|A short-haul fleet has an FH to FC ratio around one point five.
+daily utilization|giờ bay trung bình mỗi ngày|Average daily utilization is twelve point three hours.
+OOOI times|Out, Off, On, In: rời bến, cất cánh, hạ cánh, vào bến|We calculate block time from the OOOI times.
+airborne time|thời gian bay từ cất cánh tới hạ cánh|Flight hours are based on airborne time, not block time.
+tech log|sổ kỹ thuật ghi giờ bay và lỗi|The tech log is still on paper at that station.
+TSN|Time Since New: giờ từ khi mới (đọc T-S-N)|What is the TSN of this engine?
+CSN|Cycles Since New: chu kỳ từ khi mới (đọc C-S-N)|The CSN is close to the life limit.
+TSO|Time Since Overhaul: giờ từ lần đại tu gần nhất|The TSO resets after the shop visit.
+parked aircraft|máy bay để nằm, không khai thác|Exclude parked aircraft from the utilization average.
+stage length|độ dài trung bình một chặng|Longer stage length means fewer cycles per day.`)},
+ {t:"Configuration in parts",v:V(`installed base|toàn bộ thiết bị đang lắp trên đội tàu|The installed base has about forty thousand serialized parts.
+part number|mã linh kiện (P/N)|The same part number can have several serial numbers.
+serial number|số sê-ri của từng chiếc linh kiện (S/N)|Two records have the same serial number on different aircraft.
+position|vị trí lắp (trái, phải, số 1, số 2)|Engine number two is in position two, right wing.
+FIN|Functional Item Number: mã chức năng vị trí của Airbus|We join the parts on MSN and FIN.
+next higher assembly|cụm lắp cấp trên (NHA)|The valve is installed on the pack, its next higher assembly.
+effectivity|áp dụng cho những máy bay nào|Check the effectivity before you order the part.
+interchangeability|khả năng thay thế lẫn nhau (một chiều, hai chiều)|The new part number is one-way interchangeable.
+IPC|Illustrated Parts Catalog: danh mục linh kiện minh hoạ (đọc I-P-C)|The alternate part numbers are listed in the IPC.
+as-built|cấu hình lúc xuất xưởng|The as-built configuration comes from the manufacturer.
+as-maintained|cấu hình thực tế sau các lần thay|The as-maintained configuration is what is really on the aircraft.
+LLP|Life Limited Part: linh kiện giới hạn tuổi thọ (đọc L-L-P)|We track the remaining cycles of every LLP.
+rotable|linh kiện sửa được, quay vòng|Rotables go to the shop and come back to the pool.
+superseded|bị thay bằng mã mới|This part number is superseded by the dash nine.`)}
 ];
 
 const ACCENTS=[
@@ -1445,7 +1495,56 @@ const MEETS=[
    ["What is in phase one?",["The A320neo fleet","22 A350 aircraft","12 A350 aircraft","All fleets"],1],
    ["Priya says \"I have one doubt\". She means:",["She doesn't trust Julien","She has a question","She disagrees","She is confused about her job"],1],
    ["What comes before UAT?",["Two sprints of three weeks","Three sprints of two weeks","Three months of design","Two weeks of testing"],1],
-   ["Priya asks for \"the planning\". She means:",["The schedule","A budget","A design document","A contract"],0,"\"planning\" dùng như danh từ = lịch trình, rất hay gặp với người Pháp và Ấn."]]}
+   ["Priya asks for \"the planning\". She means:",["The schedule","A budget","A design document","A contract"],0,"\"planning\" dùng như danh từ = lịch trình, rất hay gặp với người Pháp và Ấn."]]},
+ {id:"relrev",t:"Họp reliability hằng tháng",ctx:"Dữ liệu reliability: removal rate, alert level, shop findings.",sp:{Tom:"gb",Arjun:"in",Nguyen:"us"},lines:[
+  ["Tom","Okay, first item on the reliability review. The pack flow control valve, ATA twenty-one, is above the alert level for the third month in a row."],
+  ["Arjun","Yes, we had fourteen removals in October. The removal rate is now zero point nine per thousand flight hours, and the alert level is zero point six."],
+  ["Tom","And what do the shop findings say? Are these confirmed failures?"],
+  ["Arjun","Only six were confirmed. The other eight were no fault found. And three removals were on the same tail, so it is a repetitive defect."],
+  ["Nguyen","I can split the dashboard into confirmed and unconfirmed removals, and flag repetitive defects automatically, say three removals within thirty days."],
+  ["Tom","That would be very useful. Let's also raise it with Airbus, we need to know if other operators see the same trend."]],
+  qs:[["Which component is discussed?",["Pack flow control valve","Bleed valve","APU starter","Brake unit"],0],
+   ["How many removals were there in October?",["Four","Six","Fourteen","Forty"],2],
+   ["What is the alert level?",["0.6 per 1000 FH","0.9 per 1000 FH","1.6 per 1000 FH","6 per 1000 FH"],0],
+   ["How many removals were confirmed failures?",["Three","Six","Eight","Fourteen"],1],
+   ["What rule does Nguyen propose for repetitive defects?",["2 removals in 10 days","3 removals in 30 days","3 removals in 3 months","Any NFF removal"],1]]},
+ {id:"smp",t:"Kế hoạch bảo dưỡng: đổi MPD",ctx:"Airbus giới thiệu revision MPD mới, airline lập kế hoạch A-check.",sp:{Claire:"fr",Elena:"es",Nguyen:"us"},lines:[
+  ["Claire","So the new MPD revision is published. The main change is the A-check interval, which goes from six hundred to seven hundred fifty flight hours."],
+  ["Elena","That is good news. But do we need to update our AMP first, or can we apply it directly?"],
+  ["Claire","You must update your AMP and get approval from your authority. Normally it takes around two months."],
+  ["Elena","Okay. And for the zonal inspection, the threshold stays at twelve thousand cycles?"],
+  ["Claire","Yes, the threshold is the same, but the repeat interval is now two years or three thousand cycles, whichever comes first."],
+  ["Nguyen","I'll recalculate the due list with the new intervals, so you can see how many A-checks you save next year."]],
+  qs:[["New A-check interval?",["600 FH","650 FH","750 FH","7,500 FH"],2],
+   ["What must the airline do before applying it?",["Nothing","Update its AMP and get approval","Buy new task cards","Ask the pilots"],1],
+   ["How long does approval usually take?",["Two weeks","Two months","Six months","One year"],1],
+   ["The zonal inspection repeat interval is:",["2 years or 3,000 FC, whichever comes first","3 years or 2,000 FC","12,000 FC only","Unchanged"],0],
+   ["What will Nguyen recalculate?",["The MPD","The due list","The alert levels","The lease"],1]]},
+ {id:"utg",t:"Dữ liệu utilization không khớp",ctx:"Giờ bay từ ACARS lệch với tech log của airline.",sp:{Priya:"in",Nguyen:"us"},lines:[
+  ["Priya","Hi Nguyen. I have one doubt on the utilization report. For VT-IXA, the dashboard shows thirteen point two flight hours per day, but our tech log says eleven point eight."],
+  ["Nguyen","Thanks Priya. The dashboard calculates flight hours from the ACARS OOOI times. Is your tech log using block time or airborne time?"],
+  ["Priya","Airborne time, from off to on. That is how we report flight hours to the authority."],
+  ["Nguyen","Then that's the gap. Our pipeline is using out to in, so it's block time. Taxi time adds more than an hour a day at your hubs."],
+  ["Priya","Okay, understood. Also, some flights have no in-time because of missing ACARS messages. How are you handling those?"],
+  ["Nguyen","Right now they're dropped. I'll fill them from the tech log instead, and exclude parked aircraft from the fleet average."]],
+  qs:[["What daily utilization does the dashboard show?",["11.8 FH","12.3 FH","13.2 FH","30.2 FH"],2],
+   ["How does the airline report flight hours?",["Block time, out to in","Airborne time, off to on","Engine running time","Scheduled time"],1],
+   ["Why is the dashboard number higher?",["It counts taxi time","It counts parked aircraft","It double counts cycles","Wrong time zone"],0],
+   ["What happens now to flights with no in-time?",["They are dropped","They are estimated","They are counted twice","They are sent to Airbus"],0],
+   ["What will be excluded from the fleet average?",["Long flights","Parked aircraft","Night flights","ACARS data"],1]]},
+ {id:"cfg",t:"Mô hình dữ liệu configuration in parts",ctx:"Ghép dữ liệu cấu hình linh kiện theo MSN, FIN, part number, serial number.",sp:{Markus:"de",Julien:"fr",Nguyen:"us"},lines:[
+  ["Markus","For the configuration in parts dataset, each row is one installed part: MSN, FIN, position, part number, serial number and install date."],
+  ["Nguyen","Okay. And when a part is removed, do we close the row with a removal date, or do we get a new record?"],
+  ["Markus","We close the row and open a new one for the replacement part. So you can rebuild the as-maintained configuration at any date."],
+  ["Julien","Be careful, the as-built configuration from Airbus and the airline's as-maintained data do not always match. Actually, we found around two percent of mismatches."],
+  ["Nguyen","Mostly serial number swaps, or superseded part numbers?"],
+  ["Julien","Both. And for the LLPs, the remaining cycles must come from the airline records, not from our data."],
+  ["Markus","My suggestion: we join on MSN and FIN first, then check the part number against the IPC for interchangeability."]],
+  qs:[["What does one row represent?",["One flight","One installed part","One task card","One aircraft"],1],
+   ["What happens when a part is removed?",["The row is deleted","The row is closed and a new row opens","Nothing","The MSN changes"],1],
+   ["How many records mismatch between as-built and as-maintained?",["About 0.2%","About 2%","About 20%","None"],1],
+   ["Where must LLP remaining cycles come from?",["Airbus data","The airline records","The IPC","ACARS"],1],
+   ["What are the first join keys Markus suggests?",["Part number and serial number","MSN and FIN","FIN and install date","Tail number and date"],1]]}
 ];
 
 const NATO="Alpha Bravo Charlie Delta Echo Foxtrot Golf Hotel India Juliett Kilo Lima Mike November Oscar Papa Quebec Romeo Sierra Tango Uniform Victor Whiskey X-ray Yankee Zulu".split(" ");
