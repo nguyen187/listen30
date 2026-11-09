@@ -1812,7 +1812,7 @@ function voiceBarHTML(){
 function mountVoiceBar(host){
   if(!host) return;
   host.innerHTML=voiceBarHTML();
-  const re=()=>{ mountVoiceBar(host); refreshAccChips(); };
+  const re=()=>{ mountVoiceBar(host); refreshAccChips(); const wb=document.getElementById("wk-body"); if(view==="work"&&workMode==="meet"&&meetOpen!=null&&wb){ playTok++; if(hasTTS) speechSynthesis.cancel(); wkMeet(wb); } };
   host.querySelector("#vb-acc").onchange=e=>{ S.forceAcc=e.target.value; save(); re(); };
   const v=host.querySelector("#vb-voice"); if(v) v.onchange=e=>{ S.voice[S.forceAcc]=e.target.value; save(); re(); };
   host.querySelector("#vb-spd").onchange=e=>{ S.speedAdj=+e.target.value; save(); };
