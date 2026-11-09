@@ -883,7 +883,7 @@ function renderDay(el){
       </details>`).join("")}
   </div>`;
   el.querySelectorAll("[data-goday]").forEach(b=>b.onclick=()=>go("today",+b.dataset.goday));
-  mountVoiceBar(document.getElementById("vbar-host"));
+  mountVoiceBar(document.getElementById("vbar-host"), [...new Set(Array.from({length:20},(_,i)=>accentFor(n,i)))]);
   mountReview(n, document.getElementById("tb-review"));
   mountLesson(n, document.getElementById("tb-lesson"));
   mountVocab(n, document.getElementById("tb-vocab"));
@@ -1167,7 +1167,7 @@ function renderGym(el){
    <div class="tabs" style="align-self:flex-start" id="gym-tabs">${[["dict","Chép chính tả tự do"],["pairs","Cặp âm dễ nhầm"],["nums","Nghe số"]].map(([k,t])=>`<button class="tab" data-g="${k}" aria-current="${gymMode===k?"page":"false"}">${t}</button>`).join("")}</div>
    <div id="vbar-host"></div>
    <div class="panel" id="gym-body"></div></div>`;
-  mountVoiceBar(el.querySelector("#vbar-host"));
+  mountVoiceBar(el.querySelector("#vbar-host"), ["us","gb","au"]);
   el.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{ gymMode=b.dataset.g; renderGym(el); });
   const body=el.querySelector("#gym-body");
   if(gymMode==="dict") gymDict(body); else if(gymMode==="pairs") gymPairs(body); else mountNums(body,10,()=>{});
@@ -1577,7 +1577,7 @@ function renderWork(el){
    <div class="tabs" style="align-self:flex-start" id="wk-tabs">${modes.map(([k,t])=>`<button class="tab" data-w="${k}" aria-current="${workMode===k?"page":"false"}">${t}</button>`).join("")}</div>
    <div id="wk-body" class="stack"></div></div>`;
   el.querySelectorAll("[data-w]").forEach(b=>b.onclick=()=>{ workMode=b.dataset.w; meetOpen=null; playTok++; if(hasTTS) speechSynthesis.cancel(); renderWork(el); });
-  mountVoiceBar(el.querySelector("#vbar-host"));
+  mountVoiceBar(el.querySelector("#vbar-host"), ["in","fr","de","es","gb","us"]);
   const body=el.querySelector("#wk-body");
   ({meet:()=>meetOpen==null?wkMeetList(body):wkMeet(body),accent:()=>wkAccent(body),terms:()=>wkTerms(body),wdict:()=>wkDict(body),alpha:()=>wkAlpha(body)})[workMode]();
 }
@@ -1797,26 +1797,28 @@ document.addEventListener("keydown",e=>{
 });
 
 /* =============================== VOICE BAR =============================== */
-function voiceBarHTML(){
-  const fa=S.forceAcc||"auto", acc=fa==="auto"?null:fa;
-  const vlist=acc?voicesFor(acc):[], cur=acc?voiceFor(acc):null;
-  return `<div class="panel row" id="vbar" style="padding:10px 14px;gap:8px 14px">
-   <span class="label">Giọng nghe</span>
-   <select id="vb-acc" style="width:auto" aria-label="Giọng"><option value="auto" ${fa==="auto"?"selected":""}>Theo bài (mỗi câu một giọng)</option>${ACC_KEYS.map(a=>`<option value="${a}" ${fa===a?"selected":""}>Chỉ giọng ${accLabel(a)}</option>`).join("")}</select>
-   ${acc?`<select id="vb-voice" style="width:auto;max-width:220px" aria-label="Người đọc"><option value="">Tự chọn${cur?" ("+esc(cur.name)+")":""}</option>${vlist.map(v=>`<option value="${esc(v.name)}" ${S.voice[acc]===v.name?"selected":""}>${esc(v.name)}</option>`).join("")}</select>`:""}
+function voiceBarHTML(accs){
+  const fa=S.forceAcc||"auto", forced=fa!=="auto";
+  const list = forced ? [fa] : accs;
+  const pick = a => { const vl=voicesFor(a), cur=voiceFor(a);
+    return `<label class="row" style="gap:6px;flex-wrap:nowrap"><span class="small muted">Người đọc ${accLabel(a)}</span><select data-vbv="${a}" style="width:auto;max-width:210px" aria-label="Người đọc giọng ${accLabel(a)}"><option value="">Tự chọn${cur?" ("+esc(cur.name)+")":""}</option>${vl.map(v=>`<option value="${esc(v.name)}" ${S.voice[a]===v.name?"selected":""}>${esc(v.name)}</option>`).join("")}</select>${voiceOk(a)?"":`<span class="chip warn">Máy chưa có giọng này</span>`}</label>`; };
+  return `<div class="panel stack" id="vbar" style="padding:12px 14px;gap:10px">
+   <div class="row" style="gap:8px 14px"><span class="label">Giọng nghe</span>
+   <select id="vb-acc" style="width:auto" aria-label="Giọng"><option value="auto" ${!forced?"selected":""}>Theo bài (mỗi câu một giọng)</option>${ACC_KEYS.map(a=>`<option value="${a}" ${fa===a?"selected":""}>Chỉ giọng ${accLabel(a)}</option>`).join("")}</select>
    <select id="vb-spd" style="width:auto" aria-label="Tốc độ">${[-0.2,-0.15,-0.1,-0.05,0,0.05,0.1,0.15,0.2].map(v=>`<option value="${v}" ${Math.abs((S.speedAdj||0)-v)<.001?"selected":""}>${v===0?"Tốc độ gốc":"Tốc độ "+(v>0?"+":"")+v}</option>`).join("")}</select>
-   <button class="btn sm play" id="vb-test">Nghe thử</button>
-   ${acc&&!voiceOk(acc)?`<span class="chip warn">Máy chưa có giọng ${accLabel(acc)}</span>`:""}
+   <button class="btn sm play" id="vb-test">Nghe thử</button></div>
+   <div class="row" style="gap:8px 16px">${list.map(pick).join("")}</div>
   </div>`;
 }
-function mountVoiceBar(host){
+function mountVoiceBar(host, accs){
   if(!host) return;
-  host.innerHTML=voiceBarHTML();
-  const re=()=>{ mountVoiceBar(host); refreshAccChips(); const wb=document.getElementById("wk-body"); if(view==="work"&&workMode==="meet"&&meetOpen!=null&&wb){ playTok++; if(hasTTS) speechSynthesis.cancel(); wkMeet(wb); } };
+  accs = accs || host._accs || ["us","gb"]; host._accs = accs;
+  host.innerHTML=voiceBarHTML(accs);
+  const re=()=>{ mountVoiceBar(host, accs); refreshAccChips(); const wb=document.getElementById("wk-body"); if(view==="work"&&workMode==="meet"&&meetOpen!=null&&wb){ playTok++; if(hasTTS) speechSynthesis.cancel(); wkMeet(wb); } };
   host.querySelector("#vb-acc").onchange=e=>{ S.forceAcc=e.target.value; save(); re(); };
-  const v=host.querySelector("#vb-voice"); if(v) v.onchange=e=>{ S.voice[S.forceAcc]=e.target.value; save(); re(); };
+  host.querySelectorAll("[data-vbv]").forEach(s=>s.onchange=e=>{ const a=s.dataset.vbv; S.voice[a]=e.target.value; save(); re(); speak("Could you walk us through the reliability data for the A320 fleet?",1,a); });
   host.querySelector("#vb-spd").onchange=e=>{ S.speedAdj=+e.target.value; save(); };
-  host.querySelector("#vb-test").onclick=()=>speak("Could you walk us through the reliability data for the A320 fleet?",1,"us");
+  host.querySelector("#vb-test").onclick=()=>speak("Could you walk us through the reliability data for the A320 fleet?",1,(S.forceAcc&&S.forceAcc!=="auto")?S.forceAcc:accs[0]);
 }
 function refreshAccChips(){ document.querySelectorAll("[data-acc-chip]").forEach(c=>c.textContent="Giọng "+accLabel(effAcc(c.dataset.accChip))); }
 
