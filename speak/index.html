@@ -288,7 +288,7 @@ const PRON=[
 /* =============================== STATE =============================== */
 const LS="talkshop.v1";
 const today=()=>{ const d=new Date(); return Math.floor((d.getTime()-d.getTimezoneOffset()*60000)/86400000); };
-function blank(){ return {days:{},talks:[],phr:{},pron:{},role:{},theme:null,voice:{},recLang:"en-US",secs:0}; }
+function blank(){ return {days:{},talks:[],phr:{},pron:{},role:{},customRoles:[],theme:null,voice:{},recLang:"en-US",secs:0}; }
 let S=blank(); try{ const r=localStorage.getItem(LS); if(r) S=Object.assign(blank(),JSON.parse(r)); }catch(e){}
 function save(){ try{ localStorage.setItem(LS,JSON.stringify(S)); }catch(e){} }
 const TASKS=[["warm","Khởi động: câu mẫu","Nói 5 câu theo chủ đề hôm nay"],["pron","Phát âm","4 câu luyện âm khó"],["role","Nhập vai cuộc họp","Đối đáp với đồng nghiệp ảo"],["talk","Trình bày tự do","Nói liền một mạch có bấm giờ"]];
@@ -452,14 +452,53 @@ function rPhr(el){
 }
 
 /* ---------- Role-play ---------- */
+const allRoles=()=>ROLES.concat(S.customRoles||[]);
+const roleBest=i=>i<ROLES.length?S.role[i]:(S.customRoles[i-ROLES.length]||{}).best;
+const ROLE_SCHEMA={type:"object",additionalProperties:false,required:["title","who","accent","context","turns"],properties:{
+  title:{type:"string",description:"Short Vietnamese title of the meeting"},
+  who:{type:"string",description:"Partner name and role, e.g. 'Julien, Airbus reliability engineer'"},
+  accent:{type:"string",enum:["us","gb","in","fr","de","es"]},
+  context:{type:"string",description:"One Vietnamese sentence describing the situation"},
+  turns:{type:"array",description:"3 to 4 exchanges; each starts with the partner speaking, then the learner answers",items:{type:"object",additionalProperties:false,required:["partner","task_vi","model_answer","key_points"],properties:{
+    partner:{type:"string",description:"What the partner says, natural spoken English"},
+    task_vi:{type:"string",description:"In Vietnamese: what the learner must say in reply, without giving the English wording"},
+    model_answer:{type:"string",description:"A concise, natural professional English answer"},
+    key_points:{type:"array",items:{type:"string"},description:"2-4 short lowercase English keywords from the model answer the learner must include; alternatives separated by |"}}}}}};
 function rRole(el){
+  if(!S.customRoles) S.customRoles=[];
+  const R=allRoles(); if(sel.role>=R.length) sel.role=0;
   el.innerHTML=`<div class="stack"><div><h2>Nhập vai cuộc họp</h2><div class="muted small">Đồng nghiệp ảo nói trước. Bạn đọc gợi ý tiếng Việt rồi tự nói bằng tiếng Anh theo cách của bạn. Máy kiểm tra bạn có nói đủ ý chính, sau đó bạn nghe câu mẫu để so.</div></div>
-   <div class="cats">${ROLES.map((r,i)=>`<button class="cell" data-r="${i}" aria-current="${sel.role===i}"><b>${esc(r.t)}</b><span class="small muted">${esc(r.who)} · ${ACCL[r.acc]}</span>${S.role[i]!=null?`<span class="chip ${S.role[i]>=75?"ok":"warn"}">${S.role[i]}% ý chính</span>`:""}</button>`).join("")}</div><div class="panel" id="rl"></div></div>`;
+   <details class="panel" id="gen" ${S.customRoles.length?"":"open"}><summary style="cursor:pointer"><b>Tạo bài nhập vai từ cuộc họp thật của bạn</b> <span class="chip warn">Mentor AI</span></summary>
+    <div class="stack" style="margin-top:10px;gap:10px"><div class="small muted">Mô tả cuộc họp sắp tới: họp với ai, về việc gì, bạn cần đạt được gì. Mentor sẽ viết kịch bản để bạn tập trước.</div>
+     <textarea id="gen-desc" rows="3" placeholder="Ví dụ: Thứ Năm họp với Julien (Airbus) để thống nhất cách tính MTBUR cho đội A350, tôi muốn đề xuất loại bỏ NFF và xin thêm dữ liệu shop findings."></textarea>
+     <div class="row"><label class="small muted" for="gen-acc">Giọng đối tác</label><select id="gen-acc"><option value="">Mentor tự chọn</option>${Object.keys(ACCL).map(a=>`<option value="${a}">${ACCL[a]}</option>`).join("")}</select><button class="btn primary" id="gen-go">Tạo kịch bản</button><span class="small" id="gen-msg"></span></div></div></details>
+   <div class="cats">${R.map((r,i)=>{ const b=roleBest(i); return `<button class="cell" data-r="${i}" aria-current="${sel.role===i}"><b>${esc(r.t)}</b><span class="small muted">${esc(r.who)} · ${ACCL[r.acc]||""}</span><span class="row" style="gap:4px">${i>=ROLES.length?'<span class="chip warn">Của bạn</span>':""}${b!=null?`<span class="chip ${b>=75?"ok":"warn"}">${b}% ý chính</span>`:""}</span></button>`; }).join("")}</div>
+   <div class="panel" id="rl"></div>${sel.role>=ROLES.length?`<div class="row"><button class="btn sm ghost" id="rl-del">Xoá bài nhập vai này</button></div>`:""}</div>`;
   el.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{ sel.role=+b.dataset.r; rRole(el); });
+  const del=el.querySelector("#rl-del"); if(del) del.onclick=()=>{ S.customRoles.splice(sel.role-ROLES.length,1); sel.role=0; save(); rRole(el); };
+  const gmsg=el.querySelector("#gen-msg");
+  el.querySelector("#gen-go").onclick=async()=>{
+    const d=el.querySelector("#gen-desc").value.trim(), acc=el.querySelector("#gen-acc").value;
+    if(!getKey()){ gmsg.innerHTML='Cần API key: <a href="#mentor">mở tab Mentor</a>'; return; }
+    if(d.length<15){ gmsg.textContent="Mô tả thêm một chút: họp với ai, về việc gì."; return; }
+    const btn=el.querySelector("#gen-go"); btn.disabled=true; gmsg.style.color="var(--muted)"; gmsg.textContent="Mentor đang viết kịch bản…";
+    try{
+      const m=await aiCall({schema:ROLE_SCHEMA,messages:[{role:"user",content:`Write a speaking role-play so I can rehearse a real meeting before it happens.
+My description of the meeting (may be in Vietnamese): """${d}"""
+${acc?`The partner should speak like someone with a ${ACCL[acc]} English accent background (use typical expressions of that group, standard spelling).`:"Choose the partner's accent from the description; if unclear, use the accents in my profile."}
+Make 3 or 4 exchanges. The partner speaks first in every exchange, then I answer. Make the partner's lines realistic for this meeting, including one moment where I must clarify, push back politely or confirm numbers. Keep each line to 1-3 sentences.`}]});
+      if(m.stop_reason==="refusal") throw new Error("Mentor không tạo được kịch bản cho mô tả này.");
+      const j=JSON.parse(msgText(m));
+      const turns=[]; (j.turns||[]).forEach(t=>{ turns.push({p:t.partner}); turns.push({y:t.task_vi,m:t.model_answer,k:(t.key_points||[]).slice(0,4)}); });
+      if(!turns.length) throw new Error("Kịch bản trống, thử lại.");
+      S.customRoles.push({t:j.title,who:j.who,acc:ACCL[j.accent]?j.accent:"us",ctx:j.context,turns,best:null,custom:1}); save();
+      sel.role=ROLES.length+S.customRoles.length-1; rRole(el);
+    }catch(e){ btn.disabled=false; gmsg.style.color="var(--bad)"; gmsg.textContent=e instanceof SyntaxError?"Mentor trả về dữ liệu lỗi, thử lại.":aiErrorText(e).replace(/^Lỗi: /,""); }
+  };
   roleWidget(el.querySelector("#rl"),sel.role);
 }
 function roleWidget(el,ri,onDone){
-  const R=ROLES[ri]; let step=0; const covers=[];
+  const R=allRoles()[ri]; let step=0; const covers=[];
   const ys=R.turns.filter(t=>t.y).length;
   function draw(){
     const shown=R.turns.slice(0,step+1);
@@ -483,7 +522,7 @@ function roleWidget(el,ri,onDone){
       resEl.querySelector("#rl-next").onclick=()=>{ covers.push(cover); step++; if(step>=R.turns.length) finish(); else draw(); };
     }}); }
   }
-  function finish(){ const avg=Math.round(covers.reduce((a,b)=>a+b,0)/Math.max(1,covers.length)); S.role[ri]=Math.max(S.role[ri]||0,avg); save(); step=R.turns.length; draw(); onDone&&onDone(avg); }
+  function finish(){ const avg=Math.round(covers.reduce((a,b)=>a+b,0)/Math.max(1,covers.length)); if(R.custom) R.best=Math.max(R.best||0,avg); else S.role[ri]=Math.max(S.role[ri]||0,avg); save(); step=R.turns.length; draw(); onDone&&onDone(avg); }
   draw();
 }
 
@@ -515,6 +554,7 @@ function talkWidget(el,ti,onDone){
       <div class="small muted">Tốc độ ${r.wpm} từ/phút: ${wpmNote}. Người bản xứ trong họp thường nói 120–150 từ/phút. Máy nhận dạng hay bỏ qua "um, uh", nên số từ đệm thật thường cao hơn: nghe lại bản ghi để tự đếm.</div>
       <div class="small"><b>Tự đánh giá khi nghe lại:</b> Có câu mở đầu nói rõ chủ đề không? Có đi đúng khung không? Có câu kết không?</div></div>`;
     aiFeedback(resEl.firstElementChild,talkPrompt(T,r));
+    followUpQA(resEl.firstElementChild,T,r);
     S.talks.push({d:today(),i:ti,wpm:r.wpm,f:r.fillers,dur:Math.round(r.dur),w:r.words,c:r.cover||0}); save();
     if(r.dur>=Math.min(30,T.sec/2)) onDone&&onDone();
   }});
@@ -728,11 +768,12 @@ function aiErrorText(e){
 }
 function waitSDK(){ return window.AIX?Promise.resolve():new Promise((res,rej)=>{ window.addEventListener("aix-ready",res,{once:true}); setTimeout(()=>rej(new Error("Không tải được thư viện Anthropic. Kiểm tra kết nối mạng.")),10000); }); }
 /* one streaming call; returns the final Message */
-async function aiCall({messages,onText,signal,system,model}){
+async function aiCall({messages,onText,signal,system,model,schema}){
   await waitSDK();
   const client=new window.AIX.Anthropic({apiKey:getKey(),dangerouslyAllowBrowser:true});
   model=model||S.aiModel||"claude-opus-5-5";
-  const base={model,max_tokens:64000,system:system||mentorSystem(),messages,output_config:{effort:"low"}};
+  const output_config={effort:"low"}; if(schema) output_config.format={type:"json_schema",schema};
+  const base={model,max_tokens:64000,system:system||mentorSystem(),messages,output_config};
   const stream = model==="claude-haiku-5-5"
     ? client.messages.stream(base,{signal})
     : client.beta.messages.stream({...base,betas:["server-side-fallback-2026-07-01"],fallbacks:"default"},{signal});
@@ -800,6 +841,35 @@ Reply briefly with:
 3. Câu trả lời của tôi đã sửa, trên dòng "> ".
 4. Hai cách nói tự nhiên khác, mỗi cách một dòng "> ".`; }
 
+/* mentor asks follow-up questions about a talk, learner answers by voice, mentor grades */
+const QA_SCHEMA={type:"object",additionalProperties:false,required:["questions"],properties:{questions:{type:"array",items:{type:"string"},description:"Exactly 3 follow-up questions in English"}}};
+function followUpQA(host,T,r){
+  if(!getKey()) return;
+  const box=document.createElement("div"); box.className="stack"; box.style.gap="8px"; host.appendChild(box);
+  box.innerHTML=`<div class="row"><button class="btn sm" data-qa="go">Mentor hỏi lại 3 câu (luyện Q&amp;A)</button><span class="small muted">Như phần hỏi đáp sau khi bạn trình bày trong họp.</span></div><div data-qa="area" class="stack" style="gap:10px"></div>`;
+  const area=box.querySelector('[data-qa="area"]'), go=box.querySelector('[data-qa="go"]');
+  go.onclick=async()=>{
+    go.disabled=true; area.innerHTML='<span class="small muted">Mentor đang nghĩ câu hỏi…</span>';
+    let qs=[];
+    try{
+      const m=await aiCall({schema:QA_SCHEMA,messages:[{role:"user",content:`I just gave this short talk in a work meeting. Topic: ${T.t}. My words (speech recognition): """${r.text}"""
+Ask me exactly 3 follow-up questions that an SME, Airbus engineer or airline manager would realistically ask after hearing it: one asking for a detail or number, one challenging an assumption, one about next steps. Keep each question to one sentence.`}]});
+      if(m.stop_reason==="refusal") throw new Error("Mentor không tạo được câu hỏi.");
+      qs=(JSON.parse(msgText(m)).questions||[]).slice(0,3);
+      if(!qs.length) throw new Error("Không có câu hỏi, thử lại.");
+    }catch(e){ go.disabled=false; area.innerHTML=`<span class="small" style="color:var(--bad)">${esc(e instanceof SyntaxError?"Mentor trả về dữ liệu lỗi, thử lại.":aiErrorText(e).replace(/^Lỗi: /,""))}</span>`; return; }
+    const answers=new Array(qs.length).fill(""); const accs=(S.profile&&S.profile.accs&&S.profile.accs.length)?S.profile.accs:["gb","in","fr"];
+    area.innerHTML=qs.map((q,i)=>`<div class="turn p"><div class="row" style="flex-wrap:nowrap;gap:8px;align-items:flex-start"><button class="btn sm play" data-qp="${i}" aria-label="Nghe câu hỏi"></button><span><b>Câu ${i+1}.</b> <span class="muted small">(bấm nghe trước, cố trả lời không nhìn chữ)</span><br>${esc(q)}</span></div><div data-qs="${i}" style="margin-top:6px"></div></div>`).join("")+`<div data-qa="grade"></div>`;
+    area.querySelectorAll("[data-qp]").forEach(b=>b.onclick=()=>speak(qs[+b.dataset.qp],1,accs[+b.dataset.qp%accs.length]));
+    const gradeBox=area.querySelector('[data-qa="grade"]');
+    area.querySelectorAll("[data-qs]").forEach(sp=>{ const i=+sp.dataset.qs; mountSpeak(sp,{onResult:res=>{ answers[i]=res.text||""; if(answers.every(a=>a)&&!gradeBox.childElementCount){
+      aiFeedback(gradeBox,`After my talk on "${T.t}", I was asked follow-up questions and answered by voice (speech recognition transcripts):
+${qs.map((q,j)=>`Q${j+1}: ${q}\nMy answer: """${answers[j]}"""`).join("\n")}
+
+For each answer: did it actually answer the question (có/chưa), and a better answer on a line starting with "> " (keep my content, make it clear and professional). End with one tip for handling questions in meetings.`,"Mentor chấm phần hỏi đáp"); } } }); });
+    speak(qs[0],1,accs[0]);
+  };
+}
 function aiPanel(el){
   const has=!!getKey();
   el.innerHTML=`<div class="panel stack" id="ai-panel"><div class="row" style="justify-content:space-between"><div><h3>Mentor AI</h3><div class="small muted">Claude đọc hồ sơ và kết quả luyện tập của bạn, trả lời câu hỏi, sửa câu, giúp chuẩn bị họp.</div></div>${has?'<button class="btn sm ghost" id="ai-set">Cài đặt AI</button>':""}</div>
