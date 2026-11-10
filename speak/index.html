@@ -1131,6 +1131,21 @@ ${l30}
 In Vietnamese: 1) what improved, with the numbers; 2) the two weakest points right now; 3) a plan for next week as 5 concrete daily tasks that name app sections; 4) one short, honest sentence of encouragement. If I practised little, say so plainly and make the plan smaller. Keep it short.`;
 }
 const EXPLAIN_SCHEMA={type:"object",additionalProperties:false,required:["explanation","key_points"],properties:{explanation:{type:"string",description:"Spoken explanation, 4-6 sentences"},key_points:{type:"array",items:{type:"string"},description:"3-4 short lowercase English keywords the retelling must include"}}};
+function rewriteUI(el){
+  el.innerHTML=`<div class="stack" style="gap:8px"><div class="small muted">Gõ một câu bạn định nói (tiếng Việt hoặc tiếng Anh chưa chuẩn). Mentor viết lại theo 3 kiểu để bạn chọn đúng giọng điệu cho từng người nghe.</div><div class="row"><input type="text" id="rw-in" placeholder="Ví dụ: tôi chưa xong vì thiếu dữ liệu, thứ 6 mới gửi được" style="flex:1;min-width:200px"><button class="btn sm primary" id="rw-go">Viết lại</button></div><div id="rw-out"></div></div>`;
+  const out=el.querySelector("#rw-out");
+  el.querySelector("#rw-go").onclick=async()=>{ const t=el.querySelector("#rw-in").value.trim(); if(!t) return; out.innerHTML='<span class="small muted">Mentor đang viết…</span>';
+    try{ const m=await aiCall({messages:[{role:"user",content:`Rewrite what I want to say at work in English, three ways. My words (Vietnamese or rough English): """${t}"""
+Answer in this exact shape, keeping all facts:
+**Trang trọng** (email cho khách hàng, Airbus, cấp trên)
+> ...
+**Trung tính** (họp với đồng nghiệp)
+> ...
+**Thân mật** (chat Teams với người quen)
+> ...
+Then one short line in Vietnamese saying when to use which.`}],onText:x=>{ out.innerHTML=mdRender(x); }});
+      out.innerHTML=mdRender(msgText(m)); bindSay(out); }catch(e){ out.innerHTML=`<span class="small" style="color:var(--bad)">${esc(aiErrorText(e))}</span>`; } };
+}
 function explainUI(el){
   el.innerHTML=`<div class="stack" style="gap:10px"><div class="small muted">Gõ một thuật ngữ hoặc khái niệm. Mentor đóng vai đồng nghiệp (SME, kỹ sư Airbus) giải thích bằng tiếng Anh nói. Bạn nghe không nhìn chữ, rồi kể lại bằng lời của mình.</div>
    <div class="row"><input type="text" id="ex-term" placeholder="Ví dụ: MTBUR, interval escalation, configuration in parts" style="flex:1;min-width:200px"><button class="btn sm primary" id="ex-go">Nhờ giải thích</button></div><div id="ex-out"></div></div>`;
@@ -1208,7 +1223,7 @@ function aiPanel(el){
     <div class="row"><button class="btn primary" id="ai-save">Lưu và kiểm tra</button>${has?'<button class="btn ghost" id="ai-del">Xoá key khỏi máy này</button>':""}<span class="small" id="ai-msg"></span></div>
     <div class="small muted">Ứng dụng bật cơ chế dự phòng của Anthropic (server-side fallback) cho Opus và Sonnet: nếu model từ chối một yêu cầu, máy chủ tự chuyển sang model khác để trả lời.</div>
    </div>
-   ${has?`<div id="ai-week" class="stack" style="gap:8px"></div><details class="stack" id="ai-explain"><summary style="cursor:pointer"><b>Nghe đồng nghiệp giải thích, rồi kể lại</b></summary><div id="ai-explain-body" style="margin-top:10px"></div></details><details class="stack" id="ai-write"><summary style="cursor:pointer"><b>Soạn tin nhắn Teams / email từ ghi chú</b></summary><div id="ai-write-body" style="margin-top:10px"></div></details><div id="ai-chat" class="stack" style="gap:10px"></div>`:""}</div>`;
+   ${has?`<div id="ai-week" class="stack" style="gap:8px"></div><details class="stack" id="ai-rew"><summary style="cursor:pointer"><b>Viết lại một câu theo 3 kiểu</b></summary><div id="ai-rew-body" style="margin-top:10px"></div></details><details class="stack" id="ai-explain"><summary style="cursor:pointer"><b>Nghe đồng nghiệp giải thích, rồi kể lại</b></summary><div id="ai-explain-body" style="margin-top:10px"></div></details><details class="stack" id="ai-write"><summary style="cursor:pointer"><b>Soạn tin nhắn Teams / email từ ghi chú</b></summary><div id="ai-write-body" style="margin-top:10px"></div></details><div id="ai-chat" class="stack" style="gap:10px"></div>`:""}</div>`;
   const msg=el.querySelector("#ai-msg");
   el.querySelector("#ai-model").onchange=e=>{ S.aiModel=e.target.value; save(); };
   const set=el.querySelector("#ai-set"); if(set) set.onclick=()=>{ const s=el.querySelector("#ai-settings"); s.hidden=!s.hidden; };
@@ -1220,7 +1235,7 @@ function aiPanel(el){
     try{ const m=await aiCall({messages:[{role:"user",content:"Reply with exactly: OK"}]}); msg.style.color="var(--good)"; msg.textContent="Key hoạt động ("+m.model+")."; el.querySelector("#ai-key").value=""; setTimeout(()=>aiPanel(el),900); }
     catch(e){ msg.style.color="var(--bad)"; msg.textContent=aiErrorText(e); }
   };
-  if(has){ aiFeedback(el.querySelector("#ai-week"),weekPrompt(),"Báo cáo tiến bộ 7 ngày qua"); writeUI(el.querySelector("#ai-write-body")); explainUI(el.querySelector("#ai-explain-body")); chatUI(el.querySelector("#ai-chat")); }
+  if(has){ aiFeedback(el.querySelector("#ai-week"),weekPrompt(),"Báo cáo tiến bộ 7 ngày qua"); writeUI(el.querySelector("#ai-write-body")); explainUI(el.querySelector("#ai-explain-body")); rewriteUI(el.querySelector("#ai-rew-body")); chatUI(el.querySelector("#ai-chat")); }
 }
 const QUICK=["Dựa vào dữ liệu của tôi, tuần này tôi nên tập trung vào gì?","Tôi sắp họp với Airbus để lấy yêu cầu dashboard reliability. Giúp tôi chuẩn bị 5 câu nói và 3 câu hỏi.","Sửa câu này cho tự nhiên hơn: ","Khi người Ấn nói \"kindly revert\" thì tôi nên trả lời thế nào?","Đóng vai SME hỏi tôi về utilization data, mỗi lượt một câu, rồi chấm câu trả lời của tôi.","Phỏng vấn thử: bạn là hiring manager tuyển data engineer cho nền tảng dữ liệu hàng không. Hỏi tôi từng câu một bằng tiếng Anh, đặt câu hỏi trên dòng bắt đầu bằng \"> \". Tôi sẽ trả lời bằng giọng nói. Sau mỗi câu trả lời, chấm ngắn bằng tiếng Việt (nội dung, độ rõ, tiếng Anh) kèm một câu trả lời mẫu tốt hơn, rồi hỏi câu tiếp. Tổng cộng 6 câu, câu cuối tổng kết điểm mạnh và điểm cần sửa."];
 function chatUI(el){

@@ -12,8 +12,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Listen 30: listening streak calendar heatmap on the Tiến độ page (last 8 weeks)
-- [ ] Talk Shop: Mentor AI "rewrite my sentence 3 ways" quick tool (formal, neutral, casual)
+- [ ] Listen 30: listening comprehension 'summary' task — after a meeting, record or type a 2-sentence summary, AI checks it
+- [ ] Talk Shop: role-play from the Listen 30 meetings (reuse the 20 meetings as speaking role-plays)
 
 ## Follow-ups
 
@@ -23,6 +23,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Talk Shop: Mentor AI "rewrite my sentence 3 ways" quick tool (formal, neutral, casual)
+- [x] Listen 30: listening streak calendar heatmap on the Tiến độ page (last 8 weeks)
 - [x] Talk Shop: export practice transcripts (journal, talks) as a text file for review
 - [x] Listen 30: Today page 'quick session' (15-minute version of the day for busy days)
 - [x] Talk Shop: show which recording mode is active next to the red button, with a one-tap switch when an error appears
