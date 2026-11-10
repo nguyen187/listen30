@@ -667,10 +667,11 @@ function rProg(el){
     <div class="row"><span style="width:200px">Giọng đồng nghiệp ảo</span>${Object.keys(ACCL).map(a=>{ const v=voiceFor(a); return `<span class="chip">${ACCL[a]}: ${esc(v?v.name:"không có")}</span>`; }).join("")}</div>
     <div class="row"><button class="btn sm" id="st-mic">Kiểm tra micro</button><span class="small muted" id="st-mic-r"></span></div>
    </div>
+   <div class="panel stack"><div class="row" style="justify-content:space-between"><h3>Thẻ tiến độ để chia sẻ</h3><span class="row"><button class="btn sm primary" id="sc-copy">Sao chép ảnh</button><button class="btn sm" id="sc-dl">Tải ảnh PNG</button></span></div><canvas id="sc-cv" width="1200" height="630" style="width:100%;max-width:600px;height:auto;border-radius:10px;border:1px solid var(--line)" role="img" aria-label="Ảnh thẻ tiến độ"></canvas><span class="small muted" id="sc-msg">Dán vào Teams hoặc chat nhóm để giữ động lực.</span></div>
    <div class="panel stack"><div class="row" style="justify-content:space-between"><h3>Lịch sử ghi âm</h3><button class="btn sm ghost" id="rec-clear">Xoá lịch sử</button></div><div class="small muted">Giữ 60 bản ghi gần nhất trên máy này. Nghe lại bản đầu tiên và bản mới nhất của cùng một bài để thấy mình tiến bộ.</div><div id="rec-list"><span class="small muted">Đang tải…</span></div></div>
    <div class="panel stack"><h3>Chuyển tiến độ sang máy khác</h3><div class="small muted">Xuất một file gồm tiến độ Talk Shop và Listen 30, rồi nhập ở máy kia. API key không nằm trong file.</div>
     <div class="row"><button class="btn sm" id="io-exp">Tải file tiến độ</button><button class="btn sm" id="io-copy">Sao chép mã</button><label class="btn sm" for="io-file">Nhập từ file</label><input type="file" id="io-file" accept=".json,application/json,text/plain" hidden><button class="btn sm" id="io-paste">Dán mã</button></div><div id="io-area"></div></div></div>`;
-  bindIO(el); drawRecs(el);
+  bindIO(el); drawRecs(el); shareCard(el);
   el.querySelector("#st-rec").onchange=e=>{ S.recLang=e.target.value; save(); };
   el.querySelector("#st-mic").onclick=async()=>{ const r=el.querySelector("#st-mic-r"); try{ await getMic(); r.textContent="Micro hoạt động. "+(SR?"Có nhận dạng giọng nói.":"Trình duyệt không có nhận dạng giọng nói, hãy dùng Chrome hoặc Edge."); }catch(e){ r.textContent="Không mở được micro: hãy cho phép trang dùng micro."; } };
 }
@@ -1086,6 +1087,25 @@ async function recTx(mode,fn){ const db=await RECDB.open(); return new Promise((
 async function recAll(){ try{ return (await recTx("readonly",st=>st.getAll()))||[]; }catch(e){ return []; } }
 async function recAdd(r){ try{ await recTx("readwrite",st=>st.add(r)); const all=await recAll(); if(all.length>60){ const old=all.slice(0,all.length-60); await recTx("readwrite",st=>{ old.forEach(x=>st.delete(x.id)); }); } }catch(e){} }
 async function recClear(){ try{ await recTx("readwrite",st=>st.clear()); }catch(e){} }
+function shareCard(el){
+  const cv=el.querySelector("#sc-cv"); if(!cv) return; const g=cv.getContext("2d");
+  const L=readL30()||{}, ldays=Object.values(L.days||{}), dict=ldays.flatMap(d=>(d.dict||[]).filter(x=>x!=null));
+  const tl=S.talks.slice(-10), wpm=tl.length?Math.round(tl.reduce((a,b)=>a+b.wpm,0)/tl.length):0;
+  const stats=[["Listen 30",`${ldays.filter(d=>d.doneAt).length}/30 ngày`],["Nghe chép đúng",dict.length?Math.round(dict.reduce((a,b)=>a+b,0)/dict.length)+"%":"–"],
+    ["Đã nói",`${Math.round((S.secs||0)/60)} phút`],["Tốc độ nói",wpm?wpm+" từ/phút":"–"],["Talk Shop",`${Array.from({length:30},(_,i)=>prog(i+1)===TASKS.length).filter(Boolean).length}/30 ngày`],["Họp mô phỏng",Object.keys((L.work||{}).meet||{}).length+" cuộc"]];
+  const bg="#0e1513", ink="#e4ece9", mut="#93a39d", acc="#ffb43a";
+  g.fillStyle=bg; g.fillRect(0,0,1200,630);
+  g.fillStyle=acc; g.beginPath(); g.arc(90,95,14,0,Math.PI*2); g.fill();
+  g.fillStyle=ink; g.font="700 54px 'Barlow Condensed', 'Arial Narrow', sans-serif"; g.fillText("TALK SHOP · LISTEN 30",125,115);
+  g.fillStyle=mut; g.font="400 26px 'Be Vietnam Pro', sans-serif"; g.fillText("Tiếng Anh cho công việc hàng không · "+new Date().toLocaleDateString("vi-VN"),78,165);
+  stats.forEach(([k,v],i)=>{ const x=78+(i%3)*360, y=255+Math.floor(i/3)*170;
+    g.fillStyle="#16201d"; g.fillRect(x,y,330,140); g.fillStyle=mut; g.font="600 22px 'Be Vietnam Pro', sans-serif"; g.fillText(k.toUpperCase(),x+24,y+42);
+    g.fillStyle=i===0||i===3?acc:ink; g.font="700 54px 'Barlow Condensed', sans-serif"; g.fillText(v,x+24,y+108); });
+  g.fillStyle=mut; g.font="400 20px 'JetBrains Mono', monospace"; g.fillText("nguyen187.github.io/listen30",78,600);
+  const msg=el.querySelector("#sc-msg");
+  el.querySelector("#sc-dl").onclick=()=>{ const a=document.createElement("a"); a.href=cv.toDataURL("image/png"); a.download="tien-do-tieng-anh.png"; document.body.appendChild(a); a.click(); a.remove(); };
+  el.querySelector("#sc-copy").onclick=()=>{ cv.toBlob(async b=>{ try{ await navigator.clipboard.write([new ClipboardItem({"image/png":b})]); msg.textContent="Đã sao chép ảnh. Dán (Cmd/Ctrl+V) vào Teams."; }catch(e){ msg.textContent="Trình duyệt không cho sao chép ảnh. Dùng nút Tải ảnh PNG."; } },"image/png"); };
+}
 let recConfirm=false;
 async function drawRecs(el){
   const box=el.querySelector("#rec-list"); if(!box) return;

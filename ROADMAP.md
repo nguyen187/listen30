@@ -12,7 +12,9 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Both: share a progress card image (canvas) to post in the team chat
+- [ ] Talk Shop: pronunciation of the user's own term list (paste words → practice cards)
+- [ ] Listen 30: accent comparison drill (same sentence in 4 accents, guess the accent)
+- [ ] Talk Shop: Mentor AI "explain like a colleague" for any term (hear an SME-style explanation, then retell it)
 
 ## Follow-ups
 
@@ -22,6 +24,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Both: share a progress card image (canvas) to post in the team chat
 - [x] Talk Shop: daily goal ring on Mentor (minutes spoken today vs target)
 - [x] Listen 30: shadowing step records the learner too (reuse Talk Shop's recorder on GitHub Pages)
 - [x] Both: offline support (cache page for flights) via a service worker on GitHub Pages
