@@ -273,7 +273,21 @@ const ROLES=[
   {p:"Okay. When will it be back?"},
   {y:"Nói đã sửa, đang nạp bù, trước 2 giờ chiều sẽ đủ.",m:"We've already fixed it and we're backfilling the data now. Everything should be back before two p.m.",k:["fixed","backfill|reload","two|2"]},
   {p:"Good. How do we avoid this next time?"},
-  {y:"Đề xuất thêm kiểm tra schema tự động và cảnh báo qua email.",m:"We'll add an automatic schema check, and an email alert if the format changes again.",k:["schema|format","check","alert|email"]}]}
+  {y:"Đề xuất thêm kiểm tra schema tự động và cảnh báo qua email.",m:"We'll add an automatic schema check, and an email alert if the format changes again.",k:["schema|format","check","alert|email"]}]},
+ {t:"Đàm phán hợp đồng MRO",who:"Markus, MRO sales manager",acc:"de",ctx:"Bạn hỗ trợ airline đàm phán giá và thời gian sửa chữa linh kiện.",turns:[
+  {p:"For the new component repair contract, our price is twelve thousand euros per repair, with a turnaround time of twenty-one days."},
+  {y:"Nói 21 ngày quá dài so với dữ liệu hiện tại (trung bình 14 ngày), hỏi họ có rút xuống 14 ngày được không.",m:"Twenty-one days is too long for us. Our current average is fourteen days. Could you commit to fourteen days?",k:["too long","fourteen|14","commit|could you"]},
+  {p:"Fourteen days is possible, but then the price goes up to thirteen thousand five hundred."},
+  {y:"Đề xuất phương án: giữ 12.000 euro nếu airline cam kết tối thiểu 40 lần sửa mỗi năm.",m:"What if we keep the price at twelve thousand, and in return we commit to a minimum of forty repairs per year?",k:["twelve thousand|12000|12,000","minimum","forty|40","per year|a year"]},
+  {p:"Forty repairs per year... that could work. I need to check with my management."},
+  {y:"Cảm ơn, đề nghị họ xác nhận bằng email trước thứ Sáu để bạn trình ban lãnh đạo.",m:"Thank you. Could you confirm it by email before Friday, so I can present it to our management?",k:["confirm","email","friday"]}]},
+ {t:"Báo chậm linh kiện (chuỗi cung ứng)",who:"Elena, planning manager",acc:"es",ctx:"Linh kiện cho đợt C-check bị chậm, bạn phải báo và đề xuất phương án.",turns:[
+  {p:"Hi Nguyen, I heard there is a problem with the parts for the C-check next month. What is the situation?"},
+  {y:"Nói 3 trong 20 linh kiện bị chậm khoảng 2 tuần do nhà cung cấp thiếu hàng.",m:"Yes. Three out of twenty parts are delayed by about two weeks, because the supplier is short of stock.",k:["three|3","delayed","two weeks|2 weeks","supplier"]},
+  {p:"Two weeks is a lot. Can we still start the check on time?"},
+  {y:"Đề xuất vẫn bắt đầu đúng hạn, làm các task không cần 3 linh kiện đó trước, và mượn một linh kiện từ pool.",m:"I think we can. We start on time with the tasks that don't need those parts, and we borrow one part from the pool.",k:["start on time|on time","tasks","borrow|pool"]},
+  {p:"Okay, that sounds reasonable. What do you need from me?"},
+  {y:"Nhờ Elena duyệt chi phí mượn linh kiện trước thứ Tư.",m:"I need your approval for the cost of borrowing the part, ideally before Wednesday.",k:["approval|approve","cost","wednesday"]}]}
 ];
 
 const TALKS=[
@@ -691,7 +705,7 @@ function analyze(){
   if(l30){
     if(l30.dictAvg!=null) diag.push([l30.dictAvg>=85?"ok":l30.dictAvg>=65?"warn":"bad","Nghe chép chính tả (Listen 30)",`${l30.dictAvg}%`]);
     if(l30.due>0) acts.push({p:58,m:5,t:`Ôn ${l30.due} thẻ từ vựng đến hạn`,why:"Thẻ đến hạn mà không ôn sẽ quên. Mất 5 phút.",href:"../#srs"});
-    const accs=P.accs||[]; if(accs.length){ const ids={in:["aog","otp","dq","kick","relrev","utg","shop","gov"],fr:["aog","sb","kick","smp","gov"],de:["pdm","cfg","shop","sec"],es:["sb","lease","smp","fleet"]};
+    const accs=P.accs||[]; if(accs.length){ const ids={in:["aog","otp","dq","kick","relrev","utg","shop","gov","warr","audit"],fr:["aog","sb","kick","smp","gov","warr"],de:["pdm","cfg","shop","sec"],es:["sb","lease","smp","fleet"]};
       const want=[...new Set(accs.flatMap(a=>ids[a]||[]))]; const weak=want.filter(id=>(l30.meet[id]??0)<80);
       if(weak.length) acts.push({p:P.pain==="listen"?93:64,m:8,t:`Nghe họp mô phỏng giọng ${accs.map(a=>ACCL[a]).join(", ")}`,why:`${weak.length} cuộc họp có giọng đồng nghiệp của bạn chưa đạt 80%.`,href:"../#work"}); }
     acts.push({p:P.pain==="listen"?88:50,m:15,t:`Listen 30: ngày ${l30.next}, phần chép chính tả`,why:l30.dictAvg==null?"Chưa có điểm nghe. Nghe tốt thì mới nói đúng lúc trong họp.":`Đã xong ${l30.done}/30 ngày.`,href:"../#day-"+l30.next});

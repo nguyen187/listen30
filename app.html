@@ -1675,7 +1675,31 @@ const MEETS=[
    ["What is the first issue?",["The service account has too many rights","The data is encrypted","The server is slow","No backups"],0],
    ["What is the maximum key validity in their policy?",["30 days","60 days","90 days","One year"],2],
    ["How often will Nguyen rotate the key?",["Every 30 days","Every 60 days","Every 90 days","Once a year"],1],
-   ["When will Markus give approval if he sees the changes by Thursday?",["Thursday","Friday","Next Monday","Next week"],1]]}
+   ["When will Markus give approval if he sees the changes by Thursday?",["Thursday","Friday","Next Monday","Next week"],1]]},
+ {id:"warr",t:"Claim bảo hành linh kiện",ctx:"Airline đòi bảo hành cho van bị hỏng sớm; Airbus và nhà cung cấp tham gia.",sp:{Arjun:"in",Claire:"fr",Nguyen:"us"},lines:[
+  ["Arjun","We want to raise a warranty claim for the bleed valves. Six units failed before four thousand flight hours, and the guaranteed MTBUR is ten thousand."],
+  ["Claire","Okay. For the claim, we need the removal date, the flight hours since new and the shop report for each unit."],
+  ["Nguyen","I can extract that from the reliability data. Four of the six shop reports confirm a seal failure, the other two are no fault found."],
+  ["Claire","The no fault found units are normally not covered. But the four confirmed failures are clearly within the warranty period."],
+  ["Arjun","Fine, we will claim for the four units first, and send the two others for a second test at a different shop."],
+  ["Claire","Good. Please submit the claim before the end of the month, because the warranty window closes on the thirtieth."]],
+  qs:[["How many valves failed early?",["Four","Six","Ten","Sixteen"],1],
+   ["What is the guaranteed MTBUR?",["4,000 FH","6,000 FH","10,000 FH","40,000 FH"],2],
+   ["What do four shop reports confirm?",["A seal failure","Wrong installation","No fault found","Corrosion"],0],
+   ["Which units are normally not covered?",["Confirmed failures","No fault found units","New units","Units under 4,000 FH"],1],
+   ["When does the warranty window close?",["The 13th","The 20th","The 30th","Next month"],2]]},
+ {id:"audit",t:"Nhà chức trách kiểm tra hồ sơ bảo dưỡng",ctx:"Chuẩn bị cho đợt audit của nhà chức trách hàng không.",sp:{Tom:"gb",Priya:"in",Nguyen:"us"},lines:[
+  ["Tom","The authority audit is in two weeks. They will focus on the deferred defects and on the airworthiness directive compliance."],
+  ["Priya","For the deferred defects, we found three items that stayed open longer than the MEL allows. We need an explanation for each one."],
+  ["Nguyen","I've built a report that shows every deferred defect with its MEL category, the deferral date and the closing date. The three late ones are highlighted."],
+  ["Tom","Very useful. Can you add the AD compliance status per aircraft, with the next due date?"],
+  ["Nguyen","Yes, I'll add it by Wednesday, and export both reports to PDF for the auditors."],
+  ["Priya","Please also keep the raw data ready. Last time the auditor asked to see the source records, not only the summary."]],
+  qs:[["When is the audit?",["Tomorrow","In one week","In two weeks","In two months"],2],
+   ["How many deferred defects stayed open too long?",["Two","Three","Four","Thirteen"],1],
+   ["What will Nguyen add to the report?",["Crew hours","AD compliance status per aircraft","Fuel burn","Delay codes"],1],
+   ["In what format will the reports go to the auditors?",["Excel","PDF","Email text","Paper only"],1],
+   ["What did the auditor ask for last time?",["Photos","The source records","A presentation","A discount"],1]]}
 ];
 
 const NATO="Alpha Bravo Charlie Delta Echo Foxtrot Golf Hotel India Juliett Kilo Lima Mike November Oscar Papa Quebec Romeo Sierra Tango Uniform Victor Whiskey X-ray Yankee Zulu".split(" ");
