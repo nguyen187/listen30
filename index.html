@@ -16,7 +16,7 @@
 :root{
   --bg:#f3f4f9; --surface:#ffffff; --sunken:#e8eaf3; --ink:#151a31; --muted:#5a6282; --line:#d6d9e7;
   --accent:#2f45cf; --accent-ink:#ffffff; --accent-soft:#e3e7ff;
-  --amber:#c98a12; --amber-soft:#fbefd2; --good:#178a5d; --good-soft:#dcf3e8; --bad:#c43c31; --bad-soft:#fbe1de;
+  --amber:#8a5a00; --amber-soft:#fbefd2; --good:#178a5d; --good-soft:#dcf3e8; --bad:#c43c31; --bad-soft:#fbe1de;
   --f-display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
   --f-body:"Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono:"JetBrains Mono", ui-monospace, Menlo, monospace;
@@ -1949,7 +1949,7 @@ function renderReal(el){
     </div>
    </div>
    <div class="panel stack"><h3>Nghe một cụm từ do nhiều người thật nói</h3><div class="muted small">YouGlish tìm cụm từ trong hàng nghìn video thật, lọc theo giọng.</div>
-    <div class="row"><input type="text" id="yg-q" value="aircraft on ground" style="flex:1;min-width:180px;width:auto"><select id="yg-acc" style="width:auto"><option value="us">Mỹ</option><option value="uk">Anh</option><option value="aus">Úc</option><option value="">Mọi giọng</option></select><a class="btn primary" id="yg-go" target="_blank" rel="noopener" href="#">Mở YouGlish ↗</a></div></div>
+    <div class="row"><input type="text" id="yg-q" aria-label="Cụm từ cần nghe" value="aircraft on ground" style="flex:1;min-width:180px;width:auto"><select id="yg-acc" style="width:auto" aria-label="Giọng trên YouGlish"><option value="us">Mỹ</option><option value="uk">Anh</option><option value="aus">Úc</option><option value="">Mọi giọng</option></select><a class="btn primary" id="yg-go" target="_blank" rel="noopener" href="#">Mở YouGlish ↗</a></div></div>
    ${REAL_SRC.map(g=>`<div class="panel stack"><h3>${esc(g.t)}</h3><div class="vgrid">${g.items.map(([t,d,u])=>`<a class="vcard" href="${u}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><b>${esc(t)} ↗</b><span class="small muted">${esc(d)}</span></a>`).join("")}</div></div>`).join("")}
   </div>`;
   const yg=()=>{ const q=el.querySelector("#yg-q").value.trim()||"aircraft on ground", a=el.querySelector("#yg-acc").value; el.querySelector("#yg-go").href=`https://youglish.com/pronounce/${encodeURIComponent(q)}/english${a?"/"+a:""}`; };
