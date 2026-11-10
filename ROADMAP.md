@@ -6,14 +6,15 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 - `app.html` — Listen 30 page body (also published as the Claude artifact https://claude.ai/artifact/PFFtUErYMHeMGTzuHqe2ig). Source of truth is the scratchpad copy `listen30.html` during a session; copy it here, then run `./build.sh` to regenerate `index.html`.
 - `index.html` — Listen 30 on GitHub Pages (generated).
+- `meetings.js` — mock meetings exported from app.html by build.sh (used by Talk Shop role-plays).
 - `speak/index.html` — Talk Shop (speaking + mentor), GitHub Pages only (needs the microphone).
 - Storage: `listen30.v1`, `talkshop.v1`, `talkshop.key`, `talkshop.chat` in localStorage (same origin on GitHub Pages).
 - Live: https://nguyen187.github.io/listen30/ and https://nguyen187.github.io/listen30/speak/
 
 ## Backlog (top = next)
 
-- [ ] Listen 30: listening comprehension 'summary' task — after a meeting, record or type a 2-sentence summary, AI checks it
-- [ ] Talk Shop: role-play from the Listen 30 meetings (reuse the 20 meetings as speaking role-plays)
+- [ ] Talk Shop: Listen 30 role-plays — let the learner pick which character to play (not only Nguyen)
+- [ ] Listen 30: summary task without AI — keyword checklist from the meeting quiz answers
 
 ## Follow-ups
 
@@ -23,6 +24,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Talk Shop: role-play from the Listen 30 meetings (reuse the 20 meetings as speaking role-plays)
+- [x] Listen 30: listening comprehension 'summary' task — after a meeting, record or type a 2-sentence summary, AI checks it
 - [x] Talk Shop: Mentor AI "rewrite my sentence 3 ways" quick tool (formal, neutral, casual)
 - [x] Listen 30: listening streak calendar heatmap on the Tiến độ page (last 8 weeks)
 - [x] Talk Shop: export practice transcripts (journal, talks) as a text file for review
