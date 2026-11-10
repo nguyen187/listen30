@@ -519,6 +519,33 @@ function rPhr(el){
 }
 
 /* ---------- Role-play ---------- */
+const RESCUE_LINES=[
+ ["The part number is D-two-three-one-eight-nine dash zero-seven, and we need it by the fourteenth.","Part number dài, nói nhanh"],
+ ["So basically the MTBUR went from eight-four-hundred to six-two-hundred after the mod.","Số liệu và từ viết tắt"],
+ ["Can you push the ETL to prod before the CAB on Thursday, or is that too tight?","Từ viết tắt lạ: ETL, prod, CAB"],
+ ["We'll circle back on the APU stuff once Toulouse revert with the SB effectivity.","Nhiều thuật ngữ dồn dập"],
+ ["Kindly do the needful and share the delta by EOD itself.","Cách nói kiểu Ấn"],
+ ["Actually the planning is not evident, we must eventually decale the formation.","Bẫy nghĩa kiểu Pháp"],
+ ["The tail is Foxtrot Hotel Bravo X-ray Alpha, MSN one-four-five-two, landing in Hanoi at zero-six-forty Zulu.","Mã máy bay và giờ Zulu"],
+ ["Sorry, you're breaking up, I think the numbers on slide twelve are off by a factor of ten.","Mạng rè, nói lấp"]];
+const RESCUE_KEYS=["sorry","repeat","again","spell","slow","slowly","confirm","mean","clarify","chat","type","understand","say that","what was","which","did you say"];
+function rescueDrill(el){
+  if(!el) return;
+  el.innerHTML=`<div class="stack" style="gap:8px"><div class="small muted">Web đọc nhanh một câu khó nghe (thuật ngữ, số, giọng lạ). Nghe xong, máy tự bật micro: hãy nói một câu hỏi lại phù hợp, ví dụ "Sorry, could you spell the part number?" hay "Just to confirm, did you say six thousand two hundred?".</div><div class="row"><button class="btn sm primary" id="rq-go">Câu tiếp theo</button><span class="small muted" id="rq-n"></span></div><div id="rq-line" class="small"></div><div id="rq-sp"></div></div>`;
+  let n=0, ok=0;
+  el.querySelector("#rq-go").onclick=async()=>{
+    const [line,why]=RESCUE_LINES[n%RESCUE_LINES.length], acc=["in","fr","de","us","gb"][n%5]; n++;
+    el.querySelector("#rq-line").innerHTML=`<span class="chip">${esc(why)}</span> <span class="muted">Giọng ${ACCL[acc]}. Chữ sẽ hiện sau khi bạn trả lời.</span>`;
+    const box=el.querySelector("#rq-sp");
+    mountSpeak(box,{label:"Phản xạ hỏi lại",kind:"rescue",keys:RESCUE_KEYS.map(k=>k),onResult:(r,resEl)=>{
+      const hit=(r.hits||[]).some(h=>h.hit); if(hit) ok++;
+      el.querySelector("#rq-n").textContent=`${ok}/${n} câu hỏi lại đúng cách`;
+      resEl.innerHTML=`<div class="stack" style="gap:6px"><span class="chip ${hit?"ok":"bad"}">${hit?"Tốt: bạn đã hỏi lại":"Chưa nghe thấy câu hỏi lại"}</span><div class="small"><b>Câu vừa nghe:</b> ${esc(line)}</div><div class="small muted">Gợi ý: “Sorry, could you repeat that more slowly?”, “Could you spell that for me?”, “Just to confirm, you said…?”, “What do you mean by …?”</div></div>`;
+    }});
+    await speak(line,1.25,acc);
+    const rec=box.querySelector(".rec"); if(rec&&rec.getAttribute("aria-pressed")!=="true") rec.click();
+  };
+}
 const allRoles=()=>ROLES.concat(S.customRoles||[]);
 const roleBest=i=>i<ROLES.length?S.role[i]:(S.customRoles[i-ROLES.length]||{}).best;
 const ROLE_SCHEMA={type:"object",additionalProperties:false,required:["title","who","accent","context","turns"],properties:{
@@ -535,6 +562,7 @@ function rRole(el){
   if(!S.customRoles) S.customRoles=[];
   const R=allRoles(); if(sel.role>=R.length) sel.role=0;
   el.innerHTML=`<div class="stack"><div><h2>Nhập vai cuộc họp</h2><div class="muted small">Đồng nghiệp ảo nói trước. Bạn đọc gợi ý tiếng Việt rồi tự nói bằng tiếng Anh theo cách của bạn. Máy kiểm tra bạn có nói đủ ý chính, sau đó bạn nghe câu mẫu để so.</div></div>
+   <details class="panel" id="rescue"><summary style="cursor:pointer"><b>Phản xạ hỏi lại</b> <span class="small muted">· nghe câu khó, trong vài giây phải hỏi lại cho đúng</span></summary><div id="rq" style="margin-top:10px"></div></details>
    <details class="panel" id="gen" ${S.customRoles.length?"":"open"}><summary style="cursor:pointer"><b>Tạo bài nhập vai từ cuộc họp thật của bạn</b> <span class="chip warn">Mentor AI</span></summary>
     <div class="stack" style="margin-top:10px;gap:10px"><div class="small muted">Mô tả cuộc họp sắp tới: họp với ai, về việc gì, bạn cần đạt được gì. Mentor sẽ viết kịch bản để bạn tập trước.</div>
      <textarea id="gen-desc" rows="3" placeholder="Ví dụ: Thứ Năm họp với Julien (Airbus) để thống nhất cách tính MTBUR cho đội A350, tôi muốn đề xuất loại bỏ NFF và xin thêm dữ liệu shop findings."></textarea>
@@ -562,6 +590,7 @@ Make 3 or 4 exchanges. The partner speaks first in every exchange, then I answer
       sel.role=ROLES.length+S.customRoles.length-1; rRole(el);
     }catch(e){ btn.disabled=false; gmsg.style.color="var(--bad)"; gmsg.textContent=e instanceof SyntaxError?"Mentor trả về dữ liệu lỗi, thử lại.":aiErrorText(e).replace(/^Lỗi: /,""); }
   };
+  rescueDrill(el.querySelector("#rq"));
   roleWidget(el.querySelector("#rl"),sel.role);
 }
 const lvlRate=()=>({easy:0.85,normal:1,hard:1.2})[S.roleLvl||"normal"];

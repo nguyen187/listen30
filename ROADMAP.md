@@ -12,8 +12,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop: "rescue phrases" quick-fire drill (hear a confusing line, respond with the right clarification phrase in 5 seconds)
-- [ ] Listen 30: end-of-course certificate page with before/after stats
+- [ ] Talk Shop: Mentor plan includes the new drills (rescue reflex, numbers, small talk) when they fit the profile
+- [ ] Both: performance pass (lazy-render long lists, avoid re-rendering whole views on small changes)
 
 ## Follow-ups
 
@@ -23,6 +23,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Listen 30: end-of-course certificate page with before/after stats
+- [x] Talk Shop: "rescue phrases" quick-fire drill (hear a confusing line, respond with the right clarification phrase in 5 seconds)
 - [x] Listen 30: 'meeting notes' exercise — after a mock meeting, write the 3 action items, Claude/keywords check them
 - [x] Talk Shop: role-play difficulty levels (partner speaks faster, interrupts, uses heavier accent)
 - [x] Listen 30: dictation hint level 2 (show the connected-speech rule that applies to the missed words)

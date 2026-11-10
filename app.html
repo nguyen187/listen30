@@ -1358,6 +1358,17 @@ function gymPairs(el){
 }
 
 /* ---------- Stats ---------- */
+function certHTML(){
+  const done=DAYS.filter((_,i)=>dayProgress(i+1)===TASKS.length).length;
+  const avgOf=ns=>{ const v=ns.flatMap(n=>((S.days[n]||{}).dict||[]).filter(x=>x!=null)); return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length):null; };
+  const w1=avgOf([1,2,3,4,5,6,7]), w4=avgOf([22,23,24,25,26,27,28,29,30]);
+  const sp=S.speedHist||[], firstSp=sp.length?sp[0].rate:null, bestSp=sp.length?Math.max(...sp.map(x=>x.rate)):null;
+  const words=Object.values(S.cards).filter(c=>c.box>=3).length, meets=Object.keys((S.work||{}).meet||{}).length;
+  const cell=(k,a,b)=>`<div class="kpi"><span class="label">${k}</span><b class="mono">${b??"–"}</b><span class="small muted">${a!=null?"lúc đầu: "+a:""}</span></div>`;
+  return `<div class="panel stack" style="${done>=30?"border-color:var(--good)":""}"><div class="row" style="justify-content:space-between"><h3>${done>=30?"Chứng nhận hoàn thành Listen 30":"Chứng nhận cuối khoá"}</h3><span class="chip ${done>=30?"ok":""}">${done>=30?"Đã hoàn thành":`Còn ${30-done} ngày`}</span></div>
+   <div class="small muted">${done>=30?"Bạn đã đi hết 30 ngày. Đây là thay đổi của bạn từ tuần đầu đến tuần cuối. Chụp lại và giữ thói quen nghe 30 phút mỗi ngày.":"Khi xong cả 30 ngày, trang này so sánh kết quả tuần đầu với tuần cuối. Bên dưới là số liệu hiện tại."}</div>
+   <div class="kpis">${cell("Chép chính tả",w1!=null?w1+"%":null,w4!=null?w4+"%":(w1!=null?"đang học":null))}${cell("Tốc độ nghe",firstSp!=null?"×"+firstSp.toFixed(1):null,bestSp!=null?"×"+bestSp.toFixed(1):null)}${cell("Từ đã thuộc",null,words)}${cell("Họp mô phỏng",null,meets)}</div></div>`;
+}
 function renderStats(el){
   const done=DAYS.filter((_,i)=>dayProgress(i+1)===TASKS.length).length;
   const cards=Object.values(S.cards), mastered=cards.filter(c=>c.box>=3).length;
@@ -1383,6 +1394,7 @@ function renderStats(el){
      ${accs.map((a,i)=>{ const x=pl+i*bw+2; return a==null?`<rect x="${x}" y="${y(2)}" width="${bw-4}" height="${y(0)-y(2)}" fill="var(--sunken)"/>`:`<rect x="${x}" y="${y(a)}" width="${bw-4}" height="${y(0)-y(a)}" rx="2" fill="${a>=80?"var(--accent)":a>=60?"var(--amber)":"var(--bad)"}"><title>Ngày ${i+1}: ${a}%</title></rect>`; }).join("")}
      ${[1,7,14,21,30].map(d=>`<text x="${pl+(d-1)*bw+bw/2}" y="${H-6}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="JetBrains Mono, monospace">${d}</text>`).join("")}
     </svg></div><div class="small muted">Vạch đứt = 80%, mức nên đạt trước khi sang tuần mới.</div></div>
+   ${certHTML()}
    <div class="panel"><h3>Tại sao cách học này hiệu quả</h3><ul class="explain" style="padding-left:18px;margin:8px 0 0">
     <li><b>Chép chính tả</b> buộc tai xử lý từng âm, lộ ra chính xác chỗ bạn đang nghe hụt.</li>
     <li><b>Âm nối, âm yếu, nuốt âm</b> là lý do lớn nhất khiến người học "biết từ mà không nghe ra". Mỗi ngày học một quy tắc.</li>
