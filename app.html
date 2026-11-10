@@ -1058,7 +1058,7 @@ function mountDict(el, items, saved, onScores, onDone, opts={}){
       <span class="row"><button class="btn" id="${uid}-again">Nghe lại</button><button class="btn primary" id="${uid}-next">${idx+1<items.length?"Câu tiếp →":"Xem kết quả"} <span class="kbd">Enter</span></button></span></div></div>`;
     el.querySelector("#"+uid+"-again").onclick=()=>speak(it.text,it.rate,it.acc);
     el.querySelector("#"+uid+"-next").onclick=next;
-    if(r.score<100) aiExplainButton(el.querySelector("#"+uid+"-res").firstElementChild, it, giveUp?"":inp.value);
+    if(r.score<100){ const hint=soundHints(it.text,r.html); if(hint) el.querySelector("#"+uid+"-res").firstElementChild.insertAdjacentHTML("beforeend",hint); aiExplainButton(el.querySelector("#"+uid+"-res").firstElementChild, it, giveUp?"":inp.value); }
     inp.readOnly=true;
     el.querySelector("#"+uid+"-check").disabled=true; el.querySelector("#"+uid+"-skip").disabled=true;
     inp.focus();
@@ -2116,6 +2116,25 @@ document.getElementById("theme-btn").onclick=()=>{
   S.theme = dark?"light":"dark"; save(); applyTheme(); if(view==="setup") render();
 };
 
+/* rule-based hints: which connected-speech rule probably hid the missed words */
+const WEAK=new Set("a an the of to and for at from can was were have has had do does did you your he she we they them him her his is are am be been than that as or but some".split(" "));
+function soundHints(text,html){
+  const words=text.split(/\s+/), miss=new Set(); const tmp=document.createElement("div"); tmp.innerHTML=html;
+  const spans=[...tmp.querySelectorAll("span.ok,span.miss")]; spans.forEach((sp,i)=>{ if(sp.classList.contains("miss")) miss.add(i); });
+  if(!miss.size) return "";
+  const clean=w=>w.toLowerCase().replace(/[^a-z']/g,""); const out=new Map();
+  const add=(k,w)=>{ if(!out.has(k)) out.set(k,new Set()); out.get(k).add(w); };
+  miss.forEach(i=>{ const w=clean(words[i]||""), prev=clean(words[i-1]||""), next=clean(words[i+1]||""); if(!w) return;
+    if(w.includes("'")) add("Dạng rút gọn (I'd, we'll, they've…) được nói rất nhanh",words[i]);
+    else if(WEAK.has(w)) add("Âm yếu: từ chức năng bị đọc nhỏ thành /ə/",words[i]);
+    if(prev&&/[bcdfgklmnprstvxz]$/.test(prev)&&/^[aeiou]/.test(w)) add("Nối âm: phụ âm cuối của từ trước dính vào nguyên âm đầu",prev+" "+w);
+    if(/[aeiou]t[aeiouy]/.test(w)||(/t$/.test(w)&&/^[aeiou]/.test(next))) add("T giữa hai nguyên âm đọc gần như D (giọng Mỹ)",words[i]);
+    if(/(ed|s|ts|ks|st)$/.test(w)&&w.length>3) add("Âm cuối -ed, -s, -st rất nhẹ, dễ mất",words[i]);
+    if(/^(going|want|got|have|kind|out|let|give)$/.test(w)&&/^(to|of|me)$/.test(next)) add("Cụm rút gọn: gonna, wanna, gotta, kinda, lemme…",w+" "+next);
+  });
+  if(!out.size) return "";
+  return `<div class="small" style="border-left:3px solid var(--amber);padding-left:10px"><b>Có thể bạn vấp ở:</b>${[...out].map(([k,ws])=>`<div>• ${esc(k)}: <span class="mono">${[...ws].slice(0,3).map(esc).join(", ")}</span></div>`).join("")}</div>`;
+}
 /* =============================== AI: WHY DID I MISHEAR =============================== */
 /* In the Claude artifact: the `sample` capability (no key). On GitHub Pages: the user's own key saved by Talk Shop. */
 function aiMd(s){

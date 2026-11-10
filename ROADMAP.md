@@ -12,8 +12,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop: pace coach — live words-per-minute meter while you talk
-- [ ] Listen 30: dictation hint level 2 (show the connected-speech rule that applies to the missed words)
+- [ ] Talk Shop: role-play difficulty levels (partner speaks faster, interrupts, uses heavier accent)
+- [ ] Listen 30: 'meeting notes' exercise — after a mock meeting, write the 3 action items, Claude/keywords check them
 
 ## Follow-ups
 
@@ -23,6 +23,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Listen 30: dictation hint level 2 (show the connected-speech rule that applies to the missed words)
+- [x] Talk Shop: pace coach — live words-per-minute meter while you talk
 - [x] Both: README update with features and how to use them
 - [x] Listen 30: "meeting mode" — continuous listening of a full mock meeting with live captions toggle, no quiz
 - [x] Talk Shop: numbers speaking drill (say prices, dates, part numbers, flight numbers; checked by recognition)
