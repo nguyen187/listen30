@@ -1834,8 +1834,17 @@ function wkMeet(body){
    <div id="mt-cap" class="panel" style="background:var(--bg);font-size:17px;min-height:2.6em" ${S.liveCC?"":"hidden"}></div>
    <div id="mt-now" class="small mono muted" style="min-height:1.4em">Nghe ít nhất một lần không nhìn chữ, trả lời câu hỏi, rồi mới mở transcript.</div>
    <div id="mt-lines" class="stack" style="gap:4px" hidden>${m.lines.map(([who,t],i)=>`<div class="row mt-line" data-l="${i}" style="flex-wrap:nowrap;gap:10px;align-items:flex-start;padding:6px 8px;border-radius:6px"><button class="btn sm play" data-pl="${i}" aria-label="Nghe câu này"></button><span style="min-width:0"><b>${esc(who)}</b> <span class="muted small">(${accLabel(effAcc(sp[who]))})</span><br>${esc(t)}</span></div>`).join("")}</div>
-  </div><div class="panel stack" id="mt-quiz"></div>`;
+  </div><div class="panel stack" id="mt-quiz"></div>
+  <div class="panel stack" id="mt-notes"><h3>Ghi biên bản</h3><div class="small muted">Như sau một cuộc họp thật: ghi lại các việc cần làm (ai, làm gì, hạn khi nào), mỗi dòng một việc, bằng tiếng Anh hoặc tiếng Việt.</div>
+   <textarea id="mn-notes" rows="4" placeholder="Ví dụ: Arjun – send the PFR – today\nJulien – ship the pump – Thursday"></textarea>
+   <div class="row"><button class="btn sm primary" id="mn-cmp">So với cuộc họp</button>${(ON_PAGES?!!pagesKey():!!(window.claude&&window.claude.use))?'<button class="btn sm" id="mn-ai">Claude chấm biên bản</button>':""}</div><div id="mn-out"></div></div>`;
   const now=body.querySelector("#mt-now"), linesEl=body.querySelector("#mt-lines");
+  { const nOut=body.querySelector("#mn-out"), notes=body.querySelector("#mn-notes");
+    const commits=m.lines.filter(([,t])=>/\b(I'll|I will|we'll|will|can you|could you|please|let's|kindly)\b/i.test(t));
+    body.querySelector("#mn-cmp").onclick=()=>{ nOut.innerHTML=`<div class="small"><b>Những câu có cam kết hoặc yêu cầu trong cuộc họp:</b>${commits.map(([w,t])=>`<div style="margin-top:4px">• <b>${esc(w)}:</b> ${esc(t)}</div>`).join("")}<div class="muted" style="margin-top:6px">Đối chiếu: bạn đã ghi đủ ai, việc gì, hạn khi nào chưa?</div></div>`; };
+    const aiB=body.querySelector("#mn-ai"); if(aiB) aiB.onclick=async()=>{ if(!notes.value.trim()){ notes.focus(); return; } nOut.innerHTML='<span class="small muted">Claude đang đọc biên bản…</span>';
+      try{ const t=await aiAsk(`Here is the transcript of a mock meeting:\n${m.lines.map(([w,t])=>w+": "+t).join("\n")}\n\nA Vietnamese learner wrote these meeting notes / action items:\n"""${notes.value}"""\n\nIn Vietnamese, briefly: list the real action items (owner, task, deadline) on lines starting with "- ", mark which ones the learner captured correctly or missed, and give one tip for taking notes in English meetings.`,txt=>{ nOut.innerHTML=aiMd(txt); }); nOut.innerHTML=aiMd(t); }
+      catch(e){ nOut.innerHTML=`<span class="small" style="color:var(--bad)">${aiErrMsg(e)}</span>`; } }; }
   const cap=body.querySelector("#mt-cap");
   body.querySelector("#mt-cc").onchange=e=>{ S.liveCC=e.target.checked; save(); cap.hidden=!S.liveCC; };
   const mark=i=>{ body.querySelectorAll(".mt-line").forEach(x=>x.classList.toggle("now",+x.dataset.l===i)); if(cap) cap.innerHTML=i>=0?`<b>${esc(m.lines[i][0])}:</b> ${esc(m.lines[i][1])}`:""; if(i>=0){ const w=m.lines[i][0]; now.textContent=`▶ ${w} (${accLabel(effAcc(sp[w]))}) đang nói · ${i+1}/${m.lines.length}`; } else now.textContent="Hết cuộc họp. Trả lời câu hỏi bên dưới."; };
