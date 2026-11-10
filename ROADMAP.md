@@ -12,7 +12,9 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop: Mentor AI "explain like a colleague" for any term (hear an SME-style explanation, then retell it)
+- [ ] Listen 30: weekly listening review — redo the 10 worst dictation sentences of the week
+- [ ] Talk Shop: small-talk deck (weekend, weather, travel, food) with 20 quick prompts and model answers
+- [ ] Both: settings sync note — explain how the artifact and GitHub copies differ, with one-click export/import between them
 
 ## Follow-ups
 
@@ -22,6 +24,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Talk Shop: Mentor AI "explain like a colleague" for any term (hear an SME-style explanation, then retell it)
 - [x] Listen 30: accent comparison drill (same sentence in 4 accents, guess the accent)
 - [x] Talk Shop: pronunciation of the user's own term list (paste words → practice cards)
 - [x] Both: share a progress card image (canvas) to post in the team chat

@@ -992,6 +992,35 @@ ${l30}
 
 In Vietnamese: 1) what improved, with the numbers; 2) the two weakest points right now; 3) a plan for next week as 5 concrete daily tasks that name app sections; 4) one short, honest sentence of encouragement. If I practised little, say so plainly and make the plan smaller. Keep it short.`;
 }
+const EXPLAIN_SCHEMA={type:"object",additionalProperties:false,required:["explanation","key_points"],properties:{explanation:{type:"string",description:"Spoken explanation, 4-6 sentences"},key_points:{type:"array",items:{type:"string"},description:"3-4 short lowercase English keywords the retelling must include"}}};
+function explainUI(el){
+  el.innerHTML=`<div class="stack" style="gap:10px"><div class="small muted">Gõ một thuật ngữ hoặc khái niệm. Mentor đóng vai đồng nghiệp (SME, kỹ sư Airbus) giải thích bằng tiếng Anh nói. Bạn nghe không nhìn chữ, rồi kể lại bằng lời của mình.</div>
+   <div class="row"><input type="text" id="ex-term" placeholder="Ví dụ: MTBUR, interval escalation, configuration in parts" style="flex:1;min-width:200px"><button class="btn sm primary" id="ex-go">Nhờ giải thích</button></div><div id="ex-out"></div></div>`;
+  const out=el.querySelector("#ex-out");
+  el.querySelector("#ex-go").onclick=async()=>{
+    const term=el.querySelector("#ex-term").value.trim(); if(!term) return;
+    const btn=el.querySelector("#ex-go"); btn.disabled=true; out.innerHTML='<div class="small muted">Đồng nghiệp đang nghĩ cách giải thích…</div>';
+    const acc=((S.profile&&S.profile.accs)||["gb"])[Math.floor(Math.random()*(((S.profile&&S.profile.accs)||["gb"]).length))];
+    try{
+      const m=await aiCall({schema:EXPLAIN_SCHEMA,messages:[{role:"user",content:`Explain "${term}" the way an experienced aviation data or maintenance colleague would explain it out loud to a new team member in a meeting: natural spoken English, 4-6 short sentences, one concrete example from airline operations or reliability data, no lists. Then give 3-4 keywords the listener should repeat when retelling it.`}]});
+      if(m.stop_reason==="refusal") throw new Error("Mentor không giải thích được thuật ngữ này.");
+      const j=JSON.parse(msgText(m));
+      out.innerHTML=`<div class="panel stack" style="background:var(--bg);gap:8px"><div class="row"><button class="btn sm primary play" id="ex-play">Nghe đồng nghiệp (giọng ${ACCL[acc]||"Anh"})</button><button class="btn sm" id="ex-slow">Chậm</button><button class="btn sm ghost" id="ex-show">Hiện chữ</button></div><div id="ex-text" hidden>${esc(j.explanation)}</div>
+        <div class="small muted">Giờ kể lại bằng tiếng Anh, khoảng 30–45 giây. Nên nhắc tới: ${(j.key_points||[]).map(k=>`<span class="chip">${esc(k)}</span>`).join(" ")}</div><div id="ex-sp"></div></div>`;
+      out.querySelector("#ex-play").onclick=()=>speak(j.explanation,1,acc);
+      out.querySelector("#ex-slow").onclick=()=>speak(j.explanation,0.8,acc);
+      out.querySelector("#ex-show").onclick=()=>{ out.querySelector("#ex-text").hidden=false; };
+      speak(j.explanation,1,acc);
+      mountSpeak(out.querySelector("#ex-sp"),{label:"Kể lại: "+term,kind:"retell",continuous:true,maxSec:90,keys:j.key_points||[],onResult:(r,resEl)=>{
+        if(!r.text) return;
+        resEl.innerHTML=`<div class="row">${(r.hits||[]).map(h=>`<span class="chip ${h.hit?"ok":"bad"}">${h.hit?"✓":"✗"} ${esc(h.k)}</span>`).join("")}</div>`;
+        aiFeedback(resEl,`A colleague explained "${term}" to me like this: """${j.explanation}"""
+I retold it in my own words (speech recognition transcript): """${r.text}"""
+In Vietnamese, briefly: 1) did I keep the main idea (có/chưa, thiếu gì); 2) two corrections of my English, each with the better sentence on a line starting with "> "; 3) a polished 2-3 sentence version of my retelling, each sentence on its own "> " line.`,"Mentor chấm phần kể lại"); }});
+    }catch(e){ out.innerHTML=`<div class="small" style="color:var(--bad)">${esc(e instanceof SyntaxError?"Mentor trả về dữ liệu lỗi, thử lại.":aiErrorText(e).replace(/^Lỗi: /,""))}</div>`; }
+    btn.disabled=false;
+  };
+}
 function writeUI(el){
   el.innerHTML=`<div class="stack" style="gap:10px"><div class="small muted">Nói hoặc gõ ý chính (tiếng Việt hay tiếng Anh đều được). Mentor viết thành tin nhắn tiếng Anh chuyên nghiệp và chỉ ra vài cụm từ đáng học.</div>
    <textarea id="wr-notes" rows="4" placeholder="Ví dụ: báo Julien là dữ liệu ACARS thiếu từ thứ Hai, đã sửa, đang nạp bù, chiều mai xong; nhờ anh ấy báo đội reliability"></textarea>
@@ -1041,7 +1070,7 @@ function aiPanel(el){
     <div class="row"><button class="btn primary" id="ai-save">Lưu và kiểm tra</button>${has?'<button class="btn ghost" id="ai-del">Xoá key khỏi máy này</button>':""}<span class="small" id="ai-msg"></span></div>
     <div class="small muted">Ứng dụng bật cơ chế dự phòng của Anthropic (server-side fallback) cho Opus và Sonnet: nếu model từ chối một yêu cầu, máy chủ tự chuyển sang model khác để trả lời.</div>
    </div>
-   ${has?`<div id="ai-week" class="stack" style="gap:8px"></div><details class="stack" id="ai-write"><summary style="cursor:pointer"><b>Soạn tin nhắn Teams / email từ ghi chú</b></summary><div id="ai-write-body" style="margin-top:10px"></div></details><div id="ai-chat" class="stack" style="gap:10px"></div>`:""}</div>`;
+   ${has?`<div id="ai-week" class="stack" style="gap:8px"></div><details class="stack" id="ai-explain"><summary style="cursor:pointer"><b>Nghe đồng nghiệp giải thích, rồi kể lại</b></summary><div id="ai-explain-body" style="margin-top:10px"></div></details><details class="stack" id="ai-write"><summary style="cursor:pointer"><b>Soạn tin nhắn Teams / email từ ghi chú</b></summary><div id="ai-write-body" style="margin-top:10px"></div></details><div id="ai-chat" class="stack" style="gap:10px"></div>`:""}</div>`;
   const msg=el.querySelector("#ai-msg");
   el.querySelector("#ai-model").onchange=e=>{ S.aiModel=e.target.value; save(); };
   const set=el.querySelector("#ai-set"); if(set) set.onclick=()=>{ const s=el.querySelector("#ai-settings"); s.hidden=!s.hidden; };
@@ -1053,7 +1082,7 @@ function aiPanel(el){
     try{ const m=await aiCall({messages:[{role:"user",content:"Reply with exactly: OK"}]}); msg.style.color="var(--good)"; msg.textContent="Key hoạt động ("+m.model+")."; el.querySelector("#ai-key").value=""; setTimeout(()=>aiPanel(el),900); }
     catch(e){ msg.style.color="var(--bad)"; msg.textContent=aiErrorText(e); }
   };
-  if(has){ aiFeedback(el.querySelector("#ai-week"),weekPrompt(),"Báo cáo tiến bộ 7 ngày qua"); writeUI(el.querySelector("#ai-write-body")); chatUI(el.querySelector("#ai-chat")); }
+  if(has){ aiFeedback(el.querySelector("#ai-week"),weekPrompt(),"Báo cáo tiến bộ 7 ngày qua"); writeUI(el.querySelector("#ai-write-body")); explainUI(el.querySelector("#ai-explain-body")); chatUI(el.querySelector("#ai-chat")); }
 }
 const QUICK=["Dựa vào dữ liệu của tôi, tuần này tôi nên tập trung vào gì?","Tôi sắp họp với Airbus để lấy yêu cầu dashboard reliability. Giúp tôi chuẩn bị 5 câu nói và 3 câu hỏi.","Sửa câu này cho tự nhiên hơn: ","Khi người Ấn nói \"kindly revert\" thì tôi nên trả lời thế nào?","Đóng vai SME hỏi tôi về utilization data, mỗi lượt một câu, rồi chấm câu trả lời của tôi.","Phỏng vấn thử: bạn là hiring manager tuyển data engineer cho nền tảng dữ liệu hàng không. Hỏi tôi từng câu một bằng tiếng Anh, đặt câu hỏi trên dòng bắt đầu bằng \"> \". Tôi sẽ trả lời bằng giọng nói. Sau mỗi câu trả lời, chấm ngắn bằng tiếng Việt (nội dung, độ rõ, tiếng Anh) kèm một câu trả lời mẫu tốt hơn, rồi hỏi câu tiếp. Tổng cộng 6 câu, câu cuối tổng kết điểm mạnh và điểm cần sửa."];
 function chatUI(el){
