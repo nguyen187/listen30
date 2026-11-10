@@ -402,10 +402,35 @@ async function getMic(){ if(micStream&&micStream.active) return micStream; micSt
 function micHelp(err){
   const inApp=/Electron|Claude/i.test(navigator.userAgent);
   if(err==="not-allowed"||err==="service-not-allowed") return "Trình duyệt đang chặn micro cho trang này. Bấm biểu tượng ổ khoá cạnh địa chỉ trang → Micro → Cho phép, rồi tải lại trang. Trên Mac, kiểm tra thêm Cài đặt hệ thống → Quyền riêng tư & Bảo mật → Micro → bật cho Chrome."+(inApp?" Trình duyệt bên trong app không dùng được micro: hãy mở trang này bằng Chrome hoặc Edge.":"");
+  if(err==="busy") return "Micro đang bị ứng dụng khác dùng (Teams, Zoom, Meet…). Tắt micro hoặc thoát cuộc gọi ở ứng dụng đó rồi thử lại.";
   if(err==="audio-capture") return "Không tìm thấy micro. Cắm tai nghe có micro, hoặc chọn đúng micro trong cài đặt âm thanh của máy.";
   if(err==="network") return "Nhận dạng giọng nói của Chrome cần Internet. Kiểm tra kết nối rồi thử lại.";
   if(err==="language-not-supported") return "Trình duyệt không hỗ trợ ngôn ngữ nhận dạng đã chọn. Đổi về Tiếng Anh Mỹ trong tab Tiến độ.";
-  return "Máy chưa nghe được gì. Nói to, rõ hơn, gần micro hơn, rồi bấm nút đỏ để thử lại.";
+  return "Máy chưa nghe được gì. Nói to, rõ hơn, gần micro hơn, rồi bấm nút đỏ để thử lại. Nếu vẫn không được, vào tab Tiến độ → Chạy kiểm tra micro từng bước.";
+}
+/* step-by-step microphone self-test */
+async function micTest(out){
+  const row=(ok,t,d)=>{ out.insertAdjacentHTML("beforeend",`<div class="row" style="flex-wrap:nowrap;align-items:flex-start;gap:8px"><span class="chip ${ok===true?"ok":ok===false?"bad":"warn"}">${ok===true?"Đạt":ok===false?"Lỗi":"…"}</span><span class="small"><b>${esc(t)}</b>${d?"<br>"+d:""}</span></div>`); return out.lastElementChild; };
+  out.innerHTML="";
+  const ua=navigator.userAgent, browser=/Edg\//.test(ua)?"Edge":/Chrome\//.test(ua)&&!/Electron/.test(ua)?"Chrome":/Safari\//.test(ua)&&!/Chrome/.test(ua)?"Safari":/Electron|Claude/.test(ua)?"trình duyệt trong app":"trình duyệt khác";
+  row(browser==="Chrome"||browser==="Edge",`1. Trình duyệt: ${browser}`,browser==="Chrome"||browser==="Edge"?"Hỗ trợ đầy đủ ghi âm và nhận dạng.":"Nên mở bằng Chrome hoặc Edge trên máy tính. "+(browser==="trình duyệt trong app"?"Trình duyệt bên trong app không cho dùng micro.":"Safari/iPhone có thể không cho vừa ghi âm vừa nhận dạng."));
+  row(isSecureContext,"2. Trang an toàn (https)",isSecureContext?"":"Micro chỉ dùng được trên https.");
+  try{ const st=(await navigator.permissions.query({name:"microphone"})).state; row(st==="granted"?true:st==="denied"?false:null,`3. Quyền micro: ${({granted:"đã cho phép",denied:"đang bị chặn",prompt:"sẽ hỏi khi dùng"})[st]||st}`,st==="denied"?micHelp("not-allowed"):""); }catch(e){ row(null,"3. Quyền micro: trình duyệt không cho biết",""); }
+  let stream=null;
+  try{ stream=await navigator.mediaDevices.getUserMedia({audio:true}); const tr=stream.getAudioTracks()[0]; row(true,"4. Mở micro",esc(tr&&tr.label||"")); }
+  catch(e){ row(false,"4. Mở micro",esc((e&&e.name)||"")+": "+micHelp(e&&e.name==="NotFoundError"?"audio-capture":e&&e.name==="NotReadableError"?"busy":"not-allowed")); return; }
+  const lv=row(null,"5. Mức âm thanh: hãy nói “hello” trong 3 giây","");
+  let peak=0; try{ const ac=new (window.AudioContext||window.webkitAudioContext)(); const src=ac.createMediaStreamSource(stream), an=ac.createAnalyser(); an.fftSize=1024; src.connect(an); const buf=new Uint8Array(an.fftSize); const t0=Date.now();
+    await new Promise(r=>{ const tick=()=>{ an.getByteTimeDomainData(buf); for(const v of buf) peak=Math.max(peak,Math.abs(v-128)); if(Date.now()-t0<3000) requestAnimationFrame(tick); else r(); }; tick(); }); ac.close(); }catch(e){}
+  lv.remove(); row(peak>8,`5. Mức âm thanh: ${peak>8?"micro thu được tiếng":"gần như im lặng"}`,peak>8?"":"Micro mở nhưng không thu được tiếng: kiểm tra đúng micro trong cài đặt âm thanh của máy, hoặc micro đang bị tắt tiếng.");
+  if(window.MediaRecorder){ try{ const chunks=[]; const rec=new MediaRecorder(stream); rec.ondataavailable=e=>e.data.size&&chunks.push(e.data); const pr=row(null,"6. Ghi thử 2 giây: nói gì đó",""); rec.start(); await new Promise(r=>setTimeout(r,2000)); await new Promise(r=>{ rec.onstop=r; rec.stop(); }); pr.remove();
+      const url=URL.createObjectURL(new Blob(chunks,{type:chunks[0]?chunks[0].type:"audio/webm"})); const el=row(chunks.length>0,"6. Ghi âm",chunks.length?`<audio controls src="${url}" style="height:32px"></audio>`:"Không ghi được dữ liệu."); }catch(e){ row(false,"6. Ghi âm",esc(e.message||"")); } }
+  else row(false,"6. Ghi âm","Trình duyệt không hỗ trợ ghi âm.");
+  stream.getTracks().forEach(t=>t.stop()); micStream=null;
+  if(!SR){ row(false,"7. Nhận dạng giọng nói","Trình duyệt không có. Dùng Chrome hoặc Edge."); return; }
+  const sr=row(null,"7. Nhận dạng: hãy nói “testing one two three”","");
+  await new Promise(res=>{ const r=new SR(); r.lang=S.recLang||"en-US"; r.interimResults=false; let got="", er=""; r.onresult=e=>{ got=e.results[0][0].transcript; }; r.onerror=e=>{ er=e.error; }; r.onend=()=>{ sr.remove(); row(!!got,"7. Nhận dạng giọng nói",got?`Máy nghe được: “${esc(got)}”`:(er?esc(er)+": "+micHelp(er):"Không nghe thấy gì. Nói to hơn hoặc gần micro hơn.")); res(); }; try{ r.start(); setTimeout(()=>{ try{ r.stop(); }catch(e){} },7000); }catch(e){ sr.remove(); row(false,"7. Nhận dạng giọng nói",esc(e.message||"")); res(); } });
+  out.insertAdjacentHTML("beforeend",'<div class="small muted">Nếu bước nào báo Lỗi, làm theo hướng dẫn ở bước đó rồi chạy lại. Gửi ảnh chụp kết quả này nếu vẫn không được.</div>');
 }
 /* mountSpeak: one record button + live transcript + result.
    opts: target (sentence to compare), keys (keywords), continuous, maxSec, onResult(res) */
@@ -424,12 +449,12 @@ function mountSpeak(el,opts={}){
     if(active&&active!==stop) active();
     if(hasTTS) speechSynthesis.cancel();
     let stream=null, micErr=null; try{ stream=await getMic(); }catch(e){ micErr=e&&e.name||"error"; }
-    if(!stream&&!SR){ live.classList.add("empty"); live.textContent=micHelp(micErr==="NotFoundError"?"audio-capture":"not-allowed"); return; }
+    if(!stream&&!SR){ live.classList.add("empty"); live.textContent=micHelp(micErr==="NotFoundError"?"audio-capture":micErr==="NotReadableError"?"busy":"not-allowed"); return; }
     const chunks=[]; let rec=null; if(stream){ try{ rec=new MediaRecorder(stream); rec.ondataavailable=e=>e.data.size&&chunks.push(e.data); rec.start(); }catch(e){} }
     let finalT="", interim="", stopped=false, err=null, t0=Date.now(), recog=null, timer=null;
     run={rec,chunks,t0};
     btn.setAttribute("aria-pressed","true"); live.classList.remove("empty"); live.textContent="Đang nghe…"; resEl.innerHTML="";
-    let lastHeard=0, restarts=0;
+    let lastHeard=0, restarts=0, retriedNoRec=false;
     timer=setInterval(()=>{ const now=Date.now(), s=Math.floor((now-t0)/1000);
       if(opts.continuous){ const w=norm(finalT+" "+interim).length, live=s>=8?Math.round(w/(s/60)):0;
         tEl.innerHTML=Math.floor(s/60)+":"+String(s%60).padStart(2,"0")+(opts.maxSec?" / "+Math.floor(opts.maxSec/60)+":"+String(opts.maxSec%60).padStart(2,"0"):"")+(live?` <span class="chip ${live>=110&&live<=165?"ok":"warn"}" style="font-size:13px">${live} từ/phút · ${live<110?"nói nhanh hơn chút":live>165?"chậm lại":"tốt"}</span>`:"");
@@ -442,7 +467,7 @@ function mountSpeak(el,opts={}){
       const done=()=>{ if(chunks.length){ const blob=new Blob(chunks,{type:chunks[0].type||"audio/webm"}); aud.src=URL.createObjectURL(blob); aud.hidden=false; if(opts.onBlob) opts.onBlob(blob); const cmp=el.querySelector("#"+id+"-cmp"); if(cmp){ cmp.hidden=false; el.querySelector("#"+id+"-ab").onclick=async()=>{ aud.pause(); aud.currentTime=0; await speak(opts.target,1,opts.acc||"us"); await new Promise(r=>setTimeout(r,350)); aud.play().catch(()=>{}); }; } if(dur>1.5) recAdd({ts:Date.now(),label:opts.label||opts.target||"Bản ghi",kind:opts.kind||"phrase",text:(lastRes&&lastRes.text)||"",score:lastRes?(lastRes.score!=null?lastRes.score:(lastRes.cover!=null?lastRes.cover:null)):null,wpm:lastRes&&lastRes.wpm||0,dur:Math.round(dur),blob}); } };
       if(rec&&rec.state!=="inactive"){ rec.onstop=done; rec.stop(); } else done();
       const text=(finalT+" "+interim).trim();
-      if(!text){ live.classList.add("empty"); live.textContent= SR? micHelp(err||(micErr?(micErr==="NotFoundError"?"audio-capture":"not-allowed"):"no-speech")) : "Trình duyệt này không có nhận dạng giọng nói. Hãy nghe lại bản ghi của bạn và so với mẫu, hoặc mở bằng Chrome/Edge để được chấm."; }
+      if(!text){ live.classList.add("empty"); live.textContent= SR? micHelp(err||(micErr?(micErr==="NotFoundError"?"audio-capture":micErr==="NotReadableError"?"busy":"not-allowed"):"no-speech")) : "Trình duyệt này không có nhận dạng giọng nói. Hãy nghe lại bản ghi của bạn và so với mẫu, hoặc mở bằng Chrome/Edge để được chấm."; }
       else live.textContent=text;
       const res={text,dur,words:norm(text).length};
       res.wpm=dur>3?Math.round(res.words/(dur/60)):0;
@@ -459,7 +484,7 @@ function mountSpeak(el,opts={}){
       const FATAL=["not-allowed","service-not-allowed","audio-capture","network","language-not-supported"];
       const startRecog=()=>{ recog=new SR(); recog.lang=S.recLang||"en-US"; recog.interimResults=true; recog.continuous=true; recog.maxAlternatives=1;
         recog.onresult=e=>{ lastHeard=Date.now(); interim=""; for(let i=e.resultIndex;i<e.results.length;i++){ const tr=e.results[i][0].transcript; if(e.results[i].isFinal) finalT+=tr+" "; else interim+=tr; } live.textContent=(finalT+interim).trim()||"Đang nghe…"; };
-        recog.onerror=e=>{ if(e.error!=="no-speech"&&e.error!=="aborted") err=e.error; };
+        recog.onerror=e=>{ if(e.error==="audio-capture"&&stream&&!retriedNoRec){ retriedNoRec=true; try{ if(rec&&rec.state!=="inactive") rec.stop(); }catch(x){} stream.getTracks().forEach(t=>t.stop()); micStream=null; stream=null; return; } if(e.error!=="no-speech"&&e.error!=="aborted") err=e.error; };
         recog.onend=()=>{ if(!stopped&&!FATAL.includes(err)&&restarts<60){ restarts++; if(interim){ finalT+=interim+" "; interim=""; } try{ startRecog(); }catch(e){ stopped=true; finish(); } return; } if(!stopped){ stopped=true; finish(); } else finish2(); };
         try{ recog.start(); }catch(e){} };
       const finish2=()=>{};
@@ -755,7 +780,7 @@ function rProg(el){
     <div class="row"><label for="st-rec" style="width:200px">Máy nhận dạng giọng của bạn theo</label><select id="st-rec">${recLangs.map(([v,t])=>`<option value="${v}" ${S.recLang===v?"selected":""}>${t}</option>`).join("")}</select></div>
     <div class="small muted">Để "Tiếng Anh Mỹ" nếu muốn chấm khắt khe nhất. Đeo tai nghe để micro không thu lại giọng đọc mẫu.</div>
     <div class="row"><span style="width:200px">Giọng đồng nghiệp ảo</span>${Object.keys(ACCL).map(a=>{ const v=voiceFor(a); return `<span class="chip">${ACCL[a]}: ${esc(v?v.name:"không có")}</span>`; }).join("")}</div>
-    <div class="row"><button class="btn sm" id="st-mic">Kiểm tra micro</button><span class="small muted" id="st-mic-r"></span></div>
+    <div class="row"><button class="btn sm primary" id="st-mic">Chạy kiểm tra micro từng bước</button></div><div id="st-mic-r" class="stack" style="gap:4px"></div>
    </div>
    <div class="panel stack"><div class="row" style="justify-content:space-between"><h3>Thẻ tiến độ để chia sẻ</h3><span class="row"><button class="btn sm primary" id="sc-copy">Sao chép ảnh</button><button class="btn sm" id="sc-dl">Tải ảnh PNG</button></span></div><canvas id="sc-cv" width="1200" height="630" style="width:100%;max-width:600px;height:auto;border-radius:10px;border:1px solid var(--line)" role="img" aria-label="Ảnh thẻ tiến độ"></canvas><span class="small muted" id="sc-msg">Dán vào Teams hoặc chat nhóm để giữ động lực.</span></div>
    <div class="panel stack"><div class="row" style="justify-content:space-between"><h3>Lịch sử ghi âm</h3><button class="btn sm ghost" id="rec-clear">Xoá lịch sử</button></div><div class="small muted">Giữ 60 bản ghi gần nhất trên máy này. Nghe lại bản đầu tiên và bản mới nhất của cùng một bài để thấy mình tiến bộ.</div><div id="rec-list"><span class="small muted">Đang tải…</span></div></div>
@@ -763,7 +788,7 @@ function rProg(el){
     <div class="row"><button class="btn sm" id="io-exp">Tải file tiến độ</button><button class="btn sm" id="io-copy">Sao chép mã</button><label class="btn sm" for="io-file">Nhập từ file</label><input type="file" id="io-file" accept=".json,application/json,text/plain" hidden><button class="btn sm" id="io-paste">Dán mã</button></div><div id="io-area"></div></div></div>`;
   bindIO(el); drawRecs(el); shareCard(el);
   el.querySelector("#st-rec").onchange=e=>{ S.recLang=e.target.value; save(); };
-  el.querySelector("#st-mic").onclick=async()=>{ const r=el.querySelector("#st-mic-r"); try{ await getMic(); r.textContent="Micro hoạt động. "+(SR?"Có nhận dạng giọng nói.":"Trình duyệt không có nhận dạng giọng nói, hãy dùng Chrome hoặc Edge."); }catch(e){ r.textContent="Không mở được micro: hãy cho phép trang dùng micro."; } };
+  el.querySelector("#st-mic").onclick=()=>micTest(el.querySelector("#st-mic-r"));
 }
 
 /* =============================== MENTOR =============================== */
