@@ -1153,6 +1153,9 @@ applyTheme();
 const warn=[]; if(!SR) warn.push("Trình duyệt này không có nhận dạng giọng nói, nên chỉ ghi âm được mà không chấm được. Hãy mở bằng Chrome hoặc Edge.");
 if(!navigator.mediaDevices||!window.MediaRecorder) warn.push("Trình duyệt không hỗ trợ ghi âm.");
 if(warn.length){ const w=document.getElementById("warn"); w.textContent=warn.join(" "); w.hidden=false; }
+if("serviceWorker" in navigator && /github\.io$/.test(location.hostname)){ navigator.serviceWorker.register("../sw.js",{scope:"../"}).catch(()=>{}); }
+function netNote(){ const w=document.getElementById("warn"); if(!w) return; if(!navigator.onLine){ w.textContent="Bạn đang ngoại tuyến. Nghe mẫu và ghi âm vẫn dùng được; chấm điểm bằng nhận dạng giọng nói và Mentor AI cần Internet."; w.hidden=false; } }
+window.addEventListener("offline",netNote); window.addEventListener("online",()=>location.reload()); netNote();
 readHash(); if(view==="today"&&!openDay) openDay=curDay(); render(); renderTour(0);
 </script>
 </body>

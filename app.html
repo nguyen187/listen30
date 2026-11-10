@@ -2175,6 +2175,7 @@ applyTheme();
 if(!hasTTS) document.getElementById("tts-warn").hidden=false;
 readHash();
 if(view==="today" && !openDay) openDay=currentDay();
+if("serviceWorker" in navigator && /github\.io$/.test(location.hostname)){ navigator.serviceWorker.register("sw.js").catch(()=>{}); }
 render();
 initCloud(); renderTour(0);
 </script>
