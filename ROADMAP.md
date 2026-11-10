@@ -12,8 +12,6 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Listen 30: shadowing step records the learner too (reuse Talk Shop's recorder on GitHub Pages)
-- [ ] Talk Shop: daily goal ring on Mentor (minutes spoken today vs target)
 - [ ] Both: share a progress card image (canvas) to post in the team chat
 
 ## Follow-ups
@@ -24,6 +22,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Talk Shop: daily goal ring on Mentor (minutes spoken today vs target)
+- [x] Listen 30: shadowing step records the learner too (reuse Talk Shop's recorder on GitHub Pages)
 - [x] Both: offline support (cache page for flights) via a service worker on GitHub Pages
 - [x] Talk Shop: role-play replay — hear the whole conversation with your recorded answers stitched in
 - [x] Talk Shop: recording fix — no cut-off at pauses (silence detection), no restart loop on network/permission errors, clear microphone help

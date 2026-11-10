@@ -1087,13 +1087,29 @@ document.addEventListener("keydown",e=>{
 });
 
 /* ---------- Shadowing ---------- */
+const CAN_REC = !!(navigator.mediaDevices&&window.MediaRecorder) && /github\.io$/.test(location.hostname);
 function mountShadow(n, el){
   const items=shadowItems(n), d=D(n);
   while(d.sh.length<items.length) d.sh.push(0);
   el.innerHTML=`<p class="explain">Nghe một câu rồi nói to theo ngay, bắt chước cả nhịp, nối âm và ngữ điệu, như cái bóng. Tăng dần tốc độ. Nói được thì tai sẽ nghe được — vì não nhận ra những âm mà miệng đã từng tạo ra.</p>
    <div class="stack" style="gap:10px">${items.map((it,i)=>`<div class="sh"><div class="txt">${esc(it.text)}</div>
      <div class="row" style="justify-content:space-between"><div class="speeds">${[0.8,1,1.2,1.4].map(r=>`<button class="btn" data-i="${i}" data-r="${r}">×${r}</button>`).join("")}</div>
-     <button class="btn sm ${d.sh[i]>=3?"":"primary"}" data-rep="${i}">Tôi đã nói theo · <span class="mono">${Math.min(d.sh[i],3)}/3</span></button></div></div>`).join("")}</div>`;
+     <button class="btn sm ${d.sh[i]>=3?"":"primary"}" data-rep="${i}">Tôi đã nói theo · <span class="mono">${Math.min(d.sh[i],3)}/3</span></button></div>
+     ${CAN_REC?`<div class="row"><button class="btn sm" data-rec="${i}">Ghi âm giọng mình</button><button class="btn sm play" data-ab="${i}" hidden>Mẫu rồi mình</button><span class="small muted" data-rs="${i}"></span></div>`:""}</div>`).join("")}</div>
+   ${CAN_REC?"":`<div class="small muted">Muốn ghi âm và so giọng mình với mẫu, hãy dùng bản GitHub hoặc Talk Shop.</div>`}`;
+  const takes={}; let recNow=null;
+  el.querySelectorAll("[data-rec]").forEach(b=>b.onclick=async()=>{
+    const i=+b.dataset.rec, st=el.querySelector(`[data-rs="${i}"]`);
+    if(recNow&&recNow.i===i){ recNow.r.stop(); return; }
+    if(recNow) recNow.r.stop();
+    try{ const stream=await navigator.mediaDevices.getUserMedia({audio:true}); const r=new MediaRecorder(stream), ch=[];
+      r.ondataavailable=e=>e.data.size&&ch.push(e.data);
+      r.onstop=()=>{ stream.getTracks().forEach(t=>t.stop()); takes[i]=URL.createObjectURL(new Blob(ch,{type:ch[0]?ch[0].type:"audio/webm"})); b.textContent="Ghi lại"; st.textContent=""; el.querySelector(`[data-ab="${i}"]`).hidden=false; recNow=null;
+        const rep=el.querySelector(`[data-rep="${i}"]`); if(rep&&d.sh[i]<3) rep.click(); };
+      r.start(); recNow={i,r}; b.textContent="Dừng ghi"; st.textContent="Đang ghi… nói theo mẫu";
+    }catch(e){ st.textContent="Không mở được micro. Cho phép trang dùng micro rồi thử lại."; }
+  });
+  el.querySelectorAll("[data-ab]").forEach(b=>b.onclick=async()=>{ const i=+b.dataset.ab, it=items[i]; await speak(it.text,1,it.acc); await new Promise(r=>setTimeout(r,300)); if(takes[i]) new Audio(takes[i]).play().catch(()=>{}); });
   el.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{ const it=items[+b.dataset.i]; speak(it.text,+b.dataset.r,it.acc); });
   el.querySelectorAll("[data-rep]").forEach(b=>b.onclick=()=>{
     const i=+b.dataset.rep; d.sh[i]=(d.sh[i]||0)+1; save();

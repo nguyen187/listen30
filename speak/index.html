@@ -418,7 +418,7 @@ function mountSpeak(el,opts={}){
       else { const heard=(finalT+interim).trim(); if(heard&&now-lastHeard>1800) stop(); else if(!heard&&now-t0>10000) stop(); else if(now-t0>40000) stop(); }
     },250);
     const finish=()=>{ clearInterval(timer); btn.setAttribute("aria-pressed","false"); active=null;
-      const dur=(Date.now()-t0)/1000; S.secs=(S.secs||0)+dur; save();
+      const dur=(Date.now()-t0)/1000; S.secs=(S.secs||0)+dur; if(!S.daySecs) S.daySecs={}; S.daySecs[today()]=(S.daySecs[today()]||0)+dur; save();
       let lastRes=null;
       const done=()=>{ if(chunks.length){ const blob=new Blob(chunks,{type:chunks[0].type||"audio/webm"}); aud.src=URL.createObjectURL(blob); aud.hidden=false; if(opts.onBlob) opts.onBlob(blob); const cmp=el.querySelector("#"+id+"-cmp"); if(cmp){ cmp.hidden=false; el.querySelector("#"+id+"-ab").onclick=async()=>{ aud.pause(); aud.currentTime=0; await speak(opts.target,1,opts.acc||"us"); await new Promise(r=>setTimeout(r,350)); aud.play().catch(()=>{}); }; } if(dur>1.5) recAdd({ts:Date.now(),label:opts.label||opts.target||"Bản ghi",kind:opts.kind||"phrase",text:(lastRes&&lastRes.text)||"",score:lastRes?(lastRes.score!=null?lastRes.score:(lastRes.cover!=null?lastRes.cover:null)):null,wpm:lastRes&&lastRes.wpm||0,dur:Math.round(dur),blob}); } };
       if(rec&&rec.state!=="inactive"){ rec.onstop=done; rec.stop(); } else done();
@@ -759,13 +759,18 @@ function analyze(){
   return {P,acts:pickd,used,diag,l30,wpm};
 }
 let mentorEdit=false;
+function goalRing(){
+  const target=Math.max(5,Math.round(((S.profile&&S.profile.mins)||25)*0.4)), spoken=((S.daySecs||{})[today()]||0)/60, pct=Math.min(1,spoken/target);
+  const r=26, c=2*Math.PI*r;
+  return `<svg width="68" height="68" viewBox="0 0 68 68" role="img" aria-label="Đã nói ${spoken.toFixed(1)} trên ${target} phút hôm nay" style="flex:none"><circle cx="34" cy="34" r="${r}" fill="none" stroke="var(--sunken)" stroke-width="7"/><circle cx="34" cy="34" r="${r}" fill="none" stroke="${pct>=1?"var(--good)":"var(--accent)"}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(c*pct).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 34 34)"/><text x="34" y="33" text-anchor="middle" font-size="15" font-weight="700" fill="var(--ink)" font-family="JetBrains Mono,monospace">${spoken<10?spoken.toFixed(1):Math.round(spoken)}</text><text x="34" y="46" text-anchor="middle" font-size="9" fill="var(--muted)" font-family="Be Vietnam Pro,sans-serif">/${target} phút</text></svg>`;
+}
 function potd(){ const flat=PHRASES.flatMap((c,ci)=>c.p.map((_,i)=>({c:ci,i}))); return flat[today()%flat.length]; }
 function rMentor(el){
   const P=S.profile;
   if(!P||mentorEdit){ return mentorSetup(el); }
   const A=analyze();
   el.innerHTML=`<div class="stack">
-   <div class="row" style="justify-content:space-between;align-items:flex-end"><div><div class="label">Mentor · ${new Date().toLocaleDateString("vi-VN",{weekday:"long",day:"numeric",month:"numeric"})}</div><h2>Hôm nay bạn nên làm ${A.acts.length} việc, khoảng ${A.used} phút</h2></div><button class="btn sm ghost" id="mt-edit">Sửa hồ sơ</button></div>
+   <div class="row" style="justify-content:space-between;align-items:flex-end"><div class="row" style="gap:14px;flex-wrap:nowrap;align-items:center">${goalRing()}<div><div class="label">Mentor · ${new Date().toLocaleDateString("vi-VN",{weekday:"long",day:"numeric",month:"numeric"})}</div><h2>Hôm nay bạn nên làm ${A.acts.length} việc, khoảng ${A.used} phút</h2></div></div><button class="btn sm ghost" id="mt-edit">Sửa hồ sơ</button></div>
    <div class="panel stack"><div class="small muted">Thứ tự dưới đây đã xếp theo mức ưu tiên, dựa trên mục tiêu và kết quả luyện tập của bạn. Làm từ trên xuống.</div>
     ${A.acts.map((a,i)=>`<div class="row" style="flex-wrap:nowrap;align-items:flex-start;gap:14px;border-top:1px solid var(--line);padding-top:12px"><span class="score mono" style="font-size:26px;min-width:28px">${i+1}</span><div style="flex:1;min-width:0"><b>${esc(a.t)}</b> <span class="chip mono">${a.m} phút</span><div class="small muted">${esc(a.why)}</div></div>${a.href?`<a class="btn sm primary" href="${a.href}">Mở ↗</a>`:`<button class="btn sm primary" data-a="${i}">Làm ngay</button>`}</div>`).join("")}</div>
    <div class="panel stack" style="gap:8px"><div class="row" style="justify-content:space-between"><h3>Câu nói của ngày</h3><span class="small muted">${esc(PHRASES[potd().c].t)}</span></div><div class="small muted">Nói câu này 3 lần, rồi tìm cơ hội dùng nó trong cuộc họp hôm nay.</div><div id="potd"></div></div>
