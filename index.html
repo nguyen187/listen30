@@ -1851,16 +1851,17 @@ function wkMeet(body){
 }
 function accentGame(el){
   const accs=["us","gb","in","fr","de","es"].filter(a=>a==="us"||voiceOk(a)), pool=shuffle(MEETS.flatMap(m=>m.lines.map(l=>l[1])).filter(x=>x.split(" ").length>=8));
-  let q=0, right=0, answered=false; const prevForce=S.forceAcc; S.forceAcc="auto";
+  let q=0, right=0, answered=false;
+  const say=(t,a)=>{ const f=S.forceAcc; S.forceAcc="auto"; speak(t,1,a); S.forceAcc=f; };
   function next(){
-    if(q>=10){ S.forceAcc=prevForce; S.accentGame=Math.max(S.accentGame||0,right); save(); el.innerHTML=`<div class="row"><span class="score">${right}/10</span><span class="small muted">${right>=8?"Tai bạn phân biệt giọng tốt.":"Nghe lại phần đặc điểm từng giọng bên dưới rồi chơi lại."}</span></div>`; return; }
+    if(q>=10){ S.accentGame=Math.max(S.accentGame||0,right); save(); el.innerHTML=`<div class="row"><span class="score">${right}/10</span><span class="small muted">${right>=8?"Tai bạn phân biệt giọng tốt.":"Nghe lại phần đặc điểm từng giọng bên dưới rồi chơi lại."}</span></div>`; return; }
     const acc=accs[rnd(0,accs.length-1)], text=pool[q%pool.length]; answered=false;
     el.innerHTML=`<div class="stack" style="gap:8px"><div class="row" style="justify-content:space-between"><span class="label">Câu ${q+1}/10</span><button class="btn sm play" data-agp>Nghe lại</button></div><div class="opts">${accs.map(a=>`<button class="opt" data-a="${a}">${accLabel(a)}</button>`).join("")}</div><div class="small muted" data-agf style="min-height:1.4em"></div></div>`;
-    el.querySelector("[data-agp]").onclick=()=>speak(text,1,acc);
+    el.querySelector("[data-agp]").onclick=()=>say(text,acc);
     el.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{ if(answered) return; answered=true; const ok=b.dataset.a===acc; if(ok) right++;
       b.classList.add(ok?"right":"wrong"); el.querySelector(`[data-a="${acc}"]`).classList.add("right");
       el.querySelector("[data-agf]").innerHTML=`${esc(text)} <button class="btn sm" data-agn style="margin-left:6px">Tiếp →</button>`; el.querySelector("[data-agn]").onclick=()=>{ q++; next(); }; });
-    speak(text,1,acc);
+    say(text,acc);
   }
   next();
 }
