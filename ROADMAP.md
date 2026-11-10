@@ -12,7 +12,6 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop: role-play replay — hear the whole conversation with your recorded answers stitched in
 - [ ] Both: offline support (cache page for flights) via a service worker on GitHub Pages
 
 ## Follow-ups
@@ -23,6 +22,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Talk Shop: role-play replay — hear the whole conversation with your recorded answers stitched in
+- [x] Talk Shop: recording fix — no cut-off at pauses (silence detection), no restart loop on network/permission errors, clear microphone help
 - [x] Listen 30: listening speed test (find the fastest speed you still get 90%)
 - [x] Talk Shop: "phrase of the day" card on Mentor with a 1-minute speaking drill
 - [x] Both: accessibility pass (labels, focus order, contrast in dark mode)

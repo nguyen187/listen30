@@ -382,6 +382,14 @@ const FILLERS=/\b(um+|uh+|erm*|ah+|hmm+|you know|i mean|basically|kind of|sort o
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 let micStream=null, active=null;
 async function getMic(){ if(micStream&&micStream.active) return micStream; micStream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true}}); return micStream; }
+function micHelp(err){
+  const inApp=/Electron|Claude/i.test(navigator.userAgent);
+  if(err==="not-allowed"||err==="service-not-allowed") return "Trình duyệt đang chặn micro cho trang này. Bấm biểu tượng ổ khoá cạnh địa chỉ trang → Micro → Cho phép, rồi tải lại trang. Trên Mac, kiểm tra thêm Cài đặt hệ thống → Quyền riêng tư & Bảo mật → Micro → bật cho Chrome."+(inApp?" Trình duyệt bên trong app không dùng được micro: hãy mở trang này bằng Chrome hoặc Edge.":"");
+  if(err==="audio-capture") return "Không tìm thấy micro. Cắm tai nghe có micro, hoặc chọn đúng micro trong cài đặt âm thanh của máy.";
+  if(err==="network") return "Nhận dạng giọng nói của Chrome cần Internet. Kiểm tra kết nối rồi thử lại.";
+  if(err==="language-not-supported") return "Trình duyệt không hỗ trợ ngôn ngữ nhận dạng đã chọn. Đổi về Tiếng Anh Mỹ trong tab Tiến độ.";
+  return "Máy chưa nghe được gì. Nói to, rõ hơn, gần micro hơn, rồi bấm nút đỏ để thử lại.";
+}
 /* mountSpeak: one record button + live transcript + result.
    opts: target (sentence to compare), keys (keywords), continuous, maxSec, onResult(res) */
 function mountSpeak(el,opts={}){
@@ -398,19 +406,24 @@ function mountSpeak(el,opts={}){
   async function start(){
     if(active&&active!==stop) active();
     if(hasTTS) speechSynthesis.cancel();
-    let stream=null; try{ stream=await getMic(); }catch(e){ live.classList.add("empty"); live.textContent="Không mở được micro. Hãy cho phép trang dùng micro (biểu tượng ổ khoá trên thanh địa chỉ) rồi thử lại."; return; }
-    const chunks=[]; let rec=null; try{ rec=new MediaRecorder(stream); rec.ondataavailable=e=>e.data.size&&chunks.push(e.data); rec.start(); }catch(e){}
+    let stream=null, micErr=null; try{ stream=await getMic(); }catch(e){ micErr=e&&e.name||"error"; }
+    if(!stream&&!SR){ live.classList.add("empty"); live.textContent=micHelp(micErr==="NotFoundError"?"audio-capture":"not-allowed"); return; }
+    const chunks=[]; let rec=null; if(stream){ try{ rec=new MediaRecorder(stream); rec.ondataavailable=e=>e.data.size&&chunks.push(e.data); rec.start(); }catch(e){} }
     let finalT="", interim="", stopped=false, err=null, t0=Date.now(), recog=null, timer=null;
     run={rec,chunks,t0};
     btn.setAttribute("aria-pressed","true"); live.classList.remove("empty"); live.textContent="Đang nghe…"; resEl.innerHTML="";
-    if(opts.continuous){ timer=setInterval(()=>{ const s=Math.floor((Date.now()-t0)/1000); tEl.textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0")+(opts.maxSec?" / "+Math.floor(opts.maxSec/60)+":"+String(opts.maxSec%60).padStart(2,"0"):""); if(opts.maxSec&&s>=opts.maxSec) stop(); },250); }
+    let lastHeard=0, restarts=0;
+    timer=setInterval(()=>{ const now=Date.now(), s=Math.floor((now-t0)/1000);
+      if(opts.continuous){ tEl.textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0")+(opts.maxSec?" / "+Math.floor(opts.maxSec/60)+":"+String(opts.maxSec%60).padStart(2,"0"):""); if(opts.maxSec&&s>=opts.maxSec) stop(); }
+      else { const heard=(finalT+interim).trim(); if(heard&&now-lastHeard>1800) stop(); else if(!heard&&now-t0>10000) stop(); else if(now-t0>40000) stop(); }
+    },250);
     const finish=()=>{ clearInterval(timer); btn.setAttribute("aria-pressed","false"); active=null;
       const dur=(Date.now()-t0)/1000; S.secs=(S.secs||0)+dur; save();
       let lastRes=null;
-      const done=()=>{ if(chunks.length){ const blob=new Blob(chunks,{type:chunks[0].type||"audio/webm"}); aud.src=URL.createObjectURL(blob); aud.hidden=false; const cmp=el.querySelector("#"+id+"-cmp"); if(cmp){ cmp.hidden=false; el.querySelector("#"+id+"-ab").onclick=async()=>{ aud.pause(); aud.currentTime=0; await speak(opts.target,1,opts.acc||"us"); await new Promise(r=>setTimeout(r,350)); aud.play().catch(()=>{}); }; } if(dur>1.5) recAdd({ts:Date.now(),label:opts.label||opts.target||"Bản ghi",kind:opts.kind||"phrase",text:(lastRes&&lastRes.text)||"",score:lastRes?(lastRes.score!=null?lastRes.score:(lastRes.cover!=null?lastRes.cover:null)):null,wpm:lastRes&&lastRes.wpm||0,dur:Math.round(dur),blob}); } };
+      const done=()=>{ if(chunks.length){ const blob=new Blob(chunks,{type:chunks[0].type||"audio/webm"}); aud.src=URL.createObjectURL(blob); aud.hidden=false; if(opts.onBlob) opts.onBlob(blob); const cmp=el.querySelector("#"+id+"-cmp"); if(cmp){ cmp.hidden=false; el.querySelector("#"+id+"-ab").onclick=async()=>{ aud.pause(); aud.currentTime=0; await speak(opts.target,1,opts.acc||"us"); await new Promise(r=>setTimeout(r,350)); aud.play().catch(()=>{}); }; } if(dur>1.5) recAdd({ts:Date.now(),label:opts.label||opts.target||"Bản ghi",kind:opts.kind||"phrase",text:(lastRes&&lastRes.text)||"",score:lastRes?(lastRes.score!=null?lastRes.score:(lastRes.cover!=null?lastRes.cover:null)):null,wpm:lastRes&&lastRes.wpm||0,dur:Math.round(dur),blob}); } };
       if(rec&&rec.state!=="inactive"){ rec.onstop=done; rec.stop(); } else done();
       const text=(finalT+" "+interim).trim();
-      if(!text){ live.classList.add("empty"); live.textContent= SR? (err==="not-allowed"?"Trình duyệt chặn nhận dạng giọng nói. Hãy cho phép micro rồi thử lại.":"Máy chưa nghe được gì. Nói to, rõ hơn, gần micro hơn.") : "Trình duyệt này không có nhận dạng giọng nói. Hãy nghe lại bản ghi của bạn và so với mẫu, hoặc mở bằng Chrome/Edge để được chấm."; }
+      if(!text){ live.classList.add("empty"); live.textContent= SR? micHelp(err||(micErr?(micErr==="NotFoundError"?"audio-capture":"not-allowed"):"no-speech")) : "Trình duyệt này không có nhận dạng giọng nói. Hãy nghe lại bản ghi của bạn và so với mẫu, hoặc mở bằng Chrome/Edge để được chấm."; }
       else live.textContent=text;
       const res={text,dur,words:norm(text).length};
       res.wpm=dur>3?Math.round(res.words/(dur/60)):0;
@@ -424,10 +437,11 @@ function mountSpeak(el,opts={}){
     stop=stopInner;
     active=stopInner;
     if(SR){
-      const startRecog=()=>{ recog=new SR(); recog.lang=S.recLang||"en-US"; recog.interimResults=true; recog.continuous=!!opts.continuous; recog.maxAlternatives=1;
-        recog.onresult=e=>{ interim=""; for(let i=e.resultIndex;i<e.results.length;i++){ const tr=e.results[i][0].transcript; if(e.results[i].isFinal) finalT+=tr+" "; else interim+=tr; } live.textContent=(finalT+interim).trim()||"Đang nghe…"; };
-        recog.onerror=e=>{ err=e.error; };
-        recog.onend=()=>{ if(!stopped&&opts.continuous&&err!=="not-allowed"){ try{ startRecog(); }catch(e){} return; } if(!stopped){ stopped=true; finish(); } else finish2(); };
+      const FATAL=["not-allowed","service-not-allowed","audio-capture","network","language-not-supported"];
+      const startRecog=()=>{ recog=new SR(); recog.lang=S.recLang||"en-US"; recog.interimResults=true; recog.continuous=true; recog.maxAlternatives=1;
+        recog.onresult=e=>{ lastHeard=Date.now(); interim=""; for(let i=e.resultIndex;i<e.results.length;i++){ const tr=e.results[i][0].transcript; if(e.results[i].isFinal) finalT+=tr+" "; else interim+=tr; } live.textContent=(finalT+interim).trim()||"Đang nghe…"; };
+        recog.onerror=e=>{ if(e.error!=="no-speech"&&e.error!=="aborted") err=e.error; };
+        recog.onend=()=>{ if(!stopped&&!FATAL.includes(err)&&restarts<60){ restarts++; if(interim){ finalT+=interim+" "; interim=""; } try{ startRecog(); }catch(e){ stopped=true; finish(); } return; } if(!stopped){ stopped=true; finish(); } else finish2(); };
         try{ recog.start(); }catch(e){} };
       const finish2=()=>{};
       startRecog();
@@ -535,20 +549,27 @@ Make 3 or 4 exchanges. The partner speaks first in every exchange, then I answer
   roleWidget(el.querySelector("#rl"),sel.role);
 }
 function roleWidget(el,ri,onDone){
-  const R=allRoles()[ri]; let step=0; const covers=[];
+  const R=allRoles()[ri]; let step=0; const covers=[]; const takes={}; let replayTok=0;
   const ys=R.turns.filter(t=>t.y).length;
   function draw(){
     const shown=R.turns.slice(0,step+1);
     el.innerHTML=`<div class="stack"><div class="row" style="justify-content:space-between"><div><b>${esc(R.t)}</b> <span class="muted small">· ${esc(R.who)} (giọng ${ACCL[R.acc]})</span><div class="small muted">${esc(R.ctx)}</div></div><button class="btn sm ghost" id="rl-restart">Làm lại</button></div>
      <div class="stack" style="gap:10px">${shown.map((t,i)=>t.p?`<div class="turn p"><div class="label">${esc(R.who.split(",")[0])}</div><div class="row" style="flex-wrap:nowrap;align-items:flex-start;gap:8px"><button class="btn sm play" data-pp="${i}" aria-label="Nghe"></button><span class="${i===step?"":"muted"}" data-txt="${i}">${i===step?'<span class="muted small">(Nghe trước, bấm "Hiện chữ" nếu cần)</span> <button class="btn sm ghost" data-show="'+i+'">Hiện chữ</button>':esc(t.p)}</span></div></div>`
        :`<div class="turn y"><div class="label">Bạn</div><div class="vi" style="color:var(--ink)">${esc(t.y)}</div>${i<step?`<div class="small muted" style="margin-top:4px">Mẫu: ${esc(t.m)}</div>`:`<div id="rl-sp" style="margin-top:8px"></div>`}</div>`).join("")}</div>
-     ${step>=R.turns.length?`<div class="banner" style="background:var(--good-soft);border-color:var(--good)">Xong cuộc hội thoại. Trung bình ${Math.round(covers.reduce((a,b)=>a+b,0)/Math.max(1,covers.length))}% ý chính. Làm lại lần hai và cố nói không cần nhìn gợi ý.</div>`:""}</div>`;
-    el.querySelector("#rl-restart").onclick=()=>{ step=0; covers.length=0; draw(); };
+     ${step>=R.turns.length?`<div class="banner" style="background:var(--good-soft);border-color:var(--good)">Xong cuộc hội thoại. Trung bình ${Math.round(covers.reduce((a,b)=>a+b,0)/Math.max(1,covers.length))}% ý chính. Làm lại lần hai và cố nói không cần nhìn gợi ý. <div class="row" style="margin-top:8px"><button class="btn sm primary" id="rl-replay">Nghe lại cả cuộc hội thoại có giọng bạn</button><button class="btn sm ghost" id="rl-stop">Dừng</button></div></div>`:""}</div>`;
+    el.querySelector("#rl-restart").onclick=()=>{ replayTok++; step=0; covers.length=0; for(const k in takes) delete takes[k]; draw(); };
+    const rp=el.querySelector("#rl-replay"); if(rp) rp.onclick=async()=>{ const tok=++replayTok;
+      for(let i=0;i<R.turns.length;i++){ if(tok!==replayTok) return; const t=R.turns[i];
+        if(t.p) await speak(t.p,1,R.acc);
+        else if(takes[i]) await new Promise(res=>{ const a=new Audio(URL.createObjectURL(takes[i])); a.onended=a.onerror=()=>res(); a.play().catch(()=>res()); el._replayAudio=a; });
+        else await speak(t.m,1,"us");
+        await new Promise(r=>setTimeout(r,300)); } };
+    const st=el.querySelector("#rl-stop"); if(st) st.onclick=()=>{ replayTok++; if(hasTTS) speechSynthesis.cancel(); if(el._replayAudio) el._replayAudio.pause(); };
     el.querySelectorAll("[data-pp]").forEach(b=>b.onclick=()=>speak(R.turns[+b.dataset.pp].p,1,R.acc));
     el.querySelectorAll("[data-show]").forEach(b=>b.onclick=()=>{ const i=+b.dataset.show; el.querySelector(`[data-txt="${i}"]`).textContent=R.turns[i].p; });
     const cur=R.turns[step];
     if(cur&&cur.p){ speak(cur.p,1,R.acc).then(()=>{ if(R.turns[step]===cur){ step++; if(step<R.turns.length) draw(); else finish(); } }); }
-    if(cur&&cur.y){ const box=el.querySelector("#rl-sp"); mountSpeak(box,{label:R.t+" · lượt "+(Math.floor(step/2)+1),kind:"role",keys:cur.k,onResult:(r,resEl)=>{
+    if(cur&&cur.y){ const box=el.querySelector("#rl-sp"); mountSpeak(box,{onBlob:b=>{ takes[step]=b; },label:R.t+" · lượt "+(Math.floor(step/2)+1),kind:"role",keys:cur.k,onResult:(r,resEl)=>{
       const hits=r.hits||cur.k.map(k=>({k:k.split("|")[0],hit:false})), cover=r.cover||0;
       resEl.innerHTML=`<div class="stack" style="gap:8px"><div class="row"><span class="label">Ý chính</span>${hits.map(h=>`<span class="chip ${h.hit?"ok":"bad"}">${h.hit?"✓":"✗"} ${esc(h.k)}</span>`).join("")}</div>
         <div class="row"><span class="small muted">Câu mẫu:</span> <span>${esc(cur.m)}</span></div>
