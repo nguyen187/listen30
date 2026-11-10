@@ -329,6 +329,7 @@ function numberItems(){
     [`The fleet will grow to ${r(21,89)} aircraft by ${r(2027,2032)}.`,"Năm: 'twenty twenty-eight' hoặc 'two thousand twenty-eight'"]
   ];
 }
+PRON.push({t:"Từ viết tắt",d:"Người trong ngành đọc phần lớn từ viết tắt theo từng chữ cái (A-O-G), một số đọc như một từ (ACARS, ETOPS). Đọc sai là người nghe không nhận ra.",items:[["We have an AOG in Delhi.","A-O-G, nhấn chữ cuối"],["The MTBUR is below the target.","M-T-B-U-R"],["Check the MEL item first.","M-E-L"],["Can you send me the PFR?","P-F-R"],["The ACARS data is missing since Monday.","ACARS đọc là \"AY-cars\""],["This aircraft is ETOPS certified.","ETOPS đọc là \"EE-tops\""],["The SME has to sign off.","S-M-E"],["Our OTP dropped last month.","O-T-P"],["The APU starter failed again.","A-P-U"],["What is the ETA for the part?","E-T-A"]]});
 PRON.push({t:"Nói số liệu",d:"Đọc to số liệu như khi báo cáo trong họp. Mỗi lần mở trang sẽ có bộ số mới. Máy so con số bạn nói với con số trên màn hình.",items:numberItems()});
 PRON.push({t:"Cặp âm dễ nhầm",d:"Nói đúng từ được yêu cầu. Nếu máy nghe ra từ kia trong cặp, nghĩa là người nghe cũng sẽ nhầm. Nghe mẫu ở tốc độ chậm rồi nói lại.",items:PAIR_ITEMS});
 
@@ -375,7 +376,9 @@ function norm(text){
   t=t.replace(/(\d+)(st|nd|rd|th)\b/g,"$1");
   t=t.replace(/\bwon't\b/g,"will not").replace(/\bcan't\b/g,"can not").replace(/\bcannot\b/g,"can not").replace(/n't\b/g," not").replace(/'m\b/g," am").replace(/'re\b/g," are").replace(/'ll\b/g," will").replace(/'ve\b/g," have").replace(/'d\b/g," would").replace(/\blet's\b/g,"let us").replace(/\bthat's\b/g,"that is").replace(/\bwhat's\b/g,"what is");
   t=t.replace(/[-–—\/]/g," ").replace(/[^a-z0-9' ]/g," ").replace(/'/g,"");
-  const out=[]; for(const w of t.split(/\s+/).filter(Boolean)){ if(/^\d+$/.test(w)){ out.push(...numWords(w).split(" ")); continue; } const s=SLANG[w]; if(s&&s!==w) out.push(...s.split(" ")); else out.push(w); }
+  const raw=t.split(/\s+/).filter(Boolean), merged=[];
+  for(let i=0;i<raw.length;i++){ if(/^[a-z]$/.test(raw[i])&&/^[a-z]$/.test(raw[i+1]||"")){ let j=i, w=""; while(/^[a-z]$/.test(raw[j]||"")){ w+=raw[j]; j++; } merged.push(w); i=j-1; } else merged.push(raw[i]); }
+  const out=[]; for(const w of merged){ if(/^\d+$/.test(w)){ out.push(...numWords(w).split(" ")); continue; } const s=SLANG[w]; if(s&&s!==w) out.push(...s.split(" ")); else out.push(w); }
   return out;
 }
 function esc(s){ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"})[c]); }
