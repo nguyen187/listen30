@@ -684,7 +684,7 @@ function analyze(){
   if(l30){
     if(l30.dictAvg!=null) diag.push([l30.dictAvg>=85?"ok":l30.dictAvg>=65?"warn":"bad","Nghe chép chính tả (Listen 30)",`${l30.dictAvg}%`]);
     if(l30.due>0) acts.push({p:58,m:5,t:`Ôn ${l30.due} thẻ từ vựng đến hạn`,why:"Thẻ đến hạn mà không ôn sẽ quên. Mất 5 phút.",href:"../#srs"});
-    const accs=P.accs||[]; if(accs.length){ const ids={in:["aog","otp","dq","kick","relrev","utg"],fr:["aog","sb","kick","smp"],de:["pdm","cfg"],es:["sb","lease","smp"]};
+    const accs=P.accs||[]; if(accs.length){ const ids={in:["aog","otp","dq","kick","relrev","utg","shop","gov"],fr:["aog","sb","kick","smp","gov"],de:["pdm","cfg","shop","sec"],es:["sb","lease","smp","fleet"]};
       const want=[...new Set(accs.flatMap(a=>ids[a]||[]))]; const weak=want.filter(id=>(l30.meet[id]??0)<80);
       if(weak.length) acts.push({p:P.pain==="listen"?93:64,m:8,t:`Nghe họp mô phỏng giọng ${accs.map(a=>ACCL[a]).join(", ")}`,why:`${weak.length} cuộc họp có giọng đồng nghiệp của bạn chưa đạt 80%.`,href:"../#work"}); }
     acts.push({p:P.pain==="listen"?88:50,m:15,t:`Listen 30: ngày ${l30.next}, phần chép chính tả`,why:l30.dictAvg==null?"Chưa có điểm nghe. Nghe tốt thì mới nói đúng lúc trong họp.":`Đã xong ${l30.done}/30 ngày.`,href:"../#day-"+l30.next});
