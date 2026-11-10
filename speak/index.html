@@ -316,6 +316,20 @@ const PRON=[
 ];
 
 const PAIR_ITEMS=[[`Please say ship again.`,`ship, không phải sheep: i ngắn và i dài`],[`Please say leave again.`,`leave, không phải live: i ngắn và i dài`],[`Please say sit again.`,`sit, không phải seat: i ngắn và i dài`],[`Please say fool again.`,`fool, không phải full: u ngắn và u dài`],[`Please say bad again.`,`bad, không phải bed: a mở rộng và e`],[`Please say men again.`,`men, không phải man: a mở rộng và e`],[`Please say walk again.`,`walk, không phải work: o tròn môi và ơ`],[`Please say sink again.`,`sink, không phải think: th và s`],[`Please say three again.`,`three, không phải tree: th và t`],[`Please say van again.`,`van, không phải fan: f và v`],[`Please say price again.`,`price, không phải prize: s và z cuối`],[`Please say bite again.`,`bite, không phải bike: âm cuối k và t`],[`Please say fine again.`,`fine, không phải five: âm cuối n và v`],[`Please say nice again.`,`nice, không phải night: âm cuối t và s`],[`Please say fifteen again.`,`fifteen, không phải fifty: -teen nhấn sau, -ty nhấn trước`],[`Please say thirty again.`,`thirty, không phải thirteen: -teen nhấn sau, -ty nhấn trước`],[`Please say want again.`,`want, không phải won't: want và won't`]];
+function numberItems(){
+  const r=(a,b)=>a+Math.floor(Math.random()*(b-a+1)), M="January February March April May June July August September October November December".split(" ");
+  const ord=d=>d+(d%10===1&&d!==11?"st":d%10===2&&d!==12?"nd":d%10===3&&d!==13?"rd":"th");
+  return [
+    [`The repair costs €${(r(2,98)*250).toLocaleString("en-US")}.`,"Giá tiền: đọc rõ phần nghìn, nói 'euros' ở cuối"],
+    [`Removals went up by ${r(3,45)}%.`,"Phần trăm: nhấn 'per-CENT'"],
+    [`The removal rate is 0.${r(2,9)} per 1,000 flight hours.`,"Số thập phân: 'zero point six', 'per thousand'"],
+    [`The meeting starts at ${r(8,17)}:${["15","30","45"][r(0,2)]}.`,"Giờ: 'fourteen thirty' hoặc 'two thirty'"],
+    [`The aircraft flew ${(r(20,99)*50).toLocaleString("en-US")} flight hours last year.`,"Số lớn: tách nghìn và trăm rõ ràng"],
+    [`The deadline is the ${ord(r(1,28))} of ${M[r(0,11)]}.`,"Ngày: số thứ tự 'the fifteenth of March'"],
+    [`The fleet will grow to ${r(21,89)} aircraft by ${r(2027,2032)}.`,"Năm: 'twenty twenty-eight' hoặc 'two thousand twenty-eight'"]
+  ];
+}
+PRON.push({t:"Nói số liệu",d:"Đọc to số liệu như khi báo cáo trong họp. Mỗi lần mở trang sẽ có bộ số mới. Máy so con số bạn nói với con số trên màn hình.",items:numberItems()});
 PRON.push({t:"Cặp âm dễ nhầm",d:"Nói đúng từ được yêu cầu. Nếu máy nghe ra từ kia trong cặp, nghĩa là người nghe cũng sẽ nhầm. Nghe mẫu ở tốc độ chậm rồi nói lại.",items:PAIR_ITEMS});
 
 /* =============================== STATE =============================== */

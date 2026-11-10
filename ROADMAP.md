@@ -12,9 +12,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop: numbers speaking drill (say prices, dates, part numbers, flight numbers; checked by recognition)
-- [ ] Listen 30: "meeting mode" — continuous listening of a full mock meeting with live captions toggle, no quiz
-- [ ] Both: README update with features and how to use them
+- [ ] Talk Shop: pace coach — live words-per-minute meter while you talk
+- [ ] Listen 30: dictation hint level 2 (show the connected-speech rule that applies to the missed words)
 
 ## Follow-ups
 
@@ -24,6 +23,9 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Both: README update with features and how to use them
+- [x] Listen 30: "meeting mode" — continuous listening of a full mock meeting with live captions toggle, no quiz
+- [x] Talk Shop: numbers speaking drill (say prices, dates, part numbers, flight numbers; checked by recognition)
 - [x] Both: settings sync note — explain how the artifact and GitHub copies differ, with one-click export/import between them
 - [x] Talk Shop: small-talk deck (weekend, weather, travel, food) with 20 quick prompts and model answers
 - [x] Listen 30: weekly listening review — redo the 10 worst dictation sentences of the week

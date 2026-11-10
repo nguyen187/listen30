@@ -1830,12 +1830,15 @@ function wkMeet(body){
     ${forced?`<span class="small muted">Đang ép mọi người nói giọng ${accLabel(S.forceAcc)}. Chọn "Theo bài" ở thanh Giọng nghe để chỉnh từng người.</span>`:""}</div>
    <div class="row"><button class="btn primary play" id="mt-play">Nghe cả cuộc họp</button><button class="btn" id="mt-stop">Dừng</button>
      <label class="small muted" for="mt-rate">Tốc độ</label><select id="mt-rate" style="width:auto"><option>0.85</option><option selected>1</option><option>1.1</option><option>1.2</option></select>
-     <button class="btn ghost" id="mt-tx">Hiện transcript</button></div>
+     <button class="btn ghost" id="mt-tx">Hiện transcript</button><label class="small"><input type="checkbox" id="mt-cc" ${S.liveCC?"checked":""}> Phụ đề trực tiếp</label></div>
+   <div id="mt-cap" class="panel" style="background:var(--bg);font-size:17px;min-height:2.6em" ${S.liveCC?"":"hidden"}></div>
    <div id="mt-now" class="small mono muted" style="min-height:1.4em">Nghe ít nhất một lần không nhìn chữ, trả lời câu hỏi, rồi mới mở transcript.</div>
    <div id="mt-lines" class="stack" style="gap:4px" hidden>${m.lines.map(([who,t],i)=>`<div class="row mt-line" data-l="${i}" style="flex-wrap:nowrap;gap:10px;align-items:flex-start;padding:6px 8px;border-radius:6px"><button class="btn sm play" data-pl="${i}" aria-label="Nghe câu này"></button><span style="min-width:0"><b>${esc(who)}</b> <span class="muted small">(${accLabel(effAcc(sp[who]))})</span><br>${esc(t)}</span></div>`).join("")}</div>
   </div><div class="panel stack" id="mt-quiz"></div>`;
   const now=body.querySelector("#mt-now"), linesEl=body.querySelector("#mt-lines");
-  const mark=i=>{ body.querySelectorAll(".mt-line").forEach(x=>x.classList.toggle("now",+x.dataset.l===i)); if(i>=0){ const w=m.lines[i][0]; now.textContent=`▶ ${w} (${accLabel(effAcc(sp[w]))}) đang nói · ${i+1}/${m.lines.length}`; } else now.textContent="Hết cuộc họp. Trả lời câu hỏi bên dưới."; };
+  const cap=body.querySelector("#mt-cap");
+  body.querySelector("#mt-cc").onchange=e=>{ S.liveCC=e.target.checked; save(); cap.hidden=!S.liveCC; };
+  const mark=i=>{ body.querySelectorAll(".mt-line").forEach(x=>x.classList.toggle("now",+x.dataset.l===i)); if(cap) cap.innerHTML=i>=0?`<b>${esc(m.lines[i][0])}:</b> ${esc(m.lines[i][1])}`:""; if(i>=0){ const w=m.lines[i][0]; now.textContent=`▶ ${w} (${accLabel(effAcc(sp[w]))}) đang nói · ${i+1}/${m.lines.length}`; } else now.textContent="Hết cuộc họp. Trả lời câu hỏi bên dưới."; };
   async function playAll(){
     const tok=++playTok;
     for(let i=0;i<m.lines.length;i++){
