@@ -1013,7 +1013,7 @@ function aiPanel(el){
   };
   if(has){ aiFeedback(el.querySelector("#ai-week"),weekPrompt(),"Báo cáo tiến bộ 7 ngày qua"); writeUI(el.querySelector("#ai-write-body")); chatUI(el.querySelector("#ai-chat")); }
 }
-const QUICK=["Dựa vào dữ liệu của tôi, tuần này tôi nên tập trung vào gì?","Tôi sắp họp với Airbus để lấy yêu cầu dashboard reliability. Giúp tôi chuẩn bị 5 câu nói và 3 câu hỏi.","Sửa câu này cho tự nhiên hơn: ","Khi người Ấn nói \"kindly revert\" thì tôi nên trả lời thế nào?","Đóng vai SME hỏi tôi về utilization data, mỗi lượt một câu, rồi chấm câu trả lời của tôi."];
+const QUICK=["Dựa vào dữ liệu của tôi, tuần này tôi nên tập trung vào gì?","Tôi sắp họp với Airbus để lấy yêu cầu dashboard reliability. Giúp tôi chuẩn bị 5 câu nói và 3 câu hỏi.","Sửa câu này cho tự nhiên hơn: ","Khi người Ấn nói \"kindly revert\" thì tôi nên trả lời thế nào?","Đóng vai SME hỏi tôi về utilization data, mỗi lượt một câu, rồi chấm câu trả lời của tôi.","Phỏng vấn thử: bạn là hiring manager tuyển data engineer cho nền tảng dữ liệu hàng không. Hỏi tôi từng câu một bằng tiếng Anh, đặt câu hỏi trên dòng bắt đầu bằng \"> \". Tôi sẽ trả lời bằng giọng nói. Sau mỗi câu trả lời, chấm ngắn bằng tiếng Việt (nội dung, độ rõ, tiếng Anh) kèm một câu trả lời mẫu tốt hơn, rồi hỏi câu tiếp. Tổng cộng 6 câu, câu cuối tổng kết điểm mạnh và điểm cần sửa."];
 function chatUI(el){
   let ctrl=null;
   function draw(){
@@ -1040,7 +1040,7 @@ function chatUI(el){
     try{
       const m=await aiCall({messages:chat.map(x=>({role:x.role,content:x.content})),system:chatSys,model:chatModel,signal:ctrl.signal,onText:t=>{ live.innerHTML=`<div class="turn p"><div class="label">Mentor</div><div>${mdRender(t)}</div></div>`; }});
       if(m.stop_reason==="refusal"){ chat.length=before; saveChat(); draw(); alertText("Mentor không trả lời được câu này. Thử hỏi theo cách khác."); }
-      else { chat.push({role:"assistant",content:m.content}); saveChat(); draw(); }
+      else { chat.push({role:"assistant",content:m.content}); saveChat(); draw(); const q=[...el.querySelectorAll("#ai-log .turn.p")].pop(); const first=q&&q.querySelector("[data-say]"); if(first&&S.aiSpeak!==false) speak(first.dataset.say,1,"gb"); }
     }catch(e){ chat.length=before; draw(); el.querySelector("#ai-in").value=q; alertText(aiErrorText(e)); }
     ctrl=null;
   }
