@@ -927,6 +927,45 @@ ${l30}
 
 In Vietnamese: 1) what improved, with the numbers; 2) the two weakest points right now; 3) a plan for next week as 5 concrete daily tasks that name app sections; 4) one short, honest sentence of encouragement. If I practised little, say so plainly and make the plan smaller. Keep it short.`;
 }
+function writeUI(el){
+  el.innerHTML=`<div class="stack" style="gap:10px"><div class="small muted">Nói hoặc gõ ý chính (tiếng Việt hay tiếng Anh đều được). Mentor viết thành tin nhắn tiếng Anh chuyên nghiệp và chỉ ra vài cụm từ đáng học.</div>
+   <textarea id="wr-notes" rows="4" placeholder="Ví dụ: báo Julien là dữ liệu ACARS thiếu từ thứ Hai, đã sửa, đang nạp bù, chiều mai xong; nhờ anh ấy báo đội reliability"></textarea>
+   <div class="row"><button class="btn sm" id="wr-mic">Nói ghi chú</button><select id="wr-lang" aria-label="Ngôn ngữ ghi chú"><option value="vi-VN">Ghi chú tiếng Việt</option><option value="en-US">Ghi chú tiếng Anh</option></select>
+    <select id="wr-type" aria-label="Loại tin nhắn"><option value="chat">Tin nhắn Teams ngắn</option><option value="email">Email trang trọng</option></select>
+    <select id="wr-to" aria-label="Gửi cho"><option>an Airbus engineer</option><option>an airline SME</option><option>my manager</option><option>my team</option><option>an external vendor</option></select>
+    <button class="btn sm primary" id="wr-go">Viết tin nhắn</button></div><div id="wr-out"></div></div>`;
+  const notes=el.querySelector("#wr-notes"), out=el.querySelector("#wr-out");
+  const micH=()=>{ if(!SR){ out.innerHTML='<div class="small" style="color:var(--bad)">Trình duyệt không có nhận dạng giọng nói.</div>'; return; }
+    const r=new SR(); r.lang=el.querySelector("#wr-lang").value; r.interimResults=true; r.continuous=true; const b=el.querySelector("#wr-mic"), base=notes.value?notes.value.trim()+" ":"";
+    let fin=""; b.textContent="Đang nghe… bấm để dừng"; b.onclick=()=>{ try{ r.stop(); }catch(e){} };
+    r.onresult=e=>{ let it=""; for(let i=e.resultIndex;i<e.results.length;i++){ if(e.results[i].isFinal) fin+=e.results[i][0].transcript+" "; else it+=e.results[i][0].transcript; } notes.value=base+fin+it; };
+    r.onend=()=>{ b.textContent="Nói ghi chú"; b.onclick=micH; }; try{ r.start(); }catch(e){} };
+  el.querySelector("#wr-mic").onclick=micH;
+  let ctl=null;
+  el.querySelector("#wr-go").onclick=async()=>{
+    const n=notes.value.trim(); if(!n){ notes.focus(); return; }
+    if(ctl){ ctl.abort(); return; }
+    const type=el.querySelector("#wr-type").value, to=el.querySelector("#wr-to").value, btn=el.querySelector("#wr-go");
+    ctl=new AbortController(); btn.textContent="Dừng"; out.innerHTML='<div class="small muted">Mentor đang viết…</div>';
+    const prompt=`Turn my notes into a ${type==="email"?"professional email with a subject line":"short Microsoft Teams chat message (2-5 sentences, friendly but professional, no subject line)"} to ${to}. My notes may be in Vietnamese or rough English: """${n}"""
+Keep every fact, number and date from the notes, invent nothing. Use clear aviation/data vocabulary where it fits.
+Answer in exactly this format:
+MESSAGE:
+<the message in English>
+---
+Then, in Vietnamese, 2-3 bullet points: useful phrases from the message worth learning, each with its meaning, with the English phrase on its own line starting with "> ".`;
+    try{
+      const m=await aiCall({messages:[{role:"user",content:prompt}],signal:ctl.signal,onText:t=>{ out.innerHTML=renderWrite(t); }});
+      if(m.stop_reason==="refusal") out.innerHTML='<div class="small muted">Mentor không viết được tin nhắn này.</div>';
+      else { out.innerHTML=renderWrite(msgText(m)); bindSay(out); const c=out.querySelector("#wr-copy"); if(c) c.onclick=async()=>{ const t=out.querySelector("#wr-msg").innerText; try{ await navigator.clipboard.writeText(t); c.textContent="Đã sao chép"; }catch(e){ const r=document.createRange(); r.selectNodeContents(out.querySelector("#wr-msg")); const sl=getSelection(); sl.removeAllRanges(); sl.addRange(r); c.textContent="Đã chọn, bấm Cmd/Ctrl+C"; } }; }
+    }catch(e){ out.innerHTML=`<div class="small" style="color:var(--bad)">${esc(aiErrorText(e))}</div>`; }
+    ctl=null; btn.textContent="Viết lại";
+  };
+}
+function renderWrite(t){
+  const parts=t.split(/\n-{3,}\n/); const msg=(parts[0]||"").replace(/^\s*MESSAGE:\s*/i,"").trim(); const rest=parts.slice(1).join("\n");
+  return `<div class="panel stack" style="background:var(--bg);gap:8px"><div id="wr-msg" style="white-space:pre-wrap">${esc(msg)}</div><div class="row"><button class="btn sm primary" id="wr-copy">Sao chép tin nhắn</button><button class="btn sm play" data-say="${esc(msg.replace(/\n+/g," ").slice(0,600))}">Nghe đọc</button></div></div>${rest?`<div style="margin-top:8px">${mdRender(rest)}</div>`:""}`;
+}
 function aiPanel(el){
   const has=!!getKey();
   el.innerHTML=`<div class="panel stack" id="ai-panel"><div class="row" style="justify-content:space-between"><div><h3>Mentor AI</h3><div class="small muted">Claude đọc hồ sơ và kết quả luyện tập của bạn, trả lời câu hỏi, sửa câu, giúp chuẩn bị họp.</div></div>${has?'<button class="btn sm ghost" id="ai-set">Cài đặt AI</button>':""}</div>
@@ -937,7 +976,7 @@ function aiPanel(el){
     <div class="row"><button class="btn primary" id="ai-save">Lưu và kiểm tra</button>${has?'<button class="btn ghost" id="ai-del">Xoá key khỏi máy này</button>':""}<span class="small" id="ai-msg"></span></div>
     <div class="small muted">Ứng dụng bật cơ chế dự phòng của Anthropic (server-side fallback) cho Opus và Sonnet: nếu model từ chối một yêu cầu, máy chủ tự chuyển sang model khác để trả lời.</div>
    </div>
-   ${has?`<div id="ai-week" class="stack" style="gap:8px"></div><div id="ai-chat" class="stack" style="gap:10px"></div>`:""}</div>`;
+   ${has?`<div id="ai-week" class="stack" style="gap:8px"></div><details class="stack" id="ai-write"><summary style="cursor:pointer"><b>Soạn tin nhắn Teams / email từ ghi chú</b></summary><div id="ai-write-body" style="margin-top:10px"></div></details><div id="ai-chat" class="stack" style="gap:10px"></div>`:""}</div>`;
   const msg=el.querySelector("#ai-msg");
   el.querySelector("#ai-model").onchange=e=>{ S.aiModel=e.target.value; save(); };
   const set=el.querySelector("#ai-set"); if(set) set.onclick=()=>{ const s=el.querySelector("#ai-settings"); s.hidden=!s.hidden; };
@@ -949,7 +988,7 @@ function aiPanel(el){
     try{ const m=await aiCall({messages:[{role:"user",content:"Reply with exactly: OK"}]}); msg.style.color="var(--good)"; msg.textContent="Key hoạt động ("+m.model+")."; el.querySelector("#ai-key").value=""; setTimeout(()=>aiPanel(el),900); }
     catch(e){ msg.style.color="var(--bad)"; msg.textContent=aiErrorText(e); }
   };
-  if(has){ aiFeedback(el.querySelector("#ai-week"),weekPrompt(),"Báo cáo tiến bộ 7 ngày qua"); chatUI(el.querySelector("#ai-chat")); }
+  if(has){ aiFeedback(el.querySelector("#ai-week"),weekPrompt(),"Báo cáo tiến bộ 7 ngày qua"); writeUI(el.querySelector("#ai-write-body")); chatUI(el.querySelector("#ai-chat")); }
 }
 const QUICK=["Dựa vào dữ liệu của tôi, tuần này tôi nên tập trung vào gì?","Tôi sắp họp với Airbus để lấy yêu cầu dashboard reliability. Giúp tôi chuẩn bị 5 câu nói và 3 câu hỏi.","Sửa câu này cho tự nhiên hơn: ","Khi người Ấn nói \"kindly revert\" thì tôi nên trả lời thế nào?","Đóng vai SME hỏi tôi về utilization data, mỗi lượt một câu, rồi chấm câu trả lời của tôi."];
 function chatUI(el){

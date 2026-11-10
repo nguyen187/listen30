@@ -12,7 +12,6 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop: email/chat writing helper (turn spoken notes into a polished Teams message) with Mentor AI
 - [ ] Listen 30: dictation of real meeting snippets pasted by the user (paste transcript → TTS → dictation)
 
 ## Follow-ups
@@ -23,6 +22,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Talk Shop: email/chat writing helper (turn spoken notes into a polished Teams message) with Mentor AI
 - [x] Both: add 4 more aviation role-plays/meetings on MRO contracts, warranty claims, supply chain delays, regulatory audits
 - [x] Listen 30: daily streak reminder banner + "continue where you left off" button on Mentor/Today
 - [x] Talk Shop: shadowing with recording overlay (play model, then own recording, back to back)
