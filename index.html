@@ -1048,6 +1048,7 @@ function mountDict(el, items, saved, onScores, onDone, opts={}){
       <span class="row"><button class="btn" id="${uid}-again">Nghe lại</button><button class="btn primary" id="${uid}-next">${idx+1<items.length?"Câu tiếp →":"Xem kết quả"} <span class="kbd">Enter</span></button></span></div></div>`;
     el.querySelector("#"+uid+"-again").onclick=()=>speak(it.text,it.rate,it.acc);
     el.querySelector("#"+uid+"-next").onclick=next;
+    if(r.score<100) aiExplainButton(el.querySelector("#"+uid+"-res").firstElementChild, it, giveUp?"":inp.value);
     inp.readOnly=true;
     el.querySelector("#"+uid+"-check").disabled=true; el.querySelector("#"+uid+"-skip").disabled=true;
     inp.focus();
@@ -1930,6 +1931,61 @@ document.getElementById("theme-btn").onclick=()=>{
   const dark = S.theme==="dark" || (S.theme!=="light" && (document.documentElement.getAttribute("data-theme")==="dark" || (!document.documentElement.getAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches)));
   S.theme = dark?"light":"dark"; save(); applyTheme(); if(view==="setup") render();
 };
+
+/* =============================== AI: WHY DID I MISHEAR =============================== */
+/* In the Claude artifact: the `sample` capability (no key). On GitHub Pages: the user's own key saved by Talk Shop. */
+function aiMd(s){
+  const inline=t=>esc(t).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>");
+  return s.split("\n").map(l=>{ const t=l.trim(); if(!t) return "";
+    if(/^>\s?/.test(t)){ const en=t.replace(/^>\s?/,""); return `<div class="row" style="flex-wrap:nowrap;gap:8px;align-items:flex-start;margin:4px 0"><button class="btn sm play" data-say="${esc(en)}" aria-label="Nghe câu này"></button><span style="font-weight:500">${inline(en)}</span></div>`; }
+    if(/^[-*•]\s+/.test(t)) return `<div style="margin:3px 0 3px 4px">• ${inline(t.replace(/^[-*•]\s+/,""))}</div>`;
+    return `<p style="margin:5px 0">${inline(t.replace(/^#+\s*/,""))}</p>`; }).join("");
+}
+let aiSampleP=null;
+async function getSample(){ if(!window.claude||!window.claude.use) return null; if(!aiSampleP) aiSampleP=window.claude.use("sample"); return aiSampleP; }
+function pagesKey(){ try{ return ON_PAGES ? (localStorage.getItem("talkshop.key")||"") : ""; }catch(e){ return ""; } }
+async function aiAsk(prompt,onText,signal){
+  const sample=await getSample();
+  if(sample){ const r=await sample(prompt,{onText:u=>onText(u.text),signal,cache:false}); return r.text; }
+  const key=pagesKey(); if(!key) throw Object.assign(new Error("nokey"),{code:"nokey"});
+  const X=await import("https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.3.0/+esm");
+  const client=new X.default({apiKey:key,dangerouslyAllowBrowser:true});
+  let model="claude-opus-5-5"; try{ model=JSON.parse(localStorage.getItem("talkshop.v1")||"{}").aiModel||model; }catch(e){}
+  const base={model,max_tokens:64000,messages:[{role:"user",content:prompt}],output_config:{effort:"low"}};
+  const stream = model==="claude-haiku-5-5" ? client.messages.stream(base,{signal}) : client.beta.messages.stream({...base,betas:["server-side-fallback-2026-07-01"],fallbacks:"default"},{signal});
+  stream.on("text",(d,snap)=>onText(snap));
+  const m=await stream.finalMessage();
+  if(m.stop_reason==="refusal") throw new Error("Claude không trả lời được yêu cầu này.");
+  return m.content.filter(b=>b.type==="text").map(b=>b.text).join("");
+}
+function aiErrMsg(e){
+  if(e&&e.code==="nokey") return 'Để dùng tính năng này trên bản GitHub, hãy nhập API key trong <a href="https://nguyen187.github.io/listen30/speak/#mentor" target="_blank" rel="noopener">Talk Shop → Mentor</a>.';
+  if(e&&e.code==="not_granted") return "Bạn chưa cho phép trang hỏi Claude.";
+  if(e&&e.code==="rate_limited") return "Đang hỏi quá nhiều, đợi một chút rồi thử lại.";
+  if(e&&(e.status===401||/auth/i.test(e.constructor&&e.constructor.name||""))) return "API key không đúng. Kiểm tra lại trong Talk Shop → Mentor.";
+  if(e&&e.status===429) return "Vượt giới hạn gọi API, đợi một chút rồi thử lại.";
+  return esc("Không hỏi được Claude: "+(e&&e.message||e));
+}
+function aiExplainButton(host,it,typed){
+  const canTry = ON_PAGES ? true : !!(window.claude&&window.claude.use);
+  if(!canTry||!host) return;
+  const box=document.createElement("div"); box.className="stack"; box.style.gap="8px";
+  box.innerHTML=`<div class="row"><button class="btn sm" data-ai="go">Vì sao mình nghe sai?</button><span class="small muted">Claude giải thích hiện tượng âm thanh khiến bạn nghe nhầm</span></div><div data-ai="out" class="panel" style="background:var(--bg);padding:12px 14px" hidden></div>`;
+  host.appendChild(box);
+  const out=box.querySelector('[data-ai="out"]'), btn=box.querySelector('[data-ai="go"]'); let ctl=null;
+  btn.onclick=async()=>{
+    if(ctl){ ctl.abort(); return; }
+    ctl=new AbortController(); out.hidden=false; out.innerHTML='<span class="small muted">Claude đang phân tích…</span>'; btn.textContent="Dừng";
+    const prompt=`You are a listening coach for a Vietnamese learner of English. In a dictation exercise the learner heard a sentence read by a text-to-speech voice (accent: ${accLabel(it.acc)} English, speed ×${(it.rate+(S.speedAdj||0)).toFixed(2)}${S.noise?", with background noise":""}).
+Original sentence: "${it.text}"
+What the learner typed: "${typed||"(nothing — they gave up)"}"
+
+In Vietnamese, in at most 5 short bullet points: which words they missed or misheard, and the sound reason for each (weak forms, linking, elision, flap T, contractions, stress, the accent, similar-sounding words). Then give one concrete tip for next time. Put the original sentence, and any short phrase worth listening to again, on their own lines starting with "> ". No headings, no preamble.`;
+    try{ const t=await aiAsk(prompt,txt=>{ out.innerHTML=aiMd(txt); },ctl.signal); out.innerHTML=aiMd(t); out.querySelectorAll("[data-say]").forEach(b=>b.onclick=()=>speak(b.dataset.say,0.8,it.acc)); }
+    catch(e){ out.innerHTML=`<span class="small" style="color:var(--bad)">${aiErrMsg(e)}</span>`; }
+    ctl=null; btn.textContent="Hỏi lại";
+  };
+}
 
 /* =============================== EXPORT / IMPORT =============================== */
 const ON_PAGES = /github\.io$/.test(location.hostname);

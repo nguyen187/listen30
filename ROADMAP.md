@@ -12,7 +12,6 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Listen 30: AI explanation of dictation mistakes (GitHub Pages: reuse Talk Shop key; artifact: `sample` capability)
 - [ ] Talk Shop: keep recordings history in IndexedDB, compare day 1 vs today
 - [ ] Talk Shop: minimal-pair speaking drill (ship/sheep etc.) checked by speech recognition
 - [ ] Talk Shop: weekly AI progress report from practice data
@@ -25,6 +24,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Listen 30: AI explanation of dictation mistakes (GitHub Pages: reuse Talk Shop key; artifact: `sample` capability)
 - [x] Listen 30: 4 more aviation meetings (engine shop visit, fleet planning, data governance, IT security review) with questions
 - [x] Listen 30: "noisy call" mode — background noise via Web Audio while dictation plays, to simulate Teams/Zoom
 - [x] Both: export / import progress as JSON (move between devices, between artifact and GitHub Pages)
