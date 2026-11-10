@@ -1806,13 +1806,35 @@ function wkAccent(body){
 }
 function wkTerms(body){
   const accs=["in","fr","gb","us","de"];
-  body.innerHTML=TERM_GROUPS.map((g,gi)=>{ const added=g.v.every(v=>S.cards[v.w]); return `<div class="panel stack"><div class="row" style="justify-content:space-between"><h3>${esc(g.t)}</h3><button class="btn sm ${added?"":"primary"}" data-add="${gi}" ${added?"disabled":""}>${added?"Đã có trong Ôn từ":"Thêm "+g.v.length+" thuật ngữ vào Ôn từ"}</button></div>
+  body.innerHTML=TERM_GROUPS.map((g,gi)=>{ const added=g.v.every(v=>S.cards[v.w]); return `<div class="panel stack"><div class="row" style="justify-content:space-between"><h3>${esc(g.t)}</h3><span class="row"><button class="btn sm" data-quiz="${gi}">Quiz nghe${S.termQuiz&&S.termQuiz[gi]!=null?" · "+S.termQuiz[gi]+"%":""}</button><button class="btn sm ${added?"":"primary"}" data-add="${gi}" ${added?"disabled":""}>${added?"Đã có trong Ôn từ":"Thêm "+g.v.length+" thuật ngữ vào Ôn từ"}</button></span></div><div data-qz="${gi}"></div>
    <div class="vgrid">${g.v.map((v,i)=>`<div class="vcard"><div class="row" style="justify-content:space-between;flex-wrap:nowrap"><span class="vw">${esc(v.w)}</span><span class="row" style="flex-wrap:nowrap;gap:4px"><button class="btn sm play" data-tw="${gi}:${i}" aria-label="Nghe"></button><button class="btn sm" data-tx="${gi}:${i}">Câu</button></span></div><div class="vm">${esc(v.m)}</div><div class="vx blur" tabindex="0">${esc(v.x)}</div><span class="small muted">Câu đọc bằng giọng ${accLabel(accs[i%5])}</span></div>`).join("")}</div></div>`; }).join("");
   body.querySelectorAll(".blur").forEach(b=>{ const f=()=>b.classList.remove("blur"); b.onclick=f; b.onkeydown=e=>{ if(e.key==="Enter") f(); }; });
   const get=s=>{ const [g,i]=s.split(":").map(Number); return [TERM_GROUPS[g].v[i],i]; };
   body.querySelectorAll("[data-tw]").forEach(b=>b.onclick=()=>{ const [v]=get(b.dataset.tw); speak(v.w,0.9,"us"); });
   body.querySelectorAll("[data-tx]").forEach(b=>b.onclick=()=>{ const [v,i]=get(b.dataset.tx); speak(v.x,1,accs[i%5]); });
+  body.querySelectorAll("[data-quiz]").forEach(b=>b.onclick=()=>termQuiz(body.querySelector(`[data-qz="${b.dataset.quiz}"]`),+b.dataset.quiz,body));
   body.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{ TERM_GROUPS[+b.dataset.add].v.forEach(v=>{ if(!S.cards[v.w]) S.cards[v.w]={box:0,due:today(),d:0}; }); save(); wkTerms(body); });
+}
+function termQuiz(el,gi,body){
+  const g=TERM_GROUPS[gi], order=shuffle(g.v.map((_,i)=>i)).slice(0,10), accs=["in","fr","gb","us","de"];
+  let q=0, right=0, answered=false;
+  function draw(){
+    if(q>=order.length){ const pct=Math.round(100*right/order.length); if(!S.termQuiz) S.termQuiz={}; S.termQuiz[gi]=Math.max(S.termQuiz[gi]||0,pct); save();
+      el.innerHTML=`<div class="panel row" style="justify-content:space-between;background:var(--bg)"><span><span class="score">${right}/${order.length}</span> <span class="small muted">${pct>=80?"Tốt, bạn hiểu nhóm thuật ngữ này khi nghe.":"Thêm nhóm này vào Ôn từ và làm lại quiz sau vài ngày."}</span></span><button class="btn sm" data-again>Làm lại</button></div>`;
+      el.querySelector("[data-again]").onclick=()=>termQuiz(el,gi,body); return; }
+    const k=order[q], v=g.v[k], acc=accs[q%5];
+    const opts=shuffle([k,...shuffle(g.v.map((_,i)=>i).filter(i=>i!==k)).slice(0,3)]);
+    answered=false;
+    el.innerHTML=`<div class="panel stack" style="background:var(--bg);gap:10px"><div class="row" style="justify-content:space-between"><span class="label">Câu ${q+1}/${order.length} · nghe câu, chọn nghĩa của thuật ngữ được nói tới</span><span class="row"><span class="chip acc">Giọng ${accLabel(effAcc(acc))}</span><button class="btn sm play" data-pl>Nghe lại</button></span></div>
+      <div class="opts">${opts.map(o=>`<button class="opt" data-o="${o}" style="font-weight:500;font-size:14px">${esc(g.v[o].m.split(":").pop().trim()||g.v[o].m)}</button>`).join("")}</div><div class="small muted" data-fb style="min-height:1.4em"></div></div>`;
+    const play=()=>speak(v.x,1,acc); el.querySelector("[data-pl]").onclick=play;
+    el.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>{ if(answered) return; answered=true; const ok=+b.dataset.o===k; if(ok) right++;
+      b.classList.add(ok?"right":"wrong"); el.querySelector(`[data-o="${k}"]`).classList.add("right");
+      el.querySelector("[data-fb]").innerHTML=`<b>${esc(v.w)}</b>: ${esc(v.m)} · “${esc(v.x)}” <button class="btn sm" data-next style="margin-left:6px">Tiếp →</button>`;
+      el.querySelector("[data-next]").onclick=()=>{ q++; draw(); }; });
+    play();
+  }
+  draw(); el.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 function wkDict(body){
   body.innerHTML=`<div class="panel"><div class="row" style="margin-bottom:14px"><label class="small muted" for="wd-acc">Giọng</label><select id="wd-acc" style="width:auto"><option value="mix">Trộn: Ấn, Pháp, Đức, Anh, Mỹ</option>${["in","fr","de","es","gb","us"].map(a=>`<option value="${a}">${accLabel(a)}</option>`).join("")}</select>
