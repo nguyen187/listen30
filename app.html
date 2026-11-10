@@ -1840,8 +1840,24 @@ function wkMeet(body){
   }
   drawQ();
 }
+function accentGame(el){
+  const accs=["us","gb","in","fr","de","es"].filter(a=>a==="us"||voiceOk(a)), pool=shuffle(MEETS.flatMap(m=>m.lines.map(l=>l[1])).filter(x=>x.split(" ").length>=8));
+  let q=0, right=0, answered=false; const prevForce=S.forceAcc; S.forceAcc="auto";
+  function next(){
+    if(q>=10){ S.forceAcc=prevForce; S.accentGame=Math.max(S.accentGame||0,right); save(); el.innerHTML=`<div class="row"><span class="score">${right}/10</span><span class="small muted">${right>=8?"Tai bạn phân biệt giọng tốt.":"Nghe lại phần đặc điểm từng giọng bên dưới rồi chơi lại."}</span></div>`; return; }
+    const acc=accs[rnd(0,accs.length-1)], text=pool[q%pool.length]; answered=false;
+    el.innerHTML=`<div class="stack" style="gap:8px"><div class="row" style="justify-content:space-between"><span class="label">Câu ${q+1}/10</span><button class="btn sm play" data-agp>Nghe lại</button></div><div class="opts">${accs.map(a=>`<button class="opt" data-a="${a}">${accLabel(a)}</button>`).join("")}</div><div class="small muted" data-agf style="min-height:1.4em"></div></div>`;
+    el.querySelector("[data-agp]").onclick=()=>speak(text,1,acc);
+    el.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{ if(answered) return; answered=true; const ok=b.dataset.a===acc; if(ok) right++;
+      b.classList.add(ok?"right":"wrong"); el.querySelector(`[data-a="${acc}"]`).classList.add("right");
+      el.querySelector("[data-agf]").innerHTML=`${esc(text)} <button class="btn sm" data-agn style="margin-left:6px">Tiếp →</button>`; el.querySelector("[data-agn]").onclick=()=>{ q++; next(); }; });
+    speak(text,1,acc);
+  }
+  next();
+}
 function wkAccent(body){
-  body.innerHTML=`<div class="banner">Giọng Pháp, Đức, Tây Ban Nha ở đây được mô phỏng bằng giọng đọc tiếng Pháp/Đức/TBN đọc câu tiếng Anh, thường nặng hơn người thật. Quen được ở đây thì gặp người thật sẽ dễ hơn. Muốn nghe người thật, xem tab Giọng thật.</div>
+  body.innerHTML=`<div class="panel stack" style="gap:10px"><div class="row" style="justify-content:space-between"><div><h3>Đoán giọng</h3><div class="small muted">Nghe một câu, đoán người nói giọng gì. Nhận ra giọng giúp bạn chuẩn bị tai trước mỗi cuộc họp.</div></div><button class="btn sm primary" id="ag-go">Chơi 10 câu${S.accentGame!=null?" · tốt nhất "+S.accentGame+"/10":""}</button></div><div id="ag"></div></div>
+  <div class="banner">Giọng Pháp, Đức, Tây Ban Nha ở đây được mô phỏng bằng giọng đọc tiếng Pháp/Đức/TBN đọc câu tiếng Anh, thường nặng hơn người thật. Quen được ở đây thì gặp người thật sẽ dễ hơn. Muốn nghe người thật, xem tab Giọng thật.</div>
   ${ACCENTS.map((a,ai)=>`<div class="panel stack"><div class="row" style="justify-content:space-between"><div><span class="label">${esc(a.who)}</span><h3>Giọng ${accLabel(a.k)}</h3></div><span class="chip ${voiceOk(a.k)?"ok":"warn"}">${voiceOk(a.k)?"Máy có giọng này":"Máy thiếu giọng, đang dùng giọng thay thế"}</span></div>
    <ul class="explain" style="margin:0;padding-left:18px">${a.tr.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>
    <div class="label">Câu mẫu: nghe giọng ${accLabel(a.k)} rồi so với giọng Anh chuẩn</div>
@@ -1850,6 +1866,7 @@ function wkAccent(body){
    <div class="stack" style="gap:6px">${RESCUE.map(([en,vi],i)=>`<div class="row" style="flex-wrap:nowrap;gap:10px"><button class="btn sm play" data-r="${i}" aria-label="Nghe"></button><span style="min-width:0">${esc(en)} <span class="muted small">· ${esc(vi)}</span></span></div>`).join("")}</div></div>`;
   body.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{ const a=ACCENTS[+b.dataset.a]; speak(a.s[+b.dataset.s][0], 1, b.dataset.std?"gb":a.k); });
   body.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>speak(RESCUE[+b.dataset.r][0],1,"us"));
+  body.querySelector("#ag-go").onclick=()=>accentGame(body.querySelector("#ag"));
 }
 function wkTerms(body){
   const accs=["in","fr","gb","us","de"];

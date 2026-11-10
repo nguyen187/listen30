@@ -619,6 +619,14 @@ function talkWidget(el,ti,onDone){
 }
 
 /* ---------- Pronunciation ---------- */
+function myTerms(el){
+  const inp=el.querySelector("#mt-in"), list=el.querySelector("#mt-list"), box=el.querySelector("#my-terms"); if(!inp) return;
+  inp.value=S.myTerms||"";
+  const build=()=>{ const items=(S.myTerms||"").split("\n").map(l=>l.trim()).filter(Boolean).slice(0,40).map(l=>{ const [t,ex]=l.split("|").map(x=>x.trim()); return [ex&&ex.split(" ").length>=3?ex:`Please say ${t} again.`, `Thuật ngữ: ${t}`]; });
+    el.querySelector("#mt-msg").textContent=items.length?items.length+" thẻ":""; if(items.length){ sayList(list,items,{key:["pron","my"]}); box.open=true; } else list.innerHTML=""; };
+  el.querySelector("#mt-save").onclick=()=>{ S.myTerms=inp.value.slice(0,5000); save(); build(); };
+  if(S.myTerms) build();
+}
 function hardWords(){
   const m=S.miss||{}, sn=S.seen||{};
   return Object.keys(m).filter(w=>m[w]>=2).map(w=>({w,miss:m[w],seen:sn[w]||m[w],rate:m[w]/(sn[w]||m[w])})).sort((a,b)=>b.rate-a.rate||b.miss-a.miss).slice(0,15);
@@ -642,8 +650,12 @@ function rPron(el){
   el.innerHTML=`<div class="stack"><div><h2>Phát âm</h2><div class="muted small">Nói từng câu. Chữ đỏ là chỗ máy không nhận ra, thường do âm cuối hoặc trọng âm. Mục tiêu: 100% liên tục ba lần.</div></div>
    <div class="cats pick">${PRON.map((p,i)=>`<button class="cell" data-p="${i}" aria-current="${sel.pron===i}"><b>${esc(p.t)}</b><span class="small muted">${p.items.length} câu</span></button>`).join("")}</div>
    <div id="pr-heat"></div>
+   <details class="panel" id="my-terms"><summary style="cursor:pointer"><b>Thuật ngữ của bạn</b> <span class="small muted">· dán từ hay dùng trong dự án để luyện phát âm</span></summary><div class="stack" style="margin-top:10px;gap:8px"><textarea id="mt-in" rows="4" placeholder="Mỗi dòng một thuật ngữ. Có thể thêm câu ví dụ sau dấu |, ví dụ:
+configuration in parts | We join configuration in parts on MSN and FIN.
+Skywise"></textarea><div class="row"><button class="btn sm primary" id="mt-save">Tạo thẻ luyện</button><span class="small muted" id="mt-msg"></span></div><div id="mt-list" class="stack"></div></div></details>
    <p class="small muted explain" style="margin:0">${esc(PRON[sel.pron].d)}</p><div id="pr-list" class="stack"></div></div>`;
   heatmap(el.querySelector("#pr-heat"));
+  myTerms(el);
   el.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{ sel.pron=+b.dataset.p; rPron(el); });
   sayList(el.querySelector("#pr-list"),PRON[sel.pron].items,{key:["pron",sel.pron]});
 }
