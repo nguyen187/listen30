@@ -223,6 +223,7 @@ input[type=text]:focus,select:focus{border-color:var(--accent);outline:none}
     <span><i class="sw" style="background:var(--sunken)"></i>Chưa học</span>
     <span><i class="sw" style="background:var(--amber);border-radius:50%"></i>Ngày kiểm tra</span>
   </div>
+  <div id="resume" style="margin-top:12px"></div>
   <div id="tts-warn" class="banner" style="margin-top:14px" hidden>Trình duyệt này không phát được giọng đọc tiếng Anh. Hãy mở bằng Chrome, Edge hoặc Safari bản mới.</div>
   <main id="view" style="margin-top:8px"></main>
   <footer class="foot"><span id="sync">Đang lưu tiến độ trên trình duyệt này</span><span>Giọng đọc: máy tính của bạn · Phím tắt chép chính tả: <span class="kbd">Enter</span> kiểm tra · <span class="kbd">Ctrl</span>+<span class="kbd">Space</span> nghe lại</span></footer>
@@ -865,8 +866,25 @@ function renderTape(){
 document.getElementById("tape").addEventListener("click",e=>{ const b=e.target.closest("[data-day]"); if(b) go("today",+b.dataset.day); });
 document.getElementById("tabs").addEventListener("click",e=>{ const b=e.target.closest("[data-view]"); if(!b) return; if(b.dataset.view==="today") openDay=currentDay(); go(b.dataset.view); });
 
+function dayStamp(ms){ const t=new Date(ms); return Math.floor((t.getTime()-t.getTimezoneOffset()*60000)/86400000); }
+function streakInfo(){
+  const dset=new Set(Object.values(S.days).filter(d=>d.doneAt).map(d=>dayStamp(d.doneAt)));
+  let n=0, t=today(); const doneToday=dset.has(t); if(!doneToday) t--; while(dset.has(t)){ n++; t--; }
+  return {n,doneToday};
+}
+function renderResume(){
+  const el=document.getElementById("resume"); if(!el) return;
+  const cur=currentDay(), p=dayProgress(cur), {n,doneToday}=streakInfo(), due=dueCards().length;
+  if(view==="today"&&openDay===cur&&!due){ el.innerHTML=""; return; }
+  const left=TASKS.length-p;
+  const msg = doneToday ? `Hôm nay bạn đã xong một ngày học${n>1?`, chuỗi ${n} ngày liên tục`:""}. Mai học tiếp Ngày ${cur}.`
+    : `${n?`Chuỗi ${n} ngày liên tục, đừng để đứt. `:""}${p?`Ngày ${cur} còn ${left} nhiệm vụ.`:`Hôm nay: Ngày ${cur}, ${esc(FOCUS[DAYS[cur-1].f].t)}.`}`;
+  el.innerHTML=`<div class="panel row" style="justify-content:space-between;padding:10px 14px;gap:8px 14px"><span class="small">${msg}${due?` · ${due} thẻ từ đến hạn`:""}</span><span class="row">${due?`<button class="btn sm" id="rs-srs">Ôn ${due} thẻ</button>`:""}${doneToday&&!(view!=="today")?"":`<button class="btn sm primary" id="rs-go">${doneToday?`Xem Ngày ${cur}`:(p?"Học tiếp":"Bắt đầu")}</button>`}</span></div>`;
+  const g=el.querySelector("#rs-go"); if(g) g.onclick=()=>go("today",cur);
+  const r=el.querySelector("#rs-srs"); if(r) r.onclick=()=>{ srsReturn=null; go("srs"); };
+}
 function render(){
-  renderTape();
+  renderTape(); renderResume();
   const el=document.getElementById("view");
   ({today:renderDay,map:renderMap,work:renderWork,real:renderReal,srs:renderSRS,gym:renderGym,stats:renderStats,setup:renderSetup})[view](el);
 }
