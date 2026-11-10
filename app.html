@@ -1226,13 +1226,13 @@ function renderSRS(el){
 let gymMode="dict";
 function renderGym(el){
   el.innerHTML=`<div class="stack" style="margin-top:22px"><div><h2>Luyện thêm</h2><div class="muted small">Luyện không giới hạn, không ảnh hưởng tiến độ ngày.</div></div>
-   <div class="tabs" style="align-self:flex-start" id="gym-tabs">${[["dict","Chép chính tả tự do"],["pairs","Cặp âm dễ nhầm"],["nums","Nghe số"]].map(([k,t])=>`<button class="tab" data-g="${k}" aria-current="${gymMode===k?"page":"false"}">${t}</button>`).join("")}</div>
+   <div class="tabs" style="align-self:flex-start" id="gym-tabs">${[["dict","Chép chính tả tự do"],["mine","Văn bản của bạn"],["pairs","Cặp âm dễ nhầm"],["nums","Nghe số"]].map(([k,t])=>`<button class="tab" data-g="${k}" aria-current="${gymMode===k?"page":"false"}">${t}</button>`).join("")}</div>
    <div id="vbar-host"></div>
    <div class="panel" id="gym-body"></div></div>`;
   mountVoiceBar(el.querySelector("#vbar-host"), ["us","gb","au"]);
   el.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{ gymMode=b.dataset.g; renderGym(el); });
   const body=el.querySelector("#gym-body");
-  if(gymMode==="dict") gymDict(body); else if(gymMode==="pairs") gymPairs(body); else mountNums(body,10,()=>{});
+  if(gymMode==="dict") gymDict(body); else if(gymMode==="mine") gymMine(body); else if(gymMode==="pairs") gymPairs(body); else mountNums(body,10,()=>{});
 }
 function gymDict(el){
   const upto=Math.max(1,currentDay());
@@ -1248,6 +1248,30 @@ function gymDict(el){
   };
   ["#gd-acc","#gd-rate","#gd-src"].forEach(s=>el.querySelector(s).onchange=start);
   start();
+}
+function splitSentences(t){
+  return t.replace(/\r/g,"").split(/(?<=[.!?])\s+|\n+/).map(x=>x.replace(/^[\s\-•*>\d.)]+/,"").replace(/\s+/g," ").trim())
+    .filter(x=>{ const n=x.split(" ").length; return n>=3&&n<=35&&/[a-z]/i.test(x); });
+}
+function gymMine(el){
+  const saved=S.mineText||"";
+  el.innerHTML=`<div class="stack" style="gap:10px"><div class="small muted explain">Dán đoạn transcript cuộc họp, email hay tài liệu bạn gặp ở công việc. Web tách thành từng câu, đọc bằng giọng bạn chọn để bạn chép lại. Nội dung chỉ lưu trên trình duyệt này.</div>
+   <textarea id="mn-text" rows="6" placeholder="Dán đoạn tiếng Anh vào đây (ví dụ phần transcript Teams)">${esc(saved)}</textarea>
+   <div class="row"><label class="small muted" for="mn-acc">Giọng</label><select id="mn-acc" style="width:auto"><option value="mix">Trộn</option>${["us","gb","in","fr","de","es","au"].map(a=>`<option value="${a}">${accLabel(a)}</option>`).join("")}</select>
+    <label class="small muted" for="mn-rate">Tốc độ</label><select id="mn-rate" style="width:auto">${[0.8,0.9,1,1.1,1.2].map(r=>`<option ${r===1?"selected":""}>${r}</option>`).join("")}</select>
+    <label class="small muted"><input type="checkbox" id="mn-shuf"> Xáo trộn</label>
+    <button class="btn primary" id="mn-go">Bắt đầu chép</button><span class="small muted" id="mn-msg"></span></div>
+   <div id="mn-w"></div></div>`;
+  el.querySelector("#mn-go").onclick=()=>{
+    const t=el.querySelector("#mn-text").value; S.mineText=t.slice(0,20000); save();
+    let ss=splitSentences(t); const msg=el.querySelector("#mn-msg");
+    if(!ss.length){ msg.textContent="Không tìm thấy câu tiếng Anh nào (cần câu 3–35 từ)."; return; }
+    if(el.querySelector("#mn-shuf").checked) ss=shuffle(ss);
+    msg.textContent=ss.length+" câu";
+    const acc=el.querySelector("#mn-acc").value, rate=+el.querySelector("#mn-rate").value, mix=["us","gb","in","fr","de"];
+    mountDict(el.querySelector("#mn-w"), ss.slice(0,40).map((x,i)=>({text:x,rate,acc:acc==="mix"?mix[i%5]:acc})), [], ()=>{}, ()=>{}, {});
+    el.querySelector("#mn-w").scrollIntoView({behavior:"smooth",block:"start"});
+  };
 }
 function gymPairs(el){
   let right=0,total=0,cur=null,answered=false;

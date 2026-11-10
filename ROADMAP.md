@@ -12,7 +12,11 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Listen 30: dictation of real meeting snippets pasted by the user (paste transcript → TTS → dictation)
+- [ ] Talk Shop: pronunciation heatmap — which words are most often red across all recordings, with a practice list
+- [ ] Listen 30: Vocab quiz mode for aviation terms (hear the term in a sentence, pick the meaning)
+- [ ] Both: onboarding tour for first-time visitors (3 short steps)
+- [ ] Talk Shop: interview mode — Mentor AI acts as a hiring manager for an aviation data role
+- [ ] Both: accessibility pass (labels, focus order, contrast in dark mode)
 
 ## Follow-ups
 
@@ -22,6 +26,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Listen 30: dictation of real meeting snippets pasted by the user (paste transcript → TTS → dictation)
 - [x] Talk Shop: email/chat writing helper (turn spoken notes into a polished Teams message) with Mentor AI
 - [x] Both: add 4 more aviation role-plays/meetings on MRO contracts, warranty claims, supply chain delays, regulatory audits
 - [x] Listen 30: daily streak reminder banner + "continue where you left off" button on Mentor/Today
