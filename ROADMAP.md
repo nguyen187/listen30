@@ -12,7 +12,6 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop: keep recordings history in IndexedDB, compare day 1 vs today
 - [ ] Talk Shop: minimal-pair speaking drill (ship/sheep etc.) checked by speech recognition
 - [ ] Talk Shop: weekly AI progress report from practice data
 - [ ] Talk Shop: keyboard shortcut (Space) to start/stop recording, shortcut help
@@ -22,8 +21,11 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 - [ ] Talk Shop: test AI role-play generation and Q&A with a real key (needs the user's key; check JSON schema is accepted)
 
+- [ ] Listen 30 artifact: test the "Vì sao mình nghe sai?" answer through the sample capability (needs the user's claude.ai session)
+
 ## Done
 
+- [x] Talk Shop: keep recordings history in IndexedDB, compare day 1 vs today
 - [x] Listen 30: AI explanation of dictation mistakes (GitHub Pages: reuse Talk Shop key; artifact: `sample` capability)
 - [x] Listen 30: 4 more aviation meetings (engine shop visit, fleet planning, data governance, IT security review) with questions
 - [x] Listen 30: "noisy call" mode — background noise via Web Audio while dictation plays, to simulate Teams/Zoom

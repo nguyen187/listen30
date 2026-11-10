@@ -386,7 +386,8 @@ function mountSpeak(el,opts={}){
     if(opts.continuous){ timer=setInterval(()=>{ const s=Math.floor((Date.now()-t0)/1000); tEl.textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0")+(opts.maxSec?" / "+Math.floor(opts.maxSec/60)+":"+String(opts.maxSec%60).padStart(2,"0"):""); if(opts.maxSec&&s>=opts.maxSec) stop(); },250); }
     const finish=()=>{ clearInterval(timer); btn.setAttribute("aria-pressed","false"); active=null;
       const dur=(Date.now()-t0)/1000; S.secs=(S.secs||0)+dur; save();
-      const done=()=>{ if(chunks.length){ aud.src=URL.createObjectURL(new Blob(chunks,{type:chunks[0].type||"audio/webm"})); aud.hidden=false; } };
+      let lastRes=null;
+      const done=()=>{ if(chunks.length){ const blob=new Blob(chunks,{type:chunks[0].type||"audio/webm"}); aud.src=URL.createObjectURL(blob); aud.hidden=false; if(dur>1.5) recAdd({ts:Date.now(),label:opts.label||opts.target||"Bản ghi",kind:opts.kind||"phrase",text:(lastRes&&lastRes.text)||"",score:lastRes?(lastRes.score!=null?lastRes.score:(lastRes.cover!=null?lastRes.cover:null)):null,wpm:lastRes&&lastRes.wpm||0,dur:Math.round(dur),blob}); } };
       if(rec&&rec.state!=="inactive"){ rec.onstop=done; rec.stop(); } else done();
       const text=(finalT+" "+interim).trim();
       if(!text){ live.classList.add("empty"); live.textContent= SR? (err==="not-allowed"?"Trình duyệt chặn nhận dạng giọng nói. Hãy cho phép micro rồi thử lại.":"Máy chưa nghe được gì. Nói to, rõ hơn, gần micro hơn.") : "Trình duyệt này không có nhận dạng giọng nói. Hãy nghe lại bản ghi của bạn và so với mẫu, hoặc mở bằng Chrome/Edge để được chấm."; }
@@ -396,6 +397,7 @@ function mountSpeak(el,opts={}){
       res.fillers=(text.toLowerCase().match(FILLERS)||[]).length;
       if(opts.target&&text){ const d=diffWords(opts.target,text); res.score=d.score; res.html=d.html; }
       if(opts.keys&&text){ res.hits=keyHits(opts.keys,text); res.cover=Math.round(100*res.hits.filter(h=>h.hit).length/res.hits.length); }
+      lastRes=res;
       opts.onResult&&opts.onResult(res,resEl);
     };
     function stopInner(){ if(stopped) return; stopped=true; if(recog){ try{recog.stop();}catch(e){} setTimeout(finish,700); } else finish(); }
@@ -526,7 +528,7 @@ function roleWidget(el,ri,onDone){
     el.querySelectorAll("[data-show]").forEach(b=>b.onclick=()=>{ const i=+b.dataset.show; el.querySelector(`[data-txt="${i}"]`).textContent=R.turns[i].p; });
     const cur=R.turns[step];
     if(cur&&cur.p){ speak(cur.p,1,R.acc).then(()=>{ if(R.turns[step]===cur){ step++; if(step<R.turns.length) draw(); else finish(); } }); }
-    if(cur&&cur.y){ const box=el.querySelector("#rl-sp"); mountSpeak(box,{keys:cur.k,onResult:(r,resEl)=>{
+    if(cur&&cur.y){ const box=el.querySelector("#rl-sp"); mountSpeak(box,{label:R.t+" · lượt "+(Math.floor(step/2)+1),kind:"role",keys:cur.k,onResult:(r,resEl)=>{
       const hits=r.hits||cur.k.map(k=>({k:k.split("|")[0],hit:false})), cover=r.cover||0;
       resEl.innerHTML=`<div class="stack" style="gap:8px"><div class="row"><span class="label">Ý chính</span>${hits.map(h=>`<span class="chip ${h.hit?"ok":"bad"}">${h.hit?"✓":"✗"} ${esc(h.k)}</span>`).join("")}</div>
         <div class="row"><span class="small muted">Câu mẫu:</span> <span>${esc(cur.m)}</span></div>
@@ -556,7 +558,7 @@ function talkWidget(el,ti,onDone){
     <div id="tk-sp"></div>
     <details><summary class="small" style="cursor:pointer">Xem và nghe bài mẫu</summary><div class="stack" style="margin-top:8px"><p class="explain" style="margin:0">${esc(T.m)}</p><div class="row"><button class="btn sm play" id="tk-m">Nghe mẫu</button><button class="btn sm" id="tk-ms">Chậm</button></div></div></details></div>`;
   el.querySelector("#tk-m").onclick=()=>speak(T.m,1,"us"); el.querySelector("#tk-ms").onclick=()=>speak(T.m,0.8,"us");
-  mountSpeak(el.querySelector("#tk-sp"),{continuous:true,maxSec:T.sec+30,keys:T.k,onResult:(r,resEl)=>{
+  mountSpeak(el.querySelector("#tk-sp"),{label:T.t,kind:"talk",continuous:true,maxSec:T.sec+30,keys:T.k,onResult:(r,resEl)=>{
     if(!r.text){ return; }
     const wpmNote=r.wpm<90?"hơi chậm, cứ nói tiếp đừng dừng để tìm từ":r.wpm>170?"hơi nhanh, chậm lại để người nghe kịp":"tốc độ tốt cho cuộc họp";
     resEl.innerHTML=`<div class="stack" style="gap:10px"><div class="meter">
@@ -603,9 +605,10 @@ function rProg(el){
     <div class="row"><span style="width:200px">Giọng đồng nghiệp ảo</span>${Object.keys(ACCL).map(a=>{ const v=voiceFor(a); return `<span class="chip">${ACCL[a]}: ${esc(v?v.name:"không có")}</span>`; }).join("")}</div>
     <div class="row"><button class="btn sm" id="st-mic">Kiểm tra micro</button><span class="small muted" id="st-mic-r"></span></div>
    </div>
+   <div class="panel stack"><div class="row" style="justify-content:space-between"><h3>Lịch sử ghi âm</h3><button class="btn sm ghost" id="rec-clear">Xoá lịch sử</button></div><div class="small muted">Giữ 60 bản ghi gần nhất trên máy này. Nghe lại bản đầu tiên và bản mới nhất của cùng một bài để thấy mình tiến bộ.</div><div id="rec-list"><span class="small muted">Đang tải…</span></div></div>
    <div class="panel stack"><h3>Chuyển tiến độ sang máy khác</h3><div class="small muted">Xuất một file gồm tiến độ Talk Shop và Listen 30, rồi nhập ở máy kia. API key không nằm trong file.</div>
     <div class="row"><button class="btn sm" id="io-exp">Tải file tiến độ</button><button class="btn sm" id="io-copy">Sao chép mã</button><label class="btn sm" for="io-file">Nhập từ file</label><input type="file" id="io-file" accept=".json,application/json,text/plain" hidden><button class="btn sm" id="io-paste">Dán mã</button></div><div id="io-area"></div></div></div>`;
-  bindIO(el);
+  bindIO(el); drawRecs(el);
   el.querySelector("#st-rec").onchange=e=>{ S.recLang=e.target.value; save(); };
   el.querySelector("#st-mic").onclick=async()=>{ const r=el.querySelector("#st-mic-r"); try{ await getMic(); r.textContent="Micro hoạt động. "+(SR?"Có nhận dạng giọng nói.":"Trình duyệt không có nhận dạng giọng nói, hãy dùng Chrome hoặc Edge."); }catch(e){ r.textContent="Không mở được micro: hãy cho phép trang dùng micro."; } };
 }
@@ -880,7 +883,7 @@ Ask me exactly 3 follow-up questions that an SME, Airbus engineer or airline man
     area.innerHTML=qs.map((q,i)=>`<div class="turn p"><div class="row" style="flex-wrap:nowrap;gap:8px;align-items:flex-start"><button class="btn sm play" data-qp="${i}" aria-label="Nghe câu hỏi"></button><span><b>Câu ${i+1}.</b> <span class="muted small">(bấm nghe trước, cố trả lời không nhìn chữ)</span><br>${esc(q)}</span></div><div data-qs="${i}" style="margin-top:6px"></div></div>`).join("")+`<div data-qa="grade"></div>`;
     area.querySelectorAll("[data-qp]").forEach(b=>b.onclick=()=>speak(qs[+b.dataset.qp],1,accs[+b.dataset.qp%accs.length]));
     const gradeBox=area.querySelector('[data-qa="grade"]');
-    area.querySelectorAll("[data-qs]").forEach(sp=>{ const i=+sp.dataset.qs; mountSpeak(sp,{onResult:res=>{ answers[i]=res.text||""; if(answers.every(a=>a)&&!gradeBox.childElementCount){
+    area.querySelectorAll("[data-qs]").forEach(sp=>{ const i=+sp.dataset.qs; mountSpeak(sp,{label:"Hỏi đáp: "+T.t,kind:"qa",onResult:res=>{ answers[i]=res.text||""; if(answers.every(a=>a)&&!gradeBox.childElementCount){
       aiFeedback(gradeBox,`After my talk on "${T.t}", I was asked follow-up questions and answered by voice (speech recognition transcripts):
 ${qs.map((q,j)=>`Q${j+1}: ${q}\nMy answer: """${answers[j]}"""`).join("\n")}
 
@@ -949,6 +952,31 @@ function chatUI(el){
 /* keep the selected item of a horizontal picker in view after re-render (phone layout) */
 function fixPick(el){ el.querySelectorAll('.cats.pick [aria-current="true"]').forEach(c=>{ const p=c.parentElement; p.scrollLeft=Math.max(0,c.offsetLeft-p.offsetLeft-8); }); }
 for(const name of ["rPhr","rRole","rTalk","rPron"]){ const f=window[name]; window[name]=el=>{ f(el); fixPick(el); }; }
+
+/* =============================== RECORDING HISTORY (IndexedDB) =============================== */
+const RECDB={p:null,open(){ return this.p||(this.p=new Promise((res,rej)=>{ const r=indexedDB.open("talkshop",1); r.onupgradeneeded=()=>r.result.createObjectStore("recs",{keyPath:"id",autoIncrement:true}); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); })); }};
+async function recTx(mode,fn){ const db=await RECDB.open(); return new Promise((res,rej)=>{ const t=db.transaction("recs",mode); const out=fn(t.objectStore("recs")); t.oncomplete=()=>res(out&&"result" in out?out.result:undefined); t.onerror=()=>rej(t.error); t.onabort=()=>rej(t.error); }); }
+async function recAll(){ try{ return (await recTx("readonly",st=>st.getAll()))||[]; }catch(e){ return []; } }
+async function recAdd(r){ try{ await recTx("readwrite",st=>st.add(r)); const all=await recAll(); if(all.length>60){ const old=all.slice(0,all.length-60); await recTx("readwrite",st=>{ old.forEach(x=>st.delete(x.id)); }); } }catch(e){} }
+async function recClear(){ try{ await recTx("readwrite",st=>st.clear()); }catch(e){} }
+let recConfirm=false;
+async function drawRecs(el){
+  const box=el.querySelector("#rec-list"); if(!box) return;
+  const all=(await recAll()).sort((a,b)=>a.ts-b.ts);
+  const clr=el.querySelector("#rec-clear");
+  clr.onclick=()=>{ recConfirm=true; drawRecs(el); };
+  if(!all.length){ box.innerHTML='<span class="small muted">Chưa có bản ghi nào. Các bài nói của bạn sẽ được lưu ở đây.</span>'; return; }
+  const groups={}; all.forEach(r=>{ (groups[r.label]=groups[r.label]||[]).push(r); });
+  const fmt=t=>new Date(t).toLocaleDateString("vi-VN",{day:"numeric",month:"numeric"})+" "+new Date(t).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"});
+  const row=(r,tag)=>`<div class="row" style="flex-wrap:nowrap;gap:8px;align-items:flex-start"><button class="btn sm play" data-rec="${r.id}" aria-label="Nghe bản ghi"></button><div style="min-width:0"><span class="small muted">${tag?tag+" · ":""}${fmt(r.ts)} · ${r.dur}s${r.score!=null?" · "+r.score+"%":""}${r.wpm?" · "+r.wpm+" từ/phút":""}</span><div class="small">${esc(r.text||"(không nhận dạng được)")}</div></div></div>`;
+  const labels=Object.keys(groups).sort((a,b)=>groups[b][groups[b].length-1].ts-groups[a][groups[a].length-1].ts);
+  box.innerHTML=(recConfirm?`<div class="banner row" style="justify-content:space-between;margin-bottom:8px"><span>Xoá toàn bộ ${all.length} bản ghi trên máy này? Không hoàn tác được.</span><span class="row"><button class="btn sm" id="rec-yes" style="border-color:var(--bad);color:var(--bad)">Xoá</button><button class="btn sm ghost" id="rec-no">Huỷ</button></span></div>`:"")+
+    `<div class="stack" style="gap:12px">${labels.slice(0,15).map(l=>{ const g=groups[l]; return `<div class="stack" style="gap:6px;border-top:1px solid var(--line);padding-top:10px"><b class="small">${esc(l)}</b>${g.length>1?row(g[0],"Lần đầu")+row(g[g.length-1],"Mới nhất"):row(g[0],"")}</div>`; }).join("")}</div>`;
+  const urls={}; let cur=null;
+  box.querySelectorAll("[data-rec]").forEach(b=>b.onclick=()=>{ const r=all.find(x=>x.id===+b.dataset.rec); if(!r) return; if(cur){ cur.pause(); } urls[r.id]=urls[r.id]||URL.createObjectURL(r.blob); cur=new Audio(urls[r.id]); cur.play().catch(()=>{}); });
+  const y=box.querySelector("#rec-yes"); if(y) y.onclick=async()=>{ recConfirm=false; await recClear(); drawRecs(el); };
+  const n=box.querySelector("#rec-no"); if(n) n.onclick=()=>{ recConfirm=false; drawRecs(el); };
+}
 
 /* =============================== EXPORT / IMPORT =============================== */
 function bundle(){ let l=null; try{ l=JSON.parse(localStorage.getItem("listen30.v1")||"null"); }catch(e){} return JSON.stringify({app:"listen30-bundle",exportedAt:new Date().toISOString(),talkshop:S,listen30:l,chat:{m:chat,s:chatSys,model:chatModel}}); }
