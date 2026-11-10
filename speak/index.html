@@ -300,6 +300,9 @@ const PRON=[
   ["The A320 and the A350 fleets.","A three twenty, A three fifty"],["Fifteen, not fifty.","fif-TEEN vs FIF-ty"],["Thirty-two percent of the fleet.","THIR-ty two PER-cent"],["The meeting is at a quarter past three.","quarter past three"],["We have nineteen aircraft in the hangar.","nine-TEEN"],["The deadline is the thirteenth of March.","thir-TEENTH"]]}
 ];
 
+const PAIR_ITEMS=[[`Please say ship again.`,`ship, không phải sheep: i ngắn và i dài`],[`Please say leave again.`,`leave, không phải live: i ngắn và i dài`],[`Please say sit again.`,`sit, không phải seat: i ngắn và i dài`],[`Please say fool again.`,`fool, không phải full: u ngắn và u dài`],[`Please say bad again.`,`bad, không phải bed: a mở rộng và e`],[`Please say men again.`,`men, không phải man: a mở rộng và e`],[`Please say walk again.`,`walk, không phải work: o tròn môi và ơ`],[`Please say sink again.`,`sink, không phải think: th và s`],[`Please say three again.`,`three, không phải tree: th và t`],[`Please say van again.`,`van, không phải fan: f và v`],[`Please say price again.`,`price, không phải prize: s và z cuối`],[`Please say bite again.`,`bite, không phải bike: âm cuối k và t`],[`Please say fine again.`,`fine, không phải five: âm cuối n và v`],[`Please say nice again.`,`nice, không phải night: âm cuối t và s`],[`Please say fifteen again.`,`fifteen, không phải fifty: -teen nhấn sau, -ty nhấn trước`],[`Please say thirty again.`,`thirty, không phải thirteen: -teen nhấn sau, -ty nhấn trước`],[`Please say want again.`,`want, không phải won't: want và won't`]];
+PRON.push({t:"Cặp âm dễ nhầm",d:"Nói đúng từ được yêu cầu. Nếu máy nghe ra từ kia trong cặp, nghĩa là người nghe cũng sẽ nhầm. Nghe mẫu ở tốc độ chậm rồi nói lại.",items:PAIR_ITEMS});
+
 /* =============================== STATE =============================== */
 const LS="talkshop.v1";
 const today=()=>{ const d=new Date(); return Math.floor((d.getTime()-d.getTimezoneOffset()*60000)/86400000); };
