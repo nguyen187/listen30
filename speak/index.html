@@ -438,7 +438,7 @@ function mountSpeak(el,opts={}){
   const id="s"+Math.random().toString(36).slice(2,7);
   el.innerHTML=`<div class="speak">
    <div class="row" style="gap:14px;flex-wrap:nowrap"><button class="rec" id="${id}-rec" aria-pressed="false" aria-label="Bấm để nói"><i></i></button>
-    <div style="min-width:0;flex:1"><div class="small muted" id="${id}-hint">${opts.continuous?"Bấm nút đỏ để bắt đầu, bấm lần nữa để dừng.":"Bấm nút đỏ rồi nói. Ngừng nói là máy tự dừng."}</div><div class="timer" id="${id}-t" ${opts.continuous?"":"hidden"}>0:00</div></div></div>
+    <div style="min-width:0;flex:1"><div class="small muted"><span class="chip" style="font-size:11px">${({both:"Ghi âm + chấm",sr:"Chỉ chấm điểm",rec:"Chỉ ghi âm"})[S.recMode||"both"]}</span></div><div class="small muted" id="${id}-hint">${opts.continuous?"Bấm nút đỏ để bắt đầu, bấm lần nữa để dừng.":"Bấm nút đỏ rồi nói. Ngừng nói là máy tự dừng."}</div><div class="timer" id="${id}-t" ${opts.continuous?"":"hidden"}>0:00</div></div></div>
    <div class="live empty" id="${id}-live">Máy nghe được gì sẽ hiện ở đây</div>
    <div id="${id}-res"></div>
    <audio id="${id}-aud" controls hidden style="width:100%"></audio>
@@ -469,7 +469,9 @@ function mountSpeak(el,opts={}){
       if(rec&&rec.state!=="inactive"){ rec.onstop=done; rec.stop(); } else done();
       const text=(finalT+" "+interim).trim();
       if(!text&&mode==="rec"){ live.classList.add("empty"); live.textContent=chunks.length?"Đã ghi âm (chế độ chỉ ghi âm). Nghe lại bản ghi bên dưới và so với mẫu.":"Không ghi được âm thanh. Chạy kiểm tra micro trong tab Tiến độ."; }
-      else if(!text){ live.classList.add("empty"); live.textContent= SR? micHelp(err||(micErr?(micErr==="NotFoundError"?"audio-capture":micErr==="NotReadableError"?"busy":"not-allowed"):"no-speech")) : "Trình duyệt này không có nhận dạng giọng nói. Hãy nghe lại bản ghi của bạn và so với mẫu, hoặc mở bằng Chrome/Edge để được chấm."; }
+      else if(!text){ live.classList.add("empty");
+        if(mode==="both"&&(err&&err!=="no-speech"||micErr)){ setTimeout(()=>{ live.insertAdjacentHTML("beforeend",`<div class="row" style="margin-top:8px"><button class="btn sm primary" data-swap>Thử lại ở chế độ "Chỉ chấm điểm"</button></div>`); const b=live.querySelector("[data-swap]"); if(b) b.onclick=()=>{ S.recMode="sr"; save(); live.textContent="Đã chuyển sang chế độ Chỉ chấm điểm. Bấm nút đỏ để thử lại."; }; },0); }
+        live.textContent= SR? micHelp(err||(micErr?(micErr==="NotFoundError"?"audio-capture":micErr==="NotReadableError"?"busy":"not-allowed"):"no-speech")) : "Trình duyệt này không có nhận dạng giọng nói. Hãy nghe lại bản ghi của bạn và so với mẫu, hoặc mở bằng Chrome/Edge để được chấm."; }
       else live.textContent=text;
       const res={text,dur,words:norm(text).length};
       res.wpm=dur>3?Math.round(res.words/(dur/60)):0;

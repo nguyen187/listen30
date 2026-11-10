@@ -12,7 +12,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop: show which recording mode is active next to the red button, with a one-tap switch when an error appears
+- [ ] Listen 30: Today page 'quick session' (15-minute version of the day for busy days)
+- [ ] Talk Shop: export practice transcripts (journal, talks) as a text file for review
 
 ## Follow-ups
 
@@ -22,6 +23,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Talk Shop: show which recording mode is active next to the red button, with a one-tap switch when an error appears
 - [x] Talk Shop: recording mode switch (both / recognition only / recording only) as a fallback; still waiting for the user to confirm the record button
 - [x] Talk Shop: 7-step microphone self-test (user reports all steps pass on their machine)
 - [x] Listen 30: daily 'word of the day' from the aviation term list on the Today page
