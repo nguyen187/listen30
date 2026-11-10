@@ -12,8 +12,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop: voice journal — 1-minute daily diary in English with Mentor AI corrections, kept as a timeline
-- [ ] Listen 30: daily 'word of the day' from the aviation term list on the Today page
+- [ ] Talk Shop: confirm the record button works for the user after the mic fixes; if not, add a 'record without recognition' fallback switch
 
 ## Follow-ups
 
@@ -23,6 +22,9 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Talk Shop: 7-step microphone self-test (user reports all steps pass on their machine)
+- [x] Listen 30: daily 'word of the day' from the aviation term list on the Today page
+- [x] Talk Shop: voice journal — 1-minute daily diary in English with Mentor AI corrections, kept as a timeline
 - [x] Talk Shop: pronunciation of acronyms (AOG, MTBUR, ACARS, ETOPS…) letter-by-letter drill with recognition
 - [x] Listen 30: "listen before meeting" mode — pick the accent and topic of your next real meeting, get a 10-minute warm-up playlist
 - [x] Both: performance pass (lazy-render long lists, avoid re-rendering whole views on small changes) (measured: every view renders in 1-11 ms, no change needed)

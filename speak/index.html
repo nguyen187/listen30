@@ -662,6 +662,22 @@ function roleWidget(el,ri,onDone){
 }
 
 /* ---------- Free talk ---------- */
+const JOURNAL_Q=["What did you work on today, and what was the hardest part?","Describe one meeting you had this week. What was decided?","What problem are you trying to solve at work right now?","What did you learn this week, at work or outside work?","Explain one dataset you use to someone new to the team.","What would you like to improve in your team's way of working?","Tell me about a small win you had recently.","What are your priorities for tomorrow, and why?","Describe a misunderstanding you had with a colleague and how you fixed it.","What do you want to say better in English in your next meeting?"];
+function journal(el){
+  if(!S.journal) S.journal=[];
+  const q=JOURNAL_Q[today()%JOURNAL_Q.length], todayDone=S.journal.some(j=>j.d===today());
+  el.innerHTML=`<div class="stack"><div><h3>Nhật ký nói 1 phút</h3><div class="small muted">Mỗi ngày nói một phút về công việc của bạn, trả lời câu hỏi bên dưới. Nói thật, nói chuyện của bạn: đây là cách nhanh nhất để có vốn câu cho chính công việc mình.${todayDone?" Hôm nay bạn đã ghi một lần.":""}</div></div>
+    <div class="row" style="flex-wrap:nowrap"><button class="btn sm play" id="jn-q" aria-label="Nghe câu hỏi"></button><b>${esc(q)}</b></div><div id="jn-sp"></div>
+    <div><div class="label">Các ngày trước</div><div class="stack" style="gap:8px;margin-top:6px">${S.journal.slice(-10).reverse().map(j=>`<div class="small" style="border-left:3px solid var(--line);padding-left:10px"><span class="muted mono">${new Date((j.d)*86400000).toLocaleDateString("vi-VN")} · ${j.wpm} từ/phút</span><br><b>${esc(j.q)}</b><br>${esc(j.text)}</div>`).join("")||'<span class="small muted">Chưa có nhật ký nào.</span>'}</div></div></div>`;
+  el.querySelector("#jn-q").onclick=()=>speak(q,1,"gb");
+  mountSpeak(el.querySelector("#jn-sp"),{label:"Nhật ký: "+q,kind:"journal",continuous:true,maxSec:75,onResult:(r,resEl)=>{
+    if(!r.text) return; S.journal.push({d:today(),q,text:r.text.slice(0,2000),wpm:r.wpm}); S.journal=S.journal.slice(-60); save();
+    resEl.innerHTML=`<div class="small muted">Đã lưu vào nhật ký. ${r.words} từ, ${r.wpm} từ/phút.</div>`;
+    aiFeedback(resEl,`This is my 1-minute English voice journal about my work (speech recognition transcript). Question: "${q}"
+"""${r.text}"""
+In Vietnamese, briefly: 1) up to 3 corrections that matter most, each with the corrected sentence on a line starting with "> "; 2) a cleaner version of my answer in natural spoken English, each sentence on its own "> " line; 3) 2 useful phrases I could reuse at work.`,"Mentor sửa nhật ký");
+  }});
+}
 const SMALL=[
  {t:"Cuối tuần",q:"How was your weekend?",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"It was pretty relaxing, thanks. I went to a coffee shop with some friends on Saturday. How about yours?"},
  {t:"Thời tiết",q:"How's the weather in Hanoi these days?",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"It's getting cooler now, around twenty degrees in the morning, which is really nice. What's it like where you are?"},
@@ -686,9 +702,10 @@ const SMALL=[
 ];
 function rTalk(el){
   el.innerHTML=`<div class="stack"><div><h2>Trình bày tự do</h2><div class="muted small">Nói liền một mạch theo khung gợi ý. Máy đo tốc độ nói, số từ đệm và các thuật ngữ bạn dùng. Sau đó nghe bài mẫu và nói lại lần hai.</div></div>
-   <div class="row"><button class="btn sm ${sel.small?"":"primary"}" data-set="main">Trình bày công việc</button><button class="btn sm ${sel.small?"primary":""}" data-set="small">Small talk nhanh (20 giây)</button></div>
+   <div class="row"><button class="btn sm ${!sel.small?"primary":""}" data-set="main">Trình bày công việc</button><button class="btn sm ${sel.small===true?"primary":""}" data-set="small">Small talk nhanh (20 giây)</button><button class="btn sm ${sel.small==="journal"?"primary":""}" data-set="journal">Nhật ký nói 1 phút</button></div>
    <div class="cats pick">${(sel.small?SMALL:TALKS).map((t,i)=>`<button class="cell" data-t="${i}" aria-current="${(sel.small?sel.smallI:sel.talk)===i}"><b>${esc(t.t)}</b><span class="small muted">${t.sec} giây</span></button>`).join("")}</div><div class="panel" id="tk"></div></div>`;
-  el.querySelectorAll("[data-set]").forEach(b=>b.onclick=()=>{ sel.small=b.dataset.set==="small"; rTalk(el); });
+  el.querySelectorAll("[data-set]").forEach(b=>b.onclick=()=>{ sel.small=b.dataset.set==="small"?true:b.dataset.set==="journal"?"journal":false; rTalk(el); });
+  if(sel.small==="journal"){ el.querySelector(".cats.pick").remove(); journal(el.querySelector("#tk")); return; }
   el.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{ if(sel.small) sel.smallI=+b.dataset.t; else sel.talk=+b.dataset.t; rTalk(el); });
   if(sel.small) talkWidget(el.querySelector("#tk"),-1,null,SMALL[sel.smallI||0]); else talkWidget(el.querySelector("#tk"),sel.talk);
 }

@@ -891,6 +891,9 @@ function refreshTrackHeads(n){
   const p=document.getElementById("day-prog"); if(p) p.textContent=dayProgress(n)+"/"+TASKS.length;
   const done=document.getElementById("day-done"); if(done) done.hidden = dayProgress(n)<TASKS.length;
 }
+function wotd(){ const flat=TERM_GROUPS.flatMap(g=>g.v); return flat[today()%flat.length]; }
+function wotdHTML(){ const v=wotd(); return `<div class="panel row" style="margin-top:12px;justify-content:space-between;gap:8px 14px;padding:12px 16px"><div style="min-width:0"><span class="label">Thuật ngữ của ngày</span><div><b style="font-family:var(--f-display);font-size:19px">${esc(v.w)}</b> <span class="small muted">· ${esc(v.m)}</span></div><div class="small">${esc(v.x)}</div></div><div class="row"><button class="btn sm play" id="wd-w" aria-label="Nghe thuật ngữ"></button><button class="btn sm" id="wd-x">Nghe câu</button><a class="btn sm ghost" href="https://youglish.com/pronounce/${encodeURIComponent(v.w)}/english" target="_blank" rel="noopener">Giọng thật ↗</a></div></div>`; }
+function bindWotd(){ const v=wotd(), w=document.getElementById("wd-w"), x=document.getElementById("wd-x"); if(w) w.onclick=()=>speak(v.w,0.9,"gb"); if(x) x.onclick=()=>speak(v.x,1,["in","fr","gb","us","de"][today()%5]); }
 function renderDay(el){
   const n=openDay||currentDay(); openDay=n;
   const day=DAYS[n-1], fo=FOCUS[day.f], wk=WEEKS[wkOf(n)-1];
@@ -913,6 +916,7 @@ function renderDay(el){
   </section>
   <div class="banner" id="day-done" style="margin-top:16px;background:var(--good-soft);border-color:var(--good)" ${dayProgress(n)<TASKS.length?"hidden":""}>Xong ngày ${n}. ${n<30?`Mai học <b>Ngày ${n+1}: ${esc(FOCUS[DAYS[n].f].t)}</b>. Đừng học dồn hai ngày một lúc, não cần ngủ để ghi nhớ âm thanh.`:"Bạn đã hoàn thành 30 ngày. Giữ thói quen nghe 30 phút mỗi ngày và ôn từ trong mục Ôn từ."}</div>
   <div id="vbar-host" style="margin-top:16px"></div>
+  ${wotdHTML()}
   <div class="stack" style="margin-top:12px" id="tracks">
     ${TASKS.map(([k,t,sub],i)=>`
       <details class="track ${taskDone(n,k)?"isdone":""}" id="tr-${k}" ${i===(firstOpen<0?-1:firstOpen)?"open":""}>
@@ -921,6 +925,7 @@ function renderDay(el){
       </details>`).join("")}
   </div>`;
   el.querySelectorAll("[data-goday]").forEach(b=>b.onclick=()=>go("today",+b.dataset.goday));
+  bindWotd();
   mountVoiceBar(document.getElementById("vbar-host"), [...new Set(Array.from({length:20},(_,i)=>accentFor(n,i)))]);
   mountReview(n, document.getElementById("tb-review"));
   mountLesson(n, document.getElementById("tb-lesson"));
