@@ -375,7 +375,8 @@ function mountSpeak(el,opts={}){
     <div style="min-width:0;flex:1"><div class="small muted" id="${id}-hint">${opts.continuous?"Bấm nút đỏ để bắt đầu, bấm lần nữa để dừng.":"Bấm nút đỏ rồi nói. Ngừng nói là máy tự dừng."}</div><div class="timer" id="${id}-t" ${opts.continuous?"":"hidden"}>0:00</div></div></div>
    <div class="live empty" id="${id}-live">Máy nghe được gì sẽ hiện ở đây</div>
    <div id="${id}-res"></div>
-   <audio id="${id}-aud" controls hidden style="width:100%"></audio></div>`;
+   <audio id="${id}-aud" controls hidden style="width:100%"></audio>
+   ${opts.target?`<div class="row" id="${id}-cmp" hidden><button class="btn sm primary" id="${id}-ab">Nghe mẫu rồi nghe mình</button><span class="small muted">So nhịp, nối âm và âm cuối giữa hai bản</span></div>`:""}</div>`;
   const btn=el.querySelector("#"+id+"-rec"), live=el.querySelector("#"+id+"-live"), resEl=el.querySelector("#"+id+"-res"), aud=el.querySelector("#"+id+"-aud"), tEl=el.querySelector("#"+id+"-t");
   let run=null;
   async function start(){
@@ -390,7 +391,7 @@ function mountSpeak(el,opts={}){
     const finish=()=>{ clearInterval(timer); btn.setAttribute("aria-pressed","false"); active=null;
       const dur=(Date.now()-t0)/1000; S.secs=(S.secs||0)+dur; save();
       let lastRes=null;
-      const done=()=>{ if(chunks.length){ const blob=new Blob(chunks,{type:chunks[0].type||"audio/webm"}); aud.src=URL.createObjectURL(blob); aud.hidden=false; if(dur>1.5) recAdd({ts:Date.now(),label:opts.label||opts.target||"Bản ghi",kind:opts.kind||"phrase",text:(lastRes&&lastRes.text)||"",score:lastRes?(lastRes.score!=null?lastRes.score:(lastRes.cover!=null?lastRes.cover:null)):null,wpm:lastRes&&lastRes.wpm||0,dur:Math.round(dur),blob}); } };
+      const done=()=>{ if(chunks.length){ const blob=new Blob(chunks,{type:chunks[0].type||"audio/webm"}); aud.src=URL.createObjectURL(blob); aud.hidden=false; const cmp=el.querySelector("#"+id+"-cmp"); if(cmp){ cmp.hidden=false; el.querySelector("#"+id+"-ab").onclick=async()=>{ aud.pause(); aud.currentTime=0; await speak(opts.target,1,opts.acc||"us"); await new Promise(r=>setTimeout(r,350)); aud.play().catch(()=>{}); }; } if(dur>1.5) recAdd({ts:Date.now(),label:opts.label||opts.target||"Bản ghi",kind:opts.kind||"phrase",text:(lastRes&&lastRes.text)||"",score:lastRes?(lastRes.score!=null?lastRes.score:(lastRes.cover!=null?lastRes.cover:null)):null,wpm:lastRes&&lastRes.wpm||0,dur:Math.round(dur),blob}); } };
       if(rec&&rec.state!=="inactive"){ rec.onstop=done; rec.stop(); } else done();
       const text=(finalT+" "+interim).trim();
       if(!text){ live.classList.add("empty"); live.textContent= SR? (err==="not-allowed"?"Trình duyệt chặn nhận dạng giọng nói. Hãy cho phép micro rồi thử lại.":"Máy chưa nghe được gì. Nói to, rõ hơn, gần micro hơn.") : "Trình duyệt này không có nhận dạng giọng nói. Hãy nghe lại bản ghi của bạn và so với mẫu, hoặc mở bằng Chrome/Edge để được chấm."; }
