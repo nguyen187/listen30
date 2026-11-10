@@ -12,7 +12,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop: confirm the record button works for the user after the mic fixes; if not, add a 'record without recognition' fallback switch
+- [ ] Talk Shop: show which recording mode is active next to the red button, with a one-tap switch when an error appears
 
 ## Follow-ups
 
@@ -22,6 +22,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Talk Shop: recording mode switch (both / recognition only / recording only) as a fallback; still waiting for the user to confirm the record button
 - [x] Talk Shop: 7-step microphone self-test (user reports all steps pass on their machine)
 - [x] Listen 30: daily 'word of the day' from the aviation term list on the Today page
 - [x] Talk Shop: voice journal — 1-minute daily diary in English with Mentor AI corrections, kept as a timeline
