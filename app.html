@@ -694,19 +694,37 @@ function voiceFor(acc){
 }
 const ACRO = /\b(AOG|MRO|MEL|AD|SB|MSN|NFF|MTBUR|MTBF|OTP|MCC|PFR|FDM|QAR|UAT|ETA|APU|ATA|SME|PFA|KPI|MPD|AMP|FH|FC|TSN|CSN|TSO|IPC|LLP|LLPs|NHA|OOOI|FIN)\b/g;
 function speechText(t){ return t.replace(/\bACARS\b/g,"ay cars").replace(/\bETOPS\b/g,"ee tops").replace(ACRO,m=>m.split("").join(" ")); }
+/* background noise that plays under the voice, to practise like a bad Teams/Zoom line */
+let actx=null, noiseBuf=null, noiseSrc=null;
+const NOISE_GAIN=[0,0.06,0.14,0.26];
+function noiseStart(level){
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)(); if(actx.state==="suspended") actx.resume();
+    if(!noiseBuf){ const len=actx.sampleRate*3; noiseBuf=actx.createBuffer(1,len,actx.sampleRate); const d=noiseBuf.getChannelData(0); let b0=0,b1=0,b2=0;
+      for(let i=0;i<len;i++){ const w=Math.random()*2-1; b0=0.99765*b0+w*0.0990460; b1=0.963*b1+w*0.2965164; b2=0.57*b2+w*1.0526913; let v=(b0+b1+b2+w*0.1848)*0.12;
+        if(Math.random()<0.0003) v+=(Math.random()*2-1)*0.9; d[i]=v; } }
+    noiseStop();
+    const src=actx.createBufferSource(); src.buffer=noiseBuf; src.loop=true;
+    const f=actx.createBiquadFilter(); f.type="bandpass"; f.frequency.value=1100; f.Q.value=0.4;
+    const g=actx.createGain(); g.gain.value=NOISE_GAIN[level]||0;
+    src.connect(f); f.connect(g); g.connect(actx.destination); src.start(); noiseSrc=src;
+  }catch(e){}
+}
+function noiseStop(){ try{ if(noiseSrc) noiseSrc.stop(); }catch(e){} noiseSrc=null; }
 let speakId=0;
 const effAcc = a => (S.forceAcc && S.forceAcc!=="auto") ? S.forceAcc : a;
 function speak(text, rate=1, acc="us"){
   acc = effAcc(acc);
   return new Promise(res=>{
     if(!hasTTS){ res(); return; }
-    const id=++speakId; speechSynthesis.cancel();
+    const id=++speakId; speechSynthesis.cancel(); noiseStop();
     setTimeout(()=>{
       if(id!==speakId){ res(); return; }
       const u=new SpeechSynthesisUtterance(speechText(text)); const v=voiceFor(acc);
       if(v){ u.voice=v; u.lang=v.lang; } else u.lang=LANG[acc];
       u.rate=Math.max(0.5,Math.min(2,rate+(S.speedAdj||0)));
-      u.onend=u.onerror=()=>res(); speechSynthesis.speak(u);
+      if(S.noise) noiseStart(S.noise);
+      u.onend=u.onerror=()=>{ if(id===speakId) noiseStop(); res(); }; speechSynthesis.speak(u);
     },60);
   });
 }
@@ -818,7 +836,7 @@ function wordInfo(w){ for(let i=0;i<DAYS.length;i++){ const v=DAYS[i].v.find(x=>
 
 /* =============================== VIEWS =============================== */
 const VIEWS=["today","map","work","real","srs","gym","stats","setup"];
-function go(v, n){ view=v; if(n) openDay=n; playTok++; if(hasTTS) speechSynthesis.cancel(); try{ history.replaceState(null,"", v==="today"?"#day-"+(openDay||currentDay()):"#"+v); }catch(e){} render(); window.scrollTo({top:0}); }
+function go(v, n){ view=v; if(n) openDay=n; playTok++; if(hasTTS) speechSynthesis.cancel(); noiseStop(); try{ history.replaceState(null,"", v==="today"?"#day-"+(openDay||currentDay()):"#"+v); }catch(e){} render(); window.scrollTo({top:0}); }
 function readHash(){
   const h=location.hash.slice(1);
   const m=h.match(/^day-(\d+)$/); if(m){ const n=+m[1]; if(n>=1&&n<=30){ view="today"; openDay=n; return; } }
@@ -1813,6 +1831,7 @@ function voiceBarHTML(accs){
    <div class="row" style="gap:8px 14px"><span class="label">Giọng nghe</span>
    <select id="vb-acc" style="width:auto" aria-label="Giọng"><option value="auto" ${!forced?"selected":""}>Theo bài (mỗi câu một giọng)</option>${ACC_KEYS.map(a=>`<option value="${a}" ${fa===a?"selected":""}>Chỉ giọng ${accLabel(a)}</option>`).join("")}</select>
    <select id="vb-spd" style="width:auto" aria-label="Tốc độ">${[-0.2,-0.15,-0.1,-0.05,0,0.05,0.1,0.15,0.2].map(v=>`<option value="${v}" ${Math.abs((S.speedAdj||0)-v)<.001?"selected":""}>${v===0?"Tốc độ gốc":"Tốc độ "+(v>0?"+":"")+v}</option>`).join("")}</select>
+   <select id="vb-noise" style="width:auto" aria-label="Tiếng ồn nền">${[["0","Không ồn"],["1","Ồn nhẹ (văn phòng)"],["2","Cuộc gọi rè"],["3","Rất ồn (quán cà phê)"]].map(([v,t])=>`<option value="${v}" ${String(S.noise||0)===v?"selected":""}>${t}</option>`).join("")}</select>
    <button class="btn sm play" id="vb-test">Nghe thử</button></div>
    <div class="row" style="gap:8px 16px">${list.map(pick).join("")}</div>
   </div>`;
@@ -1825,6 +1844,7 @@ function mountVoiceBar(host, accs){
   host.querySelector("#vb-acc").onchange=e=>{ S.forceAcc=e.target.value; save(); re(); };
   host.querySelectorAll("[data-vbv]").forEach(s=>s.onchange=e=>{ const a=s.dataset.vbv; S.voice[a]=e.target.value; save(); re(); speak("Could you walk us through the reliability data for the A320 fleet?",1,a); });
   host.querySelector("#vb-spd").onchange=e=>{ S.speedAdj=+e.target.value; save(); };
+  host.querySelector("#vb-noise").onchange=e=>{ S.noise=+e.target.value; save(); };
   host.querySelector("#vb-test").onclick=()=>speak("Could you walk us through the reliability data for the A320 fleet?",1,(S.forceAcc&&S.forceAcc!=="auto")?S.forceAcc:accs[0]);
 }
 function refreshAccChips(){ document.querySelectorAll("[data-acc-chip]").forEach(c=>c.textContent="Giọng "+accLabel(effAcc(c.dataset.accChip))); }
