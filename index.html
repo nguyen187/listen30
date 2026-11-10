@@ -1272,8 +1272,14 @@ function renderSetup(el){
     ${voices.length?"":`<div class="banner">Chưa tìm thấy giọng tiếng Anh nào. Thử tải lại trang, hoặc mở bằng Chrome.</div>`}
    </div>
    <div class="panel stack"><h3>Dữ liệu</h3><p class="muted small" style="margin:0">Tiến độ được lưu trên trình duyệt này${cloud?" và đồng bộ riêng tư vào tài khoản Claude của bạn":""}.</p>
+    <div class="stack" style="gap:8px">
+     <div class="small muted">Chuyển tiến độ sang máy khác, hoặc giữa bản trên Claude và bản GitHub: xuất ở máy này, rồi nhập ở máy kia (dán mã hoặc chọn file).</div>
+     <div class="row"><button class="btn sm" id="io-exp">Xuất tiến độ</button><label class="btn sm" for="io-file">Nhập từ file</label><input type="file" id="io-file" accept=".json,application/json,text/plain" hidden><button class="btn sm" id="io-paste">Nhập bằng cách dán mã</button></div>
+     <div id="io-area"></div>
+    </div>
     <div id="reset-zone">${confirmReset?`<div class="confirm"><span>Xoá toàn bộ tiến độ và từ đã học? Không hoàn tác được.</span><button class="btn" id="rs-yes" style="border-color:var(--bad);color:var(--bad)">Xoá hết</button><button class="btn ghost" id="rs-no">Huỷ</button></div>`:`<button class="btn" id="rs">Học lại từ đầu</button>`}</div></div></div>`;
   bindTheme(el, ()=>renderSetup(el));
+  bindIO(el);
   ACC_KEYS.forEach(a=>{ el.querySelector("#v-"+a).onchange=e=>{ S.voice[a]=e.target.value; save(); }; });
   el.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>speak("I'm going to grab a coffee. Do you want one?",1,b.dataset.t));
   el.querySelector("#spd").onchange=e=>{ S.speedAdj=+e.target.value; save(); };
@@ -1856,6 +1862,42 @@ document.getElementById("theme-btn").onclick=()=>{
   const dark = S.theme==="dark" || (S.theme!=="light" && (document.documentElement.getAttribute("data-theme")==="dark" || (!document.documentElement.getAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches)));
   S.theme = dark?"light":"dark"; save(); applyTheme(); if(view==="setup") render();
 };
+
+/* =============================== EXPORT / IMPORT =============================== */
+const ON_PAGES = /github\.io$/.test(location.hostname);
+function exportCode(){ return JSON.stringify({app:"listen30",exportedAt:new Date().toISOString(),listen30:S}); }
+function parseImport(txt){
+  const j=JSON.parse(txt);
+  const data = j&&j.listen30 ? j.listen30 : (j&&j.days&&j.cards ? j : null);
+  if(!data||typeof data!=="object"||!data.days) throw new Error("Không thấy dữ liệu Listen 30 trong mã này.");
+  return {data, talk: j&&j.talkshop || null};
+}
+function bindIO(el){
+  const area=el.querySelector("#io-area"); if(!area) return;
+  el.querySelector("#io-exp").onclick=()=>{
+    const code=exportCode();
+    area.innerHTML=`<div class="stack" style="gap:8px"><textarea id="io-code" rows="4" readonly class="mono" style="font-size:12px">${esc(code)}</textarea>
+      <div class="row"><button class="btn sm primary" id="io-copy">Sao chép mã</button>${ON_PAGES?'<button class="btn sm" id="io-dl">Tải file .json</button>':""}<span class="small muted" id="io-msg">${Object.keys(S.days).length} ngày, ${Object.keys(S.cards).length} từ</span></div></div>`;
+    area.querySelector("#io-copy").onclick=async()=>{ const t=area.querySelector("#io-code"); try{ await navigator.clipboard.writeText(code); area.querySelector("#io-msg").textContent="Đã sao chép."; }catch(e){ t.focus(); t.select(); area.querySelector("#io-msg").textContent="Mã đã được chọn, bấm Cmd/Ctrl+C để sao chép."; } };
+    const dl=area.querySelector("#io-dl"); if(dl) dl.onclick=()=>{ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([code],{type:"application/json"})); a.download="listen30-"+new Date().toISOString().slice(0,10)+".json"; document.body.appendChild(a); a.click(); a.remove(); };
+  };
+  const confirmImport=txt=>{
+    let r; try{ r=parseImport(txt); }catch(e){ area.innerHTML=`<div class="small" style="color:var(--bad)">${esc(e instanceof SyntaxError?"Mã không hợp lệ: hãy dán đúng toàn bộ mã đã xuất.":e.message)}</div>`; return; }
+    const d=r.data;
+    area.innerHTML=`<div class="confirm"><span>Thay tiến độ hiện tại bằng dữ liệu nhập vào (${Object.keys(d.days||{}).length} ngày, ${Object.keys(d.cards||{}).length} từ)?${r.talk&&ON_PAGES?" Kèm cả dữ liệu Talk Shop.":""}</span><button class="btn sm primary" id="io-yes">Nhập</button><button class="btn sm ghost" id="io-no">Huỷ</button></div>`;
+    area.querySelector("#io-no").onclick=()=>{ area.innerHTML=""; };
+    area.querySelector("#io-yes").onclick=()=>{
+      S=Object.assign(blank(),d); S.updatedAt=Date.now();
+      if(r.talk&&ON_PAGES){ try{ localStorage.setItem("talkshop.v1",JSON.stringify(r.talk)); }catch(e){} }
+      save(); applyTheme(); render(); const a2=document.getElementById("io-area"); if(a2) a2.innerHTML='<div class="small" style="color:var(--good)">Đã nhập tiến độ.</div>';
+    };
+  };
+  el.querySelector("#io-file").onchange=e=>{ const f=e.target.files[0]; if(!f) return; f.text().then(confirmImport); e.target.value=""; };
+  el.querySelector("#io-paste").onclick=()=>{
+    area.innerHTML=`<div class="stack" style="gap:8px"><textarea id="io-in" rows="4" class="mono" style="font-size:12px" placeholder="Dán mã tiến độ vào đây"></textarea><div class="row"><button class="btn sm primary" id="io-go">Kiểm tra mã</button></div></div>`;
+    area.querySelector("#io-go").onclick=()=>confirmImport(area.querySelector("#io-in").value.trim());
+  };
+}
 
 /* =============================== BOOT =============================== */
 applyTheme();

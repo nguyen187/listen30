@@ -602,7 +602,10 @@ function rProg(el){
     <div class="small muted">Để "Tiếng Anh Mỹ" nếu muốn chấm khắt khe nhất. Đeo tai nghe để micro không thu lại giọng đọc mẫu.</div>
     <div class="row"><span style="width:200px">Giọng đồng nghiệp ảo</span>${Object.keys(ACCL).map(a=>{ const v=voiceFor(a); return `<span class="chip">${ACCL[a]}: ${esc(v?v.name:"không có")}</span>`; }).join("")}</div>
     <div class="row"><button class="btn sm" id="st-mic">Kiểm tra micro</button><span class="small muted" id="st-mic-r"></span></div>
-   </div></div>`;
+   </div>
+   <div class="panel stack"><h3>Chuyển tiến độ sang máy khác</h3><div class="small muted">Xuất một file gồm tiến độ Talk Shop và Listen 30, rồi nhập ở máy kia. API key không nằm trong file.</div>
+    <div class="row"><button class="btn sm" id="io-exp">Tải file tiến độ</button><button class="btn sm" id="io-copy">Sao chép mã</button><label class="btn sm" for="io-file">Nhập từ file</label><input type="file" id="io-file" accept=".json,application/json,text/plain" hidden><button class="btn sm" id="io-paste">Dán mã</button></div><div id="io-area"></div></div></div>`;
+  bindIO(el);
   el.querySelector("#st-rec").onchange=e=>{ S.recLang=e.target.value; save(); };
   el.querySelector("#st-mic").onclick=async()=>{ const r=el.querySelector("#st-mic-r"); try{ await getMic(); r.textContent="Micro hoạt động. "+(SR?"Có nhận dạng giọng nói.":"Trình duyệt không có nhận dạng giọng nói, hãy dùng Chrome hoặc Edge."); }catch(e){ r.textContent="Không mở được micro: hãy cho phép trang dùng micro."; } };
 }
@@ -946,6 +949,29 @@ function chatUI(el){
 /* keep the selected item of a horizontal picker in view after re-render (phone layout) */
 function fixPick(el){ el.querySelectorAll('.cats.pick [aria-current="true"]').forEach(c=>{ const p=c.parentElement; p.scrollLeft=Math.max(0,c.offsetLeft-p.offsetLeft-8); }); }
 for(const name of ["rPhr","rRole","rTalk","rPron"]){ const f=window[name]; window[name]=el=>{ f(el); fixPick(el); }; }
+
+/* =============================== EXPORT / IMPORT =============================== */
+function bundle(){ let l=null; try{ l=JSON.parse(localStorage.getItem("listen30.v1")||"null"); }catch(e){} return JSON.stringify({app:"listen30-bundle",exportedAt:new Date().toISOString(),talkshop:S,listen30:l,chat:{m:chat,s:chatSys,model:chatModel}}); }
+function bindIO(el){
+  const area=el.querySelector("#io-area");
+  el.querySelector("#io-exp").onclick=()=>{ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([bundle()],{type:"application/json"})); a.download="talkshop-listen30-"+new Date().toISOString().slice(0,10)+".json"; document.body.appendChild(a); a.click(); a.remove(); area.innerHTML='<div class="small muted">Đã tạo file. Mở Talk Shop ở máy kia, vào Tiến độ, bấm "Nhập từ file".</div>'; };
+  el.querySelector("#io-copy").onclick=async()=>{ const code=bundle(); try{ await navigator.clipboard.writeText(code); area.innerHTML='<div class="small" style="color:var(--good)">Đã sao chép mã. Dán vào ô "Dán mã" ở máy kia, hoặc vào Listen 30 → Cài đặt.</div>'; }catch(e){ area.innerHTML=`<textarea rows="4" class="mono" style="font-size:12px;width:100%" readonly>${esc(code)}</textarea><div class="small muted">Chọn toàn bộ mã và sao chép.</div>`; area.querySelector("textarea").select(); } };
+  const confirmImport=txt=>{
+    let j; try{ j=JSON.parse(txt); }catch(e){ area.innerHTML='<div class="small" style="color:var(--bad)">Mã không hợp lệ: hãy dán đúng toàn bộ mã đã xuất.</div>'; return; }
+    const ts=j&&j.talkshop, l=j&&(j.listen30||(j.days&&j.cards?j:null));
+    if(!ts&&!l){ area.innerHTML='<div class="small" style="color:var(--bad)">Không thấy dữ liệu Talk Shop hay Listen 30 trong mã này.</div>'; return; }
+    area.innerHTML=`<div class="banner row" style="justify-content:space-between"><span>Thay dữ liệu trên máy này bằng: ${ts?"Talk Shop ("+(ts.talks||[]).length+" bài trình bày)":""}${ts&&l?" và ":""}${l?"Listen 30 ("+Object.keys(l.days||{}).length+" ngày)":""}?</span><span class="row"><button class="btn sm primary" id="io-yes">Nhập</button><button class="btn sm ghost" id="io-no">Huỷ</button></span></div>`;
+    area.querySelector("#io-no").onclick=()=>{ area.innerHTML=""; };
+    area.querySelector("#io-yes").onclick=()=>{
+      if(ts){ S=Object.assign(blank(),ts); save(); }
+      if(l){ try{ localStorage.setItem("listen30.v1",JSON.stringify(l)); }catch(e){} }
+      if(j.chat&&Array.isArray(j.chat.m)){ chat=j.chat.m; chatSys=j.chat.s||""; chatModel=j.chat.model||""; saveChat(); }
+      applyTheme(); render(); const a2=document.getElementById("io-area"); if(a2) a2.innerHTML='<div class="small" style="color:var(--good)">Đã nhập tiến độ.</div>';
+    };
+  };
+  el.querySelector("#io-file").onchange=e=>{ const f=e.target.files[0]; if(f) f.text().then(confirmImport); e.target.value=""; };
+  el.querySelector("#io-paste").onclick=()=>{ area.innerHTML='<div class="stack" style="gap:8px"><textarea id="io-in" rows="4" class="mono" style="font-size:12px" placeholder="Dán mã tiến độ vào đây"></textarea><div class="row"><button class="btn sm primary" id="io-go">Kiểm tra mã</button></div></div>'; area.querySelector("#io-go").onclick=()=>confirmImport(area.querySelector("#io-in").value.trim()); };
+}
 
 /* =============================== THEME & BOOT =============================== */
 function applyTheme(){ if(S.theme) document.documentElement.setAttribute("data-theme",S.theme); }

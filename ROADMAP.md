@@ -12,7 +12,6 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Both: export / import progress as JSON (move between devices, between artifact and GitHub Pages)
 - [ ] Listen 30: "noisy call" mode — background noise via Web Audio while dictation plays, to simulate Teams/Zoom
 - [ ] Listen 30: 4 more aviation meetings (engine shop visit, fleet planning, data governance, IT security review) with questions
 - [ ] Listen 30: AI explanation of dictation mistakes (GitHub Pages: reuse Talk Shop key; artifact: `sample` capability)
@@ -28,6 +27,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Both: export / import progress as JSON (move between devices, between artifact and GitHub Pages)
 - [x] Both: mobile layout pass at 375px (header/tabs crowding, panels, record button)
 - [x] Talk Shop: AI follow-up Q&A after a talk (mentor asks 3 follow-up questions, user answers by voice, mentor grades)
 - [x] Talk Shop: AI-generated role-play from the user's real upcoming meeting (describe meeting → Claude returns a role-play script via structured outputs → runs in the role-play widget)
