@@ -842,6 +842,11 @@ function analyze(){
       if(weak.length) acts.push({p:P.pain==="listen"?93:64,m:8,t:`Nghe họp mô phỏng giọng ${accs.map(a=>ACCL[a]).join(", ")}`,why:`${weak.length} cuộc họp có giọng đồng nghiệp của bạn chưa đạt 80%.`,href:"../#work"}); }
     acts.push({p:P.pain==="listen"?88:50,m:15,t:`Listen 30: ngày ${l30.next}, phần chép chính tả`,why:l30.dictAvg==null?"Chưa có điểm nghe. Nghe tốt thì mới nói đúng lúc trong họp.":`Đã xong ${l30.done}/30 ngày.`,href:"../#day-"+l30.next});
   } else acts.push({p:P.pain==="listen"?90:45,m:15,t:"Bắt đầu Listen 30 ngày 1",why:"Chưa có dữ liệu nghe. Nghe và nói cần đi cùng nhau.",href:"../#day-1"});
+  // newer drills
+  const sk=(P.sits||[]);
+  if(P.pain==="listen"||(P.accs||[]).some(x=>x==="in"||x==="fr")) acts.push({p:P.pain==="listen"?80:60,m:4,t:"Phản xạ hỏi lại khi nghe không kịp",why:"Luyện bật ra câu hỏi lại trong vài giây, thay vì im lặng hoặc đoán.",go:()=>{ go("role"); setTimeout(()=>{ const d=document.getElementById("rescue"); if(d){ d.open=true; d.scrollIntoView({behavior:"smooth"}); } },50); }});
+  { const ni=PRON.findIndex(g=>g.t==="Nói số liệu"), nv=pronAvg[ni]; if(ni>=0&&(nv==null||nv<85)&&(sk.includes("aog")||sk.includes("sme")||sk.includes("demo"))) acts.push({p:62,m:4,t:"Nói số liệu như khi báo cáo",why:nv==null?"Báo cáo trong họp luôn có số: giá, phần trăm, giờ bay, ngày.":`Độ rõ khi nói số mới ${nv}%.`,go:()=>{ sel.pron=ni; go("pron"); }}); }
+  if(sk.includes("small")||P.pain==="fear") acts.push({p:P.pain==="fear"?84:55,m:3,t:"Small talk nhanh 20 giây",why:P.pain==="fear"?"Bắt đầu bằng câu xã giao dễ nhất để quen nói trong họp.":"Đầu buổi họp với đối tác luôn có vài câu xã giao.",go:()=>{ sel.small=true; sel.smallI=Math.floor(Math.random()*SMALL.length); go("talk"); }});
   acts.sort((a,b)=>b.p-a.p);
   const pickd=[]; let used=0; for(const a of acts){ if(used+a.m<=mins+3||pickd.length<2){ pickd.push(a); used+=a.m; } if(pickd.length>=5) break; }
   return {P,acts:pickd,used,diag,l30,wpm};
