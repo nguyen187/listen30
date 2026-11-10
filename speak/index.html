@@ -320,7 +320,7 @@ PRON.push({t:"Cặp âm dễ nhầm",d:"Nói đúng từ được yêu cầu. N�
 /* =============================== STATE =============================== */
 const LS="talkshop.v1";
 const today=()=>{ const d=new Date(); return Math.floor((d.getTime()-d.getTimezoneOffset()*60000)/86400000); };
-function blank(){ return {days:{},talks:[],phr:{},pron:{},role:{},customRoles:[],theme:null,voice:{},recLang:"en-US",secs:0}; }
+function blank(){ return {days:{},talks:[],phr:{},pron:{},role:{},customRoles:[],miss:{},seen:{},theme:null,voice:{},recLang:"en-US",secs:0}; }
 let S=blank(); try{ const r=localStorage.getItem(LS); if(r) S=Object.assign(blank(),JSON.parse(r)); }catch(e){}
 function save(){ try{ localStorage.setItem(LS,JSON.stringify(S)); }catch(e){} }
 const TASKS=[["warm","Khởi động: câu mẫu","Nói 5 câu theo chủ đề hôm nay"],["pron","Phát âm","4 câu luyện âm khó"],["role","Nhập vai cuộc họp","Đối đáp với đồng nghiệp ảo"],["talk","Trình bày tự do","Nói liền một mạch có bấm giờ"]];
@@ -370,8 +370,9 @@ function diffWords(target,input){
   for(let i=n-1;i>=0;i--) for(let j=m-1;j>=0;j--) L[i][j]=tn[i]===un[j]?L[i+1][j+1]+1:Math.max(L[i+1][j],L[i][j+1]);
   const ok=new Array(n).fill(false); let i=0,j=0; while(i<n&&j<m){ if(tn[i]===un[j]){ok[i]=true;i++;j++;} else if(L[i+1][j]>=L[i][j+1]) i++; else j++; }
   const matched=ok.filter(Boolean).length;
-  const html=disp.map((w,wi)=>{ const idx=owner.map((o,k)=>o===wi?k:-1).filter(k=>k>=0); const good=idx.length===0||idx.every(k=>ok[k]); return `<span class="${good?"ok":"miss"}">${esc(w)}</span>`; }).join(" ");
-  return {html,score:Math.round(100*matched/Math.max(n,1))};
+  const miss=[], hit=[];
+  const html=disp.map((w,wi)=>{ const idx=owner.map((o,k)=>o===wi?k:-1).filter(k=>k>=0); const good=idx.length===0||idx.every(k=>ok[k]); const key=w.toLowerCase().replace(/[^a-z0-9'-]/g,""); if(key.length>2) (good?hit:miss).push(key); return `<span class="${good?"ok":"miss"}">${esc(w)}</span>`; }).join(" ");
+  return {html,score:Math.round(100*matched/Math.max(n,1)),miss,hit};
 }
 function keyHits(keys,text){ const t=" "+norm(text).join(" ")+" "; return keys.map(k=>({k:k.split("|")[0],hit:k.split("|").some(a=>t.includes(" "+norm(a).join(" ")+" "))})); }
 const FILLERS=/\b(um+|uh+|erm*|ah+|hmm+|you know|i mean|basically|kind of|sort of)\b/g;
@@ -413,7 +414,7 @@ function mountSpeak(el,opts={}){
       const res={text,dur,words:norm(text).length};
       res.wpm=dur>3?Math.round(res.words/(dur/60)):0;
       res.fillers=(text.toLowerCase().match(FILLERS)||[]).length;
-      if(opts.target&&text){ const d=diffWords(opts.target,text); res.score=d.score; res.html=d.html; }
+      if(opts.target&&text){ const d=diffWords(opts.target,text); res.score=d.score; res.html=d.html; res.miss=d.miss; if(!S.miss) S.miss={}; if(!S.seen) S.seen={}; d.miss.forEach(w=>{ S.miss[w]=(S.miss[w]||0)+1; S.seen[w]=(S.seen[w]||0)+1; }); d.hit.forEach(w=>{ S.seen[w]=(S.seen[w]||0)+1; }); save(); }
       if(opts.keys&&text){ res.hits=keyHits(opts.keys,text); res.cover=Math.round(100*res.hits.filter(h=>h.hit).length/res.hits.length); }
       lastRes=res;
       opts.onResult&&opts.onResult(res,resEl);
@@ -596,10 +597,31 @@ function talkWidget(el,ti,onDone){
 }
 
 /* ---------- Pronunciation ---------- */
+function hardWords(){
+  const m=S.miss||{}, sn=S.seen||{};
+  return Object.keys(m).filter(w=>m[w]>=2).map(w=>({w,miss:m[w],seen:sn[w]||m[w],rate:m[w]/(sn[w]||m[w])})).sort((a,b)=>b.rate-a.rate||b.miss-a.miss).slice(0,15);
+}
+function sentencesWith(w){
+  const pool=[...PHRASES.flatMap(c=>c.p.map(x=>x[0])),...PRON.flatMap(g=>g.items.map(x=>x[0])),...ROLES.flatMap(r=>r.turns.filter(t=>t.m).map(t=>t.m)),...TALKS.map(t=>t.m).flatMap(m=>m.split(/(?<=[.!?])\s+/))];
+  const re=new RegExp("\\b"+w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\b","i");
+  return [...new Set(pool.filter(x=>re.test(x)))].sort((a,b)=>a.length-b.length).slice(0,3);
+}
+function heatmap(el){
+  const hw=hardWords();
+  if(!hw.length){ el.innerHTML='<div class="panel small muted">Sau vài lần luyện, các từ máy hay nghe sai sẽ hiện ở đây kèm bài luyện riêng.</div>'; return; }
+  el.innerHTML=`<div class="panel stack" style="gap:10px"><div><h3>Từ bạn hay bị nghe sai</h3><div class="small muted">Tỉ lệ máy không nhận ra từ đó trong các lần bạn nói. Bấm một từ để luyện riêng.</div></div>
+   <div class="row">${hw.map((h,i)=>{ const pct=Math.round(h.rate*100); return `<button class="chip ${pct>=60?"bad":pct>=35?"warn":""}" data-hw="${i}" style="border:0;cursor:pointer;font-size:13px">${esc(h.w)} · ${pct}%</button>`; }).join("")}</div><div id="hw-drill" class="stack"></div></div>`;
+  el.querySelectorAll("[data-hw]").forEach(b=>b.onclick=()=>{ const w=hw[+b.dataset.hw].w; speak(w,0.8,"us");
+    const ss=sentencesWith(w); const items=[[`Please say ${w} again.`,`Từ "${w}" đơn lẻ`],...ss.map(x=>[x,`Câu có "${w}"`])];
+    const box=el.querySelector("#hw-drill"); box.innerHTML=`<div class="label">Luyện "${esc(w)}"</div><div class="stack"></div>`; sayList(box.lastElementChild,items,{}); });
+}
+
 function rPron(el){
   el.innerHTML=`<div class="stack"><div><h2>Phát âm</h2><div class="muted small">Nói từng câu. Chữ đỏ là chỗ máy không nhận ra, thường do âm cuối hoặc trọng âm. Mục tiêu: 100% liên tục ba lần.</div></div>
    <div class="cats pick">${PRON.map((p,i)=>`<button class="cell" data-p="${i}" aria-current="${sel.pron===i}"><b>${esc(p.t)}</b><span class="small muted">${p.items.length} câu</span></button>`).join("")}</div>
+   <div id="pr-heat"></div>
    <p class="small muted explain" style="margin:0">${esc(PRON[sel.pron].d)}</p><div id="pr-list" class="stack"></div></div>`;
+  heatmap(el.querySelector("#pr-heat"));
   el.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{ sel.pron=+b.dataset.p; rPron(el); });
   sayList(el.querySelector("#pr-list"),PRON[sel.pron].items,{key:["pron",sel.pron]});
 }
