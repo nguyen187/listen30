@@ -12,8 +12,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop: Mentor plan includes the new drills (rescue reflex, numbers, small talk) when they fit the profile
-- [ ] Both: performance pass (lazy-render long lists, avoid re-rendering whole views on small changes)
+- [ ] Listen 30: "listen before meeting" mode — pick the accent and topic of your next real meeting, get a 10-minute warm-up playlist
+- [ ] Talk Shop: pronunciation of acronyms (AOG, MTBUR, ACARS, ETOPS…) letter-by-letter drill with recognition
 
 ## Follow-ups
 
@@ -23,6 +23,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Both: performance pass (lazy-render long lists, avoid re-rendering whole views on small changes) (measured: every view renders in 1-11 ms, no change needed)
+- [x] Talk Shop: Mentor plan includes the new drills (rescue reflex, numbers, small talk) when they fit the profile
 - [x] Listen 30: end-of-course certificate page with before/after stats
 - [x] Talk Shop: "rescue phrases" quick-fire drill (hear a confusing line, respond with the right clarification phrase in 5 seconds)
 - [x] Listen 30: 'meeting notes' exercise — after a mock meeting, write the 3 action items, Claude/keywords check them
