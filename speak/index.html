@@ -584,9 +584,9 @@ function roleWidget(el,ri,onDone){
     const st=el.querySelector("#rl-stop"); if(st) st.onclick=()=>{ replayTok++; if(hasTTS) speechSynthesis.cancel(); if(el._replayAudio) el._replayAudio.pause(); };
     el.querySelector("#rl-lvl").onchange=e=>{ S.roleLvl=e.target.value; save(); replayTok++; if(hasTTS) speechSynthesis.cancel(); step=0; covers.length=0; draw(); };
     el.querySelectorAll("[data-hint]").forEach(b=>b.onclick=()=>{ b.nextElementSibling.hidden=false; b.remove(); });
-    if(S.roleLvl==="easy") el.querySelectorAll("[data-show]").forEach(b=>b.click());
     el.querySelectorAll("[data-pp]").forEach(b=>b.onclick=()=>speak(R.turns[+b.dataset.pp].p,lvlRate(),R.acc));
     el.querySelectorAll("[data-show]").forEach(b=>b.onclick=()=>{ const i=+b.dataset.show; el.querySelector(`[data-txt="${i}"]`).textContent=R.turns[i].p; });
+    if(S.roleLvl==="easy") el.querySelectorAll("[data-show]").forEach(x=>x.click());
     const cur=R.turns[step];
     if(cur&&cur.p){ speak(cur.p,lvlRate(),R.acc).then(()=>{ if(R.turns[step]===cur){ step++; if(step<R.turns.length) draw(); else finish(); } }); }
     if(cur&&cur.y){ const box=el.querySelector("#rl-sp"); mountSpeak(box,{onBlob:b=>{ takes[step]=b; },label:R.t+" · lượt "+(Math.floor(step/2)+1),kind:"role",keys:cur.k,onResult:(r,resEl)=>{
