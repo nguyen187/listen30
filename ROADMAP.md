@@ -12,7 +12,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop: export practice transcripts (journal, talks) as a text file for review
+- [ ] Listen 30: listening streak calendar heatmap on the Tiến độ page (last 8 weeks)
+- [ ] Talk Shop: Mentor AI "rewrite my sentence 3 ways" quick tool (formal, neutral, casual)
 
 ## Follow-ups
 
@@ -22,6 +23,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Talk Shop: export practice transcripts (journal, talks) as a text file for review
 - [x] Listen 30: Today page 'quick session' (15-minute version of the day for busy days)
 - [x] Talk Shop: show which recording mode is active next to the red button, with a one-tap switch when an error appears
 - [x] Talk Shop: recording mode switch (both / recognition only / recording only) as a fallback; still waiting for the user to confirm the record button
