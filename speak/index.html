@@ -585,21 +585,47 @@ function roleWidget(el,ri,onDone){
 }
 
 /* ---------- Free talk ---------- */
+const SMALL=[
+ {t:"Cuối tuần",q:"How was your weekend?",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"It was pretty relaxing, thanks. I went to a coffee shop with some friends on Saturday. How about yours?"},
+ {t:"Thời tiết",q:"How's the weather in Hanoi these days?",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"It's getting cooler now, around twenty degrees in the morning, which is really nice. What's it like where you are?"},
+ {t:"Dạo này bận không",q:"Have you been busy lately?",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"Quite busy, to be honest. We're preparing a new release of the reliability dashboard, but it's going well. How about you?"},
+ {t:"Kỳ nghỉ",q:"Did you have a good holiday?",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"Yes, thanks! I went back to my hometown and spent time with my family. It was great to have a real break."},
+ {t:"Bữa trưa",q:"What did you have for lunch?",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"I had pho at a small place near the office. It's my go-to lunch. Have you ever tried Vietnamese food?"},
+ {t:"Du lịch Pháp",q:"Have you ever been to France?",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"Not yet, but I'd love to visit Toulouse one day, especially to see the Airbus factory."},
+ {t:"Thời gian làm dự án",q:"How long have you been working on this project?",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"About eight months now. I joined when we started building the data pipelines."},
+ {t:"Sở thích",q:"What do you like to do in your free time?",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"I like running and reading. Recently I've also been practising my English with a speaking app."},
+ {t:"Ngày lễ",q:"Is it a public holiday in Vietnam today?",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"No, but next week we have a long weekend, and a lot of people travel to the beach."},
+ {t:"Đội của bạn",q:"How's your team doing?",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"Everyone's doing well. We're a small team, so we work closely together. We just welcomed a new data analyst."},
+ {t:"Làm ở nhà",q:"Are you working from home today?",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"Yes, I usually work from home on Fridays. It's quieter, so I can focus on the data work."},
+ {t:"Trận đấu",q:"Did you watch the match last night?",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"No, I missed it, I went to bed early. Who won?"},
+ {t:"Giao thông",q:"How's the traffic in your city?",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"It can be pretty bad during rush hour, so I usually leave early or work from home."},
+ {t:"Kế hoạch cuối tuần",q:"Any plans for the weekend?",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"Nothing big. Maybe a short trip outside the city if the weather is nice. What about you?"},
+ {t:"Công cụ mới",q:"How are you finding the new tool?",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"So far so good. It's much faster than the old one, but I'm still getting used to the interface."},
+ {t:"Nghe rõ không",q:"Can you hear me okay?",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"Yes, loud and clear. Can you see my screen as well?"},
+ {t:"Đến muộn",q:"Sorry I'm late, the previous meeting ran over.",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"No worries at all, we just started. We were only doing a quick round of updates."},
+ {t:"Múi giờ",q:"What time is it there now?",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"It's four in the afternoon here, so we're six hours ahead of you."},
+ {t:"Máy pha cà phê",q:"Have you tried the new coffee machine?",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"Not yet, but I heard it's much better. I'll try it tomorrow."},
+ {t:"Chào cuối tuần",q:"Thanks everyone, have a nice weekend!",sec:20,st:"Trả lời 1–2 câu, thêm một chi tiết, rồi hỏi lại",k:[],m:"Thanks, you too! Enjoy your weekend and see you on Monday."}
+];
 function rTalk(el){
   el.innerHTML=`<div class="stack"><div><h2>Trình bày tự do</h2><div class="muted small">Nói liền một mạch theo khung gợi ý. Máy đo tốc độ nói, số từ đệm và các thuật ngữ bạn dùng. Sau đó nghe bài mẫu và nói lại lần hai.</div></div>
-   <div class="cats pick">${TALKS.map((t,i)=>`<button class="cell" data-t="${i}" aria-current="${sel.talk===i}"><b>${esc(t.t)}</b><span class="small muted">${t.sec} giây</span></button>`).join("")}</div><div class="panel" id="tk"></div></div>`;
-  el.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{ sel.talk=+b.dataset.t; rTalk(el); });
-  talkWidget(el.querySelector("#tk"),sel.talk);
+   <div class="row"><button class="btn sm ${sel.small?"":"primary"}" data-set="main">Trình bày công việc</button><button class="btn sm ${sel.small?"primary":""}" data-set="small">Small talk nhanh (20 giây)</button></div>
+   <div class="cats pick">${(sel.small?SMALL:TALKS).map((t,i)=>`<button class="cell" data-t="${i}" aria-current="${(sel.small?sel.smallI:sel.talk)===i}"><b>${esc(t.t)}</b><span class="small muted">${t.sec} giây</span></button>`).join("")}</div><div class="panel" id="tk"></div></div>`;
+  el.querySelectorAll("[data-set]").forEach(b=>b.onclick=()=>{ sel.small=b.dataset.set==="small"; rTalk(el); });
+  el.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{ if(sel.small) sel.smallI=+b.dataset.t; else sel.talk=+b.dataset.t; rTalk(el); });
+  if(sel.small) talkWidget(el.querySelector("#tk"),-1,null,SMALL[sel.smallI||0]); else talkWidget(el.querySelector("#tk"),sel.talk);
 }
-function talkWidget(el,ti,onDone){
-  const T=TALKS[ti];
+function talkWidget(el,ti,onDone,obj){
+  const T=obj||TALKS[ti];
   el.innerHTML=`<div class="stack"><div><h3>${esc(T.t)}</h3><div class="row" style="margin-top:6px"><span class="label">Khung</span><span>${esc(T.st)}</span></div>
-    <div class="row" style="margin-top:6px"><span class="label">Nên dùng</span>${T.k.map(k=>`<span class="chip">${esc(k.split("|")[0])}</span>`).join("")}</div></div>
-    <div class="small muted">Chuẩn bị 30 giây trong đầu, rồi bấm nút đỏ và nói khoảng ${T.sec} giây.</div>
+    ${T.k.length?`<div class="row" style="margin-top:6px"><span class="label">Nên dùng</span>${T.k.map(k=>`<span class="chip">${esc(k.split("|")[0])}</span>`).join("")}</div>`:""}
+    ${T.q?`<div class="row" style="margin-top:8px;flex-wrap:nowrap"><button class="btn sm primary play" id="tk-q">Nghe câu hỏi</button><span class="small muted">Đồng nghiệp hỏi. Nghe rồi trả lời ngay, đừng nghĩ quá lâu.</span></div>`:""}</div>
+    <div class="small muted">${T.q?"Trả lời tự nhiên trong khoảng 20 giây.":`Chuẩn bị 30 giây trong đầu, rồi bấm nút đỏ và nói khoảng ${T.sec} giây.`}</div>
     <div id="tk-sp"></div>
     <details><summary class="small" style="cursor:pointer">Xem và nghe bài mẫu</summary><div class="stack" style="margin-top:8px"><p class="explain" style="margin:0">${esc(T.m)}</p><div class="row"><button class="btn sm play" id="tk-m">Nghe mẫu</button><button class="btn sm" id="tk-ms">Chậm</button></div></div></details></div>`;
+  const qb=el.querySelector("#tk-q"); if(qb){ const qa=((S.profile&&S.profile.accs)||["gb"])[0]; qb.onclick=()=>speak(T.q,1,qa); }
   el.querySelector("#tk-m").onclick=()=>speak(T.m,1,"us"); el.querySelector("#tk-ms").onclick=()=>speak(T.m,0.8,"us");
-  mountSpeak(el.querySelector("#tk-sp"),{label:T.t,kind:"talk",continuous:true,maxSec:T.sec+30,keys:T.k,onResult:(r,resEl)=>{
+  mountSpeak(el.querySelector("#tk-sp"),{label:T.t,kind:"talk",continuous:true,maxSec:T.sec+30,keys:T.k.length?T.k:null,onResult:(r,resEl)=>{
     if(!r.text){ return; }
     const wpmNote=r.wpm<90?"hơi chậm, cứ nói tiếp đừng dừng để tìm từ":r.wpm>170?"hơi nhanh, chậm lại để người nghe kịp":"tốc độ tốt cho cuộc họp";
     resEl.innerHTML=`<div class="stack" style="gap:10px"><div class="meter">

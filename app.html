@@ -1243,13 +1243,13 @@ function renderSRS(el){
 let gymMode="dict";
 function renderGym(el){
   el.innerHTML=`<div class="stack" style="margin-top:22px"><div><h2>Luyện thêm</h2><div class="muted small">Luyện không giới hạn, không ảnh hưởng tiến độ ngày.</div></div>
-   <div class="tabs" style="align-self:flex-start" id="gym-tabs">${[["dict","Chép chính tả tự do"],["speed","Đo tốc độ nghe"],["mine","Văn bản của bạn"],["pairs","Cặp âm dễ nhầm"],["nums","Nghe số"]].map(([k,t])=>`<button class="tab" data-g="${k}" aria-current="${gymMode===k?"page":"false"}">${t}</button>`).join("")}</div>
+   <div class="tabs" style="align-self:flex-start" id="gym-tabs">${[["dict","Chép chính tả tự do"],["worst","Câu hay sai"],["speed","Đo tốc độ nghe"],["mine","Văn bản của bạn"],["pairs","Cặp âm dễ nhầm"],["nums","Nghe số"]].map(([k,t])=>`<button class="tab" data-g="${k}" aria-current="${gymMode===k?"page":"false"}">${t}</button>`).join("")}</div>
    <div id="vbar-host"></div>
    <div class="panel" id="gym-body"></div></div>`;
   mountVoiceBar(el.querySelector("#vbar-host"), ["us","gb","au"]);
   el.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{ gymMode=b.dataset.g; renderGym(el); });
   const body=el.querySelector("#gym-body");
-  if(gymMode==="dict") gymDict(body); else if(gymMode==="speed") gymSpeed(body); else if(gymMode==="mine") gymMine(body); else if(gymMode==="pairs") gymPairs(body); else mountNums(body,10,()=>{});
+  if(gymMode==="dict") gymDict(body); else if(gymMode==="worst") gymWorst(body); else if(gymMode==="speed") gymSpeed(body); else if(gymMode==="mine") gymMine(body); else if(gymMode==="pairs") gymPairs(body); else mountNums(body,10,()=>{});
 }
 function gymDict(el){
   const upto=Math.max(1,currentDay());
@@ -1269,6 +1269,18 @@ function gymDict(el){
 function splitSentences(t){
   return t.replace(/\r/g,"").split(/(?<=[.!?])\s+|\n+/).map(x=>x.replace(/^[\s\-•*>\d.)]+/,"").replace(/\s+/g," ").trim())
     .filter(x=>{ const n=x.split(" ").length; return n>=3&&n<=35&&/[a-z]/i.test(x); });
+}
+function worstSentences(){
+  const out=[];
+  for(let n=1;n<=30;n++){ const d=S.days[n]; if(!d||!d.dict||!d.dict.length) continue; const its=dictItems(n);
+    d.dict.forEach((sc,i)=>{ if(sc!=null&&sc<90&&its[i]) out.push(Object.assign({score:sc,day:n},its[i])); }); }
+  return out.sort((a,b)=>a.score-b.score).slice(0,10);
+}
+function gymWorst(el){
+  const w=worstSentences();
+  if(!w.length){ el.innerHTML='<div class="small muted">Chưa có câu nào dưới 90%. Làm phần Chép chính tả trong các ngày học, những câu bạn nghe sai sẽ được gom về đây để ôn lại.</div>'; return; }
+  el.innerHTML=`<div class="stack" style="gap:10px"><div class="small muted explain">10 câu bạn chép sai nhiều nhất trong lộ trình (điểm thấp nhất trước), đọc lại đúng giọng và tốc độ lần đầu. Ôn mỗi tuần một lần.</div><div class="row">${w.map(x=>`<span class="chip mono">Ngày ${x.day}: ${x.score}%</span>`).join("")}</div><div id="ws-w"></div></div>`;
+  mountDict(el.querySelector("#ws-w"), w.map(x=>({text:x.text,rate:x.rate,acc:x.acc})), [], ()=>{}, ()=>{}, {});
 }
 const SPEED_STEPS=[0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6];
 function gymSpeed(el){
