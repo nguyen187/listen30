@@ -1417,7 +1417,8 @@ function renderSetup(el){
    </div>
    <div class="panel stack"><h3>Dữ liệu</h3><p class="muted small" style="margin:0">Tiến độ được lưu trên trình duyệt này${cloud?" và đồng bộ riêng tư vào tài khoản Claude của bạn":""}.</p>
     <div class="stack" style="gap:8px">
-     <div class="small muted">Chuyển tiến độ sang máy khác, hoặc giữa bản trên Claude và bản GitHub: xuất ở máy này, rồi nhập ở máy kia (dán mã hoặc chọn file).</div>
+     <div class="banner small stack" style="gap:6px"><b>Bạn đang dùng ${ON_PAGES?"bản GitHub":"bản trên Claude"}.</b><span>${ON_PAGES?"Tiến độ lưu trong trình duyệt này. Bản GitHub có ghi âm, phát YouTube và dùng được khi mất mạng.":"Tiến độ lưu trong trình duyệt và đồng bộ riêng vào tài khoản Claude của bạn. Bản trên Claude có AI giải thích lỗi không cần API key."}</span><span>Hai bản không tự đồng bộ với nhau. Để chuyển: bấm nút dưới đây (mã tiến độ được sao chép), mở bản kia, vào Cài đặt → "Nhập bằng cách dán mã".</span><div class="row"><button class="btn sm primary" id="io-move">Sao chép mã và mở ${ON_PAGES?"bản trên Claude":"bản GitHub"}</button><a class="btn sm ghost" href="${ON_PAGES?"https://claude.ai/artifact/PFFtUErYMHeMGTzuHqe2ig#setup":"https://nguyen187.github.io/listen30/#setup"}" target="_blank" rel="noopener">Chỉ mở bản kia ↗</a></div></div>
+     <div class="small muted">Chuyển tiến độ sang máy khác: xuất ở máy này, rồi nhập ở máy kia (dán mã hoặc chọn file).</div>
      <div class="row"><button class="btn sm" id="io-exp">Xuất tiến độ</button><label class="btn sm" for="io-file">Nhập từ file</label><input type="file" id="io-file" accept=".json,application/json,text/plain" hidden><button class="btn sm" id="io-paste">Nhập bằng cách dán mã</button></div>
      <div id="io-area"></div>
     </div>
@@ -2187,6 +2188,10 @@ function parseImport(txt){
 }
 function bindIO(el){
   const area=el.querySelector("#io-area"); if(!area) return;
+  const mv=el.querySelector("#io-move"); if(mv) mv.onclick=async()=>{ const code=exportCode(); const url=ON_PAGES?"https://claude.ai/artifact/PFFtUErYMHeMGTzuHqe2ig#setup":"https://nguyen187.github.io/listen30/#setup";
+    let ok=false; try{ await navigator.clipboard.writeText(code); ok=true; }catch(e){}
+    if(ok){ area.innerHTML=`<div class="small" style="color:var(--good)">Đã sao chép mã. Ở trang vừa mở, vào Cài đặt → "Nhập bằng cách dán mã", dán rồi bấm Kiểm tra mã. Nếu trang không tự mở: <a href="${url}" target="_blank" rel="noopener">mở ở đây ↗</a></div>`; const a=document.createElement("a"); a.href=url; a.target="_blank"; a.rel="noopener"; document.body.appendChild(a); a.click(); a.remove(); }
+    else el.querySelector("#io-exp").click(); };
   el.querySelector("#io-exp").onclick=()=>{
     const code=exportCode();
     area.innerHTML=`<div class="stack" style="gap:8px"><textarea id="io-code" rows="4" readonly class="mono" style="font-size:12px">${esc(code)}</textarea>

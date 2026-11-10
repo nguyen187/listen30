@@ -12,7 +12,9 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Both: settings sync note — explain how the artifact and GitHub copies differ, with one-click export/import between them
+- [ ] Talk Shop: numbers speaking drill (say prices, dates, part numbers, flight numbers; checked by recognition)
+- [ ] Listen 30: "meeting mode" — continuous listening of a full mock meeting with live captions toggle, no quiz
+- [ ] Both: README update with features and how to use them
 
 ## Follow-ups
 
@@ -22,6 +24,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Both: settings sync note — explain how the artifact and GitHub copies differ, with one-click export/import between them
 - [x] Talk Shop: small-talk deck (weekend, weather, travel, food) with 20 quick prompts and model answers
 - [x] Listen 30: weekly listening review — redo the 10 worst dictation sentences of the week
 - [x] Talk Shop: Mentor AI "explain like a colleague" for any term (hear an SME-style explanation, then retell it)
