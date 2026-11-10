@@ -828,13 +828,16 @@ function shadowItems(n){
   return texts.map((t,i)=>({text:t, acc:accentFor(n,i)}));
 }
 function taskDone(n,k){ return !!D(n).t[k]; }
-function dayProgress(n){ const d=S.days[n]; if(!d) return 0; return TASKS.filter(([k])=>d.t[k]).length; }
+const QUICK_KEYS=["review","lesson","dict"];
+function tasksFor(n){ const d=S.days[n]; return d&&d.quick ? TASKS.filter(([k])=>QUICK_KEYS.includes(k)) : TASKS; }
+const need=n=>tasksFor(n).length;
+function dayProgress(n){ const d=S.days[n]; if(!d) return 0; return tasksFor(n).filter(([k])=>d.t[k]).length; }
 function markTask(n,k){
   const d=D(n); if(d.t[k]) return; d.t[k]=true;
-  if(dayProgress(n)===TASKS.length && !d.doneAt) d.doneAt=Date.now();
+  if(dayProgress(n)===need(n) && !d.doneAt) d.doneAt=Date.now();
   save(); renderTape(); refreshTrackHeads(n);
 }
-function currentDay(){ for(let n=1;n<=30;n++) if(dayProgress(n)<TASKS.length) return n; return 30; }
+function currentDay(){ for(let n=1;n<=30;n++) if(dayProgress(n)<need(n)) return n; return 30; }
 
 /* =============================== SRS =============================== */
 const INTERVALS=[1,2,4,7,15,30,60];
@@ -859,7 +862,7 @@ function renderTape(){
   const cur=currentDay(), sel=view==="today"?(openDay||cur):0;
   document.getElementById("tape").innerHTML = DAYS.map((d,i)=>{
     const n=i+1, p=dayProgress(n);
-    const cls=[p===TASKS.length?"done":p>0?"part":"", n===sel?"cur":"", isTest(n)?"chk":""].join(" ");
+    const cls=[p===need(n)?"done":p>0?"part":"", n===sel?"cur":"", isTest(n)?"chk":""].join(" ");
     return `<button class="${cls}" data-day="${n}" title="Ngày ${n}: ${esc(d.th)} · ${esc(FOCUS[d.f].t)}" aria-label="Ngày ${n}">${n}</button>`;
   }).join("");
   document.querySelectorAll("#tabs .tab").forEach(b=>b.setAttribute("aria-current", b.dataset.view===view?"page":"false"));
@@ -877,7 +880,7 @@ function renderResume(){
   const el=document.getElementById("resume"); if(!el) return;
   const cur=currentDay(), p=dayProgress(cur), {n,doneToday}=streakInfo(), due=dueCards().length;
   if(view==="today"&&openDay===cur&&!due){ el.innerHTML=""; return; }
-  const left=TASKS.length-p;
+  const left=need(cur)-p;
   const msg = doneToday ? `Hôm nay bạn đã xong một ngày học${n>1?`, chuỗi ${n} ngày liên tục`:""}. Mai học tiếp Ngày ${cur}.`
     : `${n?`Chuỗi ${n} ngày liên tục, đừng để đứt. `:""}${p?`Ngày ${cur} còn ${left} nhiệm vụ.`:`Hôm nay: Ngày ${cur}, ${esc(FOCUS[DAYS[cur-1].f].t)}.`}`;
   el.innerHTML=`<div class="panel row" style="justify-content:space-between;padding:10px 14px;gap:8px 14px"><span class="small">${msg}${due?` · ${due} thẻ từ đến hạn`:""}</span><span class="row">${due?`<button class="btn sm" id="rs-srs">Ôn ${due} thẻ</button>`:""}${doneToday&&!(view!=="today")?"":`<button class="btn sm primary" id="rs-go">${doneToday?`Xem Ngày ${cur}`:(p?"Học tiếp":"Bắt đầu")}</button>`}</span></div>`;
@@ -897,8 +900,8 @@ function refreshTrackHeads(n){
     tr.classList.toggle("isdone", taskDone(n,k));
     const chip=tr.querySelector(".tstate"); if(chip){ chip.className="chip tstate "+(taskDone(n,k)?"ok":""); chip.textContent=taskDone(n,k)?"Xong":"Chưa"; }
   });
-  const p=document.getElementById("day-prog"); if(p) p.textContent=dayProgress(n)+"/"+TASKS.length;
-  const done=document.getElementById("day-done"); if(done) done.hidden = dayProgress(n)<TASKS.length;
+  const p=document.getElementById("day-prog"); if(p) p.textContent=dayProgress(n)+"/"+need(n);
+  const done=document.getElementById("day-done"); if(done) done.hidden = dayProgress(n)<need(n);
 }
 function wotd(){ const flat=TERM_GROUPS.flatMap(g=>g.v); return flat[today()%flat.length]; }
 function wotdHTML(){ const v=wotd(); return `<div class="panel row" style="margin-top:12px;justify-content:space-between;gap:8px 14px;padding:12px 16px"><div style="min-width:0"><span class="label">Thuật ngữ của ngày</span><div><b style="font-family:var(--f-display);font-size:19px">${esc(v.w)}</b> <span class="small muted">· ${esc(v.m)}</span></div><div class="small">${esc(v.x)}</div></div><div class="row"><button class="btn sm play" id="wd-w" aria-label="Nghe thuật ngữ"></button><button class="btn sm" id="wd-x">Nghe câu</button><a class="btn sm ghost" href="https://youglish.com/pronounce/${encodeURIComponent(v.w)}/english" target="_blank" rel="noopener">Giọng thật ↗</a></div></div>`; }
@@ -906,7 +909,7 @@ function bindWotd(){ const v=wotd(), w=document.getElementById("wd-w"), x=docume
 function renderDay(el){
   const n=openDay||currentDay(); openDay=n;
   const day=DAYS[n-1], fo=FOCUS[day.f], wk=WEEKS[wkOf(n)-1];
-  const firstOpen = TASKS.findIndex(([k])=>!taskDone(n,k));
+  const firstOpen = tasksFor(n).findIndex(([k])=>!taskDone(n,k));
   el.innerHTML = `
   <section class="dayhead">
     <div class="row" style="gap:18px;align-items:flex-end;flex-wrap:nowrap;min-width:0">
@@ -919,15 +922,16 @@ function renderDay(el){
     </div>
     <div class="progress-ring">
       <div class="label">Nhiệm vụ hôm nay</div>
-      <div class="score mono" id="day-prog">${dayProgress(n)}/${TASKS.length}</div>
+      <div class="score mono" id="day-prog">${dayProgress(n)}/${need(n)}</div>
+      <button class="btn sm ${D(n).quick?"primary":"ghost"}" id="quick-tg">${D(n).quick?"Đang học nhanh 15 phút · đổi sang đầy đủ":"Bận? Học nhanh 15 phút"}</button>
       <div class="row">${n>1?`<button class="btn sm ghost" data-goday="${n-1}">← Ngày ${n-1}</button>`:""}${n<30?`<button class="btn sm ghost" data-goday="${n+1}">Ngày ${n+1} →</button>`:""}</div>
     </div>
   </section>
-  <div class="banner" id="day-done" style="margin-top:16px;background:var(--good-soft);border-color:var(--good)" ${dayProgress(n)<TASKS.length?"hidden":""}>Xong ngày ${n}. ${n<30?`Mai học <b>Ngày ${n+1}: ${esc(FOCUS[DAYS[n].f].t)}</b>. Đừng học dồn hai ngày một lúc, não cần ngủ để ghi nhớ âm thanh.`:"Bạn đã hoàn thành 30 ngày. Giữ thói quen nghe 30 phút mỗi ngày và ôn từ trong mục Ôn từ."}</div>
+  <div class="banner" id="day-done" style="margin-top:16px;background:var(--good-soft);border-color:var(--good)" ${dayProgress(n)<need(n)?"hidden":""}>Xong ngày ${n}. ${n<30?`Mai học <b>Ngày ${n+1}: ${esc(FOCUS[DAYS[n].f].t)}</b>. Đừng học dồn hai ngày một lúc, não cần ngủ để ghi nhớ âm thanh.`:"Bạn đã hoàn thành 30 ngày. Giữ thói quen nghe 30 phút mỗi ngày và ôn từ trong mục Ôn từ."}</div>
   <div id="vbar-host" style="margin-top:16px"></div>
   ${wotdHTML()}
   <div class="stack" style="margin-top:12px" id="tracks">
-    ${TASKS.map(([k,t,sub],i)=>`
+    ${tasksFor(n).map(([k,t,sub],i)=>`
       <details class="track ${taskDone(n,k)?"isdone":""}" id="tr-${k}" ${i===(firstOpen<0?-1:firstOpen)?"open":""}>
         <summary><span class="tno">${i+1}</span><span><div class="ttitle">${t}</div><div class="tsub">${sub}</div></span><span class="chip tstate ${taskDone(n,k)?"ok":""}">${taskDone(n,k)?"Xong":"Chưa"}</span></summary>
         <div class="tbody" id="tb-${k}"></div>
@@ -936,13 +940,15 @@ function renderDay(el){
   el.querySelectorAll("[data-goday]").forEach(b=>b.onclick=()=>go("today",+b.dataset.goday));
   bindWotd();
   mountVoiceBar(document.getElementById("vbar-host"), [...new Set(Array.from({length:20},(_,i)=>accentFor(n,i)))]);
+  el.querySelector("#quick-tg").onclick=()=>{ D(n).quick=!D(n).quick; if(dayProgress(n)===need(n)&&!D(n).doneAt) D(n).doneAt=Date.now(); save(); render(); };
+  const has=k=>document.getElementById("tb-"+k);
   mountReview(n, document.getElementById("tb-review"));
   mountLesson(n, document.getElementById("tb-lesson"));
-  mountVocab(n, document.getElementById("tb-vocab"));
-  mountDict(document.getElementById("tb-dict"), dictItems(n), D(n).dict, (scores)=>{ D(n).dict=scores; save(); }, ()=>markTask(n,"dict"));
-  mountShadow(n, document.getElementById("tb-shadow"));
-  mountNums(document.getElementById("tb-nums"), 10, (score)=>{ D(n).nums=score; markTask(n,"nums"); });
-  mountExt(n, document.getElementById("tb-ext"));
+  if(has("vocab")) mountVocab(n, document.getElementById("tb-vocab"));
+  mountDict(document.getElementById("tb-dict"), D(n).quick?dictItems(n).slice(0,6):dictItems(n), D(n).dict, (scores)=>{ D(n).dict=scores; save(); }, ()=>markTask(n,"dict"));
+  if(has("shadow")) mountShadow(n, document.getElementById("tb-shadow"));
+  if(has("nums")) mountNums(document.getElementById("tb-nums"), 10, (score)=>{ D(n).nums=score; markTask(n,"nums"); });
+  if(has("ext")) mountExt(n, document.getElementById("tb-ext"));
 }
 
 function mountReview(n, el){
@@ -1185,7 +1191,7 @@ function renderMap(el){
    <p class="muted explain">Mỗi ngày ~60 phút, gồm 7 nhiệm vụ. Ngày 7, 14, 21 là ngày kiểm tra, ngày 30 là bài thi cuối. Tốc độ đọc tăng dần qua từng tuần và giọng đọc chuyển từ Mỹ sang trộn Anh, Úc.</p></div>
    <div class="weeks" style="margin-top:14px">${[1,2,3,4].map(w=>{ const wk=WEEKS[w-1]; const days=[]; for(let n=(w-1)*7+1;n<=(w===4?30:w*7);n++) days.push(n);
      return `<section><div class="row" style="justify-content:space-between"><div><span class="label">${wk.n}</span><h3>${esc(wk.t)}</h3></div><span class="chip mono">tốc độ ×${wk.rate} · nghe thả ${wk.ext}′</span></div>
-     <div class="wk-days">${days.map(n=>{ const d=DAYS[n-1], p=dayProgress(n); return `<button class="dcell ${p===TASKS.length?"done":""}" data-day="${n}"><span class="row" style="justify-content:space-between"><span class="dn">NGÀY ${n}</span>${p===TASKS.length?'<span class="chip ok">Xong</span>':p?`<span class="chip warn">${p}/7</span>`:isTest(n)?'<span class="chip acc">Kiểm tra</span>':""}</span><b>${esc(FOCUS[d.f].t)}</b><span class="small muted">${esc(d.th)}</span></button>`; }).join("")}</div></section>`; }).join("")}</div>`;
+     <div class="wk-days">${days.map(n=>{ const d=DAYS[n-1], p=dayProgress(n); return `<button class="dcell ${p===need(n)?"done":""}" data-day="${n}"><span class="row" style="justify-content:space-between"><span class="dn">NGÀY ${n}</span>${p===need(n)?'<span class="chip ok">Xong</span>':p?`<span class="chip warn">${p}/${need(n)}</span>`:isTest(n)?'<span class="chip acc">Kiểm tra</span>':""}</span><b>${esc(FOCUS[d.f].t)}</b><span class="small muted">${esc(d.th)}</span></button>`; }).join("")}</div></section>`; }).join("")}</div>`;
   el.querySelectorAll("[data-day]").forEach(b=>b.onclick=()=>go("today",+b.dataset.day));
 }
 
@@ -1373,7 +1379,7 @@ function gymPairs(el){
 
 /* ---------- Stats ---------- */
 function certHTML(){
-  const done=DAYS.filter((_,i)=>dayProgress(i+1)===TASKS.length).length;
+  const done=DAYS.filter((_,i)=>dayProgress(i+1)===need(i+1)).length;
   const avgOf=ns=>{ const v=ns.flatMap(n=>((S.days[n]||{}).dict||[]).filter(x=>x!=null)); return v.length?Math.round(v.reduce((a,b)=>a+b,0)/v.length):null; };
   const w1=avgOf([1,2,3,4,5,6,7]), w4=avgOf([22,23,24,25,26,27,28,29,30]);
   const sp=S.speedHist||[], firstSp=sp.length?sp[0].rate:null, bestSp=sp.length?Math.max(...sp.map(x=>x.rate)):null;
@@ -1384,7 +1390,7 @@ function certHTML(){
    <div class="kpis">${cell("Chép chính tả",w1!=null?w1+"%":null,w4!=null?w4+"%":(w1!=null?"đang học":null))}${cell("Tốc độ nghe",firstSp!=null?"×"+firstSp.toFixed(1):null,bestSp!=null?"×"+bestSp.toFixed(1):null)}${cell("Từ đã thuộc",null,words)}${cell("Họp mô phỏng",null,meets)}</div></div>`;
 }
 function renderStats(el){
-  const done=DAYS.filter((_,i)=>dayProgress(i+1)===TASKS.length).length;
+  const done=DAYS.filter((_,i)=>dayProgress(i+1)===need(i+1)).length;
   const cards=Object.values(S.cards), mastered=cards.filter(c=>c.box>=3).length;
   const mins=Object.values(S.days).reduce((a,d)=>a+(d.min||0),0);
   const accs=DAYS.map((_,i)=>{ const s=(S.days[i+1]?.dict||[]).filter(x=>x!=null); return s.length?Math.round(s.reduce((a,b)=>a+b,0)/s.length):null; });
