@@ -1227,13 +1227,13 @@ function renderSRS(el){
 let gymMode="dict";
 function renderGym(el){
   el.innerHTML=`<div class="stack" style="margin-top:22px"><div><h2>Luyện thêm</h2><div class="muted small">Luyện không giới hạn, không ảnh hưởng tiến độ ngày.</div></div>
-   <div class="tabs" style="align-self:flex-start" id="gym-tabs">${[["dict","Chép chính tả tự do"],["mine","Văn bản của bạn"],["pairs","Cặp âm dễ nhầm"],["nums","Nghe số"]].map(([k,t])=>`<button class="tab" data-g="${k}" aria-current="${gymMode===k?"page":"false"}">${t}</button>`).join("")}</div>
+   <div class="tabs" style="align-self:flex-start" id="gym-tabs">${[["dict","Chép chính tả tự do"],["speed","Đo tốc độ nghe"],["mine","Văn bản của bạn"],["pairs","Cặp âm dễ nhầm"],["nums","Nghe số"]].map(([k,t])=>`<button class="tab" data-g="${k}" aria-current="${gymMode===k?"page":"false"}">${t}</button>`).join("")}</div>
    <div id="vbar-host"></div>
    <div class="panel" id="gym-body"></div></div>`;
   mountVoiceBar(el.querySelector("#vbar-host"), ["us","gb","au"]);
   el.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{ gymMode=b.dataset.g; renderGym(el); });
   const body=el.querySelector("#gym-body");
-  if(gymMode==="dict") gymDict(body); else if(gymMode==="mine") gymMine(body); else if(gymMode==="pairs") gymPairs(body); else mountNums(body,10,()=>{});
+  if(gymMode==="dict") gymDict(body); else if(gymMode==="speed") gymSpeed(body); else if(gymMode==="mine") gymMine(body); else if(gymMode==="pairs") gymPairs(body); else mountNums(body,10,()=>{});
 }
 function gymDict(el){
   const upto=Math.max(1,currentDay());
@@ -1253,6 +1253,36 @@ function gymDict(el){
 function splitSentences(t){
   return t.replace(/\r/g,"").split(/(?<=[.!?])\s+|\n+/).map(x=>x.replace(/^[\s\-•*>\d.)]+/,"").replace(/\s+/g," ").trim())
     .filter(x=>{ const n=x.split(" ").length; return n>=3&&n<=35&&/[a-z]/i.test(x); });
+}
+const SPEED_STEPS=[0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6];
+function gymSpeed(el){
+  const hist=S.speedHist||[];
+  el.innerHTML=`<div class="stack" style="gap:10px"><div class="small muted explain">Mỗi mức tốc độ có 2 câu. Chép đúng trung bình từ 90% trở lên thì lên mức nhanh hơn. Kết quả là tốc độ nhanh nhất bạn vẫn nghe rõ. Người bản xứ nói trong họp thường tương đương ×1.1–×1.3.</div>
+   ${hist.length?`<div class="row">${hist.slice(-6).map(h=>`<span class="chip mono">${new Date(h.ts).toLocaleDateString("vi-VN",{day:"numeric",month:"numeric"})}: ×${h.rate.toFixed(1)}</span>`).join("")}</div>`:""}
+   <div class="row"><label class="small muted" for="sp-acc">Giọng</label><select id="sp-acc" style="width:auto">${["us","gb","in","fr","au"].map(a=>`<option value="${a}">${accLabel(a)}</option>`).join("")}</select><button class="btn primary" id="sp-go">Bắt đầu đo</button></div><div id="sp-w"></div></div>`;
+  el.querySelector("#sp-go").onclick=()=>{
+    const acc=el.querySelector("#sp-acc").value, box=el.querySelector("#sp-w");
+    const pool=shuffle(DAYS.flatMap(d=>d.v.map(x=>x.x)).filter(x=>x.split(" ").length>=7));
+    let step=0, k=0, scores=[], best=null, pi=0;
+    function finish(){ const rate=best==null?SPEED_STEPS[0]-0.1:best; S.speedHist=[...(S.speedHist||[]),{ts:Date.now(),rate,acc}].slice(-30); save();
+      box.innerHTML=`<div class="panel stack" style="background:var(--bg);gap:6px"><div class="label">Kết quả</div><div class="score">${best==null?"Dưới ×0.9":"×"+best.toFixed(1)}</div><div class="small muted">${best==null?"Hãy học các ngày đầu của lộ trình, rồi đo lại sau một tuần.":best>=1.3?"Rất tốt: bạn theo kịp tốc độ họp thật. Thử với giọng khác.":"Luyện ở tốc độ ×"+(Math.min(1.6,(best||0.9)+0.1)).toFixed(1)+" trong Luyện thêm để đẩy giới hạn lên."}</div><div class="row"><button class="btn sm" id="sp-again">Đo lại</button></div></div>`;
+      box.querySelector("#sp-again").onclick=()=>gymSpeed(el); }
+    function ask(){
+      const rate=SPEED_STEPS[step], text=pool[pi++%pool.length];
+      box.innerHTML=`<div class="panel stack" style="background:var(--bg);gap:10px"><div class="row" style="justify-content:space-between"><span class="label">Tốc độ ×${rate.toFixed(1)} · câu ${k+1}/2</span><button class="btn sm play" id="sp-pl">Nghe lại</button></div>
+        <input type="text" class="big-input" id="sp-in" placeholder="Gõ lại câu vừa nghe rồi Enter" autocomplete="off" spellcheck="false"><div id="sp-r" class="small"></div></div>`;
+      const inp=box.querySelector("#sp-in"); let done=false;
+      box.querySelector("#sp-pl").onclick=()=>{ speak(text,rate-(S.speedAdj||0),acc); inp.focus(); };
+      inp.onkeydown=e=>{ if(e.key!=="Enter") return; e.preventDefault();
+        if(!done){ done=true; const r=diffWords(text,inp.value); scores.push(r.score); inp.readOnly=true; box.querySelector("#sp-r").innerHTML=`<div class="diff">${r.html}</div><span class="mono">${r.score}%</span> · <span class="muted">Enter để tiếp</span>`; return; }
+        k++; if(k<2){ ask(); return; }
+        const avg=scores.reduce((a,b)=>a+b,0)/scores.length; scores=[]; k=0;
+        if(avg>=90){ best=rate; step++; if(step>=SPEED_STEPS.length){ finish(); return; } ask(); } else finish();
+      };
+      speak(text,rate-(S.speedAdj||0),acc); setTimeout(()=>inp.focus({preventScroll:true}),50);
+    }
+    ask();
+  };
 }
 function gymMine(el){
   const saved=S.mineText||"";
