@@ -216,6 +216,7 @@ input[type=text]:focus,select:focus{border-color:var(--accent);outline:none}
   </div>
   <div id="resume" style="margin-top:12px"></div>
   <div id="tts-warn" class="banner" style="margin-top:14px" hidden>Trình duyệt này không phát được giọng đọc tiếng Anh. Hãy mở bằng Chrome, Edge hoặc Safari bản mới.</div>
+  <div id="tour"></div>
   <main id="view" style="margin-top:8px"></main>
   <footer class="foot"><span id="sync">Đang lưu tiến độ trên trình duyệt này</span><span>Giọng đọc: máy tính của bạn · Phím tắt chép chính tả: <span class="kbd">Enter</span> kiểm tra · <span class="kbd">Ctrl</span>+<span class="kbd">Space</span> nghe lại</span></footer>
 </div>
@@ -2126,11 +2127,24 @@ function bindIO(el){
   };
 }
 
+/* =============================== FIRST-VISIT TOUR =============================== */
+const TOUR_STEPS=[["Mỗi ngày làm 7 nhiệm vụ trong tab Hôm nay","Ôn từ, học một hiện tượng âm thanh, 10 từ mới, chép chính tả, nói theo, nghe số và nghe nội dung thật. Khoảng 60 phút. Thanh Học tiếp ở trên luôn đưa bạn về đúng chỗ.","today"],["Tab Công việc: tiếng Anh hàng không","18 cuộc họp mô phỏng với giọng Ấn, Pháp, Đức, Tây Ban Nha, kèm thuật ngữ reliability, maintenance, utilization, configuration, quiz và luyện mã số NATO.","work"],["Chỉnh giọng, tốc độ, tiếng ồn ở thanh Giọng nghe","Ép một giọng (ví dụ chỉ giọng Ấn), chọn người đọc, tăng tốc độ hoặc thêm tiếng ồn như cuộc gọi Teams. Muốn luyện nói thì mở Talk Shop (nút góc trên).",""]];
+function renderTour(i){
+  const el=document.getElementById("tour"); if(!el) return;
+  if(i===0&&!S.tourDone&&Object.keys(S.days).length>0){ S.tourDone=1; save(); }
+  if(S.tourDone||i>=TOUR_STEPS.length){ el.innerHTML=""; if(!S.tourDone){ S.tourDone=1; save(); } return; }
+  const [t,d,v]=TOUR_STEPS[i];
+  el.innerHTML=`<div class="panel stack" role="dialog" aria-label="Hướng dẫn nhanh" style="gap:8px;margin-top:14px;border-color:var(--accent)"><div class="row" style="justify-content:space-between"><span class="label">Hướng dẫn nhanh · ${i+1}/${TOUR_STEPS.length}</span><button class="btn sm ghost" id="tour-skip">Bỏ qua</button></div><b>${t}</b><div class="small explain">${d}</div><div class="row">${v?`<button class="btn sm" id="tour-show">Xem ngay</button>`:""}<button class="btn sm primary" id="tour-next">${i+1<TOUR_STEPS.length?"Tiếp":"Bắt đầu học"}</button></div></div>`;
+  el.querySelector("#tour-skip").onclick=()=>{ S.tourDone=1; save(); el.innerHTML=""; };
+  el.querySelector("#tour-next").onclick=()=>renderTour(i+1);
+  const sh=el.querySelector("#tour-show"); if(sh) sh.onclick=()=>{ go(v); renderTour(i); };
+}
+
 /* =============================== BOOT =============================== */
 applyTheme();
 if(!hasTTS) document.getElementById("tts-warn").hidden=false;
 readHash();
 if(view==="today" && !openDay) openDay=currentDay();
 render();
-initCloud();
+initCloud(); renderTour(0);
 </script>

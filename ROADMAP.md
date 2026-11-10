@@ -12,7 +12,6 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Both: onboarding tour for first-time visitors (3 short steps)
 - [ ] Talk Shop: interview mode — Mentor AI acts as a hiring manager for an aviation data role
 - [ ] Both: accessibility pass (labels, focus order, contrast in dark mode)
 
@@ -24,6 +23,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Both: onboarding tour for first-time visitors (3 short steps)
 - [x] Listen 30: Vocab quiz mode for aviation terms (hear the term in a sentence, pick the meaning)
 - [x] Talk Shop: pronunciation heatmap — which words are most often red across all recordings, with a practice list
 - [x] Listen 30: dictation of real meeting snippets pasted by the user (paste transcript → TTS → dictation)
