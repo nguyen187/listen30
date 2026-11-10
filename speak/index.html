@@ -142,7 +142,7 @@ select,textarea,input[type=text]{font:inherit;color:var(--ink);background:var(--
   <div class="strip" id="strip" aria-label="30 ngày"></div>
   <div id="warn" class="banner" style="margin-top:14px" hidden></div>
   <main id="view" style="margin-top:18px"></main>
-  <footer class="foot"><span>Ghi âm và nhận dạng chạy trong trình duyệt. Tiến độ lưu trên máy này.</span><span>Nên dùng Chrome hoặc Edge, đeo tai nghe có micro.</span></footer>
+  <footer class="foot"><span>Ghi âm và nhận dạng chạy trong trình duyệt. Tiến độ lưu trên máy này.</span><span>Phím tắt: <b>Space</b> bắt đầu / dừng ghi âm ở nút đang hiện trên màn hình. Nên dùng Chrome hoặc Edge, đeo tai nghe có micro.</span></footer>
 </div>
 
 <script type="module">
@@ -894,6 +894,24 @@ For each answer: did it actually answer the question (có/chưa), and a better a
     speak(qs[0],1,accs[0]);
   };
 }
+function weekPrompt(){
+  const t=today(), inW=(d,a,b)=>d>=t-b&&d<=t-a;
+  const tw=S.talks.filter(x=>inW(x.d,0,6)), tp=S.talks.filter(x=>inW(x.d,7,13));
+  const av=(a,k)=>a.length?Math.round(a.reduce((s,x)=>s+(x[k]||0),0)/a.length):null;
+  const L=readL30(); let l30="Listen 30: no data.";
+  if(L){ const days=Object.entries(L.days||{}); const dt=days.filter(([,d])=>d.doneAt&&Math.floor((d.doneAt-new Date(d.doneAt).getTimezoneOffset()*60000)/86400000)>=t-6).length;
+    const dict=days.flatMap(([,d])=>(d.dict||[]).filter(x=>x!=null)); const meet=Object.entries((L.work||{}).meet||{});
+    l30=`Listen 30: ${days.filter(([,d])=>d.doneAt).length}/30 days done in total, ${dt} completed in the last 7 days; average dictation accuracy ${dict.length?Math.round(dict.reduce((a,b)=>a+b,0)/dict.length)+"%":"n/a"}; meeting quiz scores: ${meet.length?meet.map(([k,v])=>k+" "+v+"%").join(", "):"none yet"}.`; }
+  const A=analyze();
+  return `Write my weekly English progress report.
+Talk Shop, last 7 days: ${tw.length} talks, average ${av(tw,"wpm")??"n/a"} words per minute, ${av(tw,"f")??"n/a"} fillers per talk, ${av(tw,"c")??"n/a"}% target terms used.
+Talk Shop, the 7 days before: ${tp.length} talks, average ${av(tp,"wpm")??"n/a"} words per minute, ${av(tp,"f")??"n/a"} fillers per talk.
+Current diagnosis: ${A.diag.map(([s,t2,v])=>t2+": "+v).join("; ")||"not enough data"}.
+Total speaking time so far: ${Math.round((S.secs||0)/60)} minutes. Talk Shop days completed: ${Array.from({length:30},(_,i)=>prog(i+1)===TASKS.length).filter(Boolean).length}/30.
+${l30}
+
+In Vietnamese: 1) what improved, with the numbers; 2) the two weakest points right now; 3) a plan for next week as 5 concrete daily tasks that name app sections; 4) one short, honest sentence of encouragement. If I practised little, say so plainly and make the plan smaller. Keep it short.`;
+}
 function aiPanel(el){
   const has=!!getKey();
   el.innerHTML=`<div class="panel stack" id="ai-panel"><div class="row" style="justify-content:space-between"><div><h3>Mentor AI</h3><div class="small muted">Claude đọc hồ sơ và kết quả luyện tập của bạn, trả lời câu hỏi, sửa câu, giúp chuẩn bị họp.</div></div>${has?'<button class="btn sm ghost" id="ai-set">Cài đặt AI</button>':""}</div>
@@ -904,7 +922,7 @@ function aiPanel(el){
     <div class="row"><button class="btn primary" id="ai-save">Lưu và kiểm tra</button>${has?'<button class="btn ghost" id="ai-del">Xoá key khỏi máy này</button>':""}<span class="small" id="ai-msg"></span></div>
     <div class="small muted">Ứng dụng bật cơ chế dự phòng của Anthropic (server-side fallback) cho Opus và Sonnet: nếu model từ chối một yêu cầu, máy chủ tự chuyển sang model khác để trả lời.</div>
    </div>
-   ${has?`<div id="ai-chat" class="stack" style="gap:10px"></div>`:""}</div>`;
+   ${has?`<div id="ai-week" class="stack" style="gap:8px"></div><div id="ai-chat" class="stack" style="gap:10px"></div>`:""}</div>`;
   const msg=el.querySelector("#ai-msg");
   el.querySelector("#ai-model").onchange=e=>{ S.aiModel=e.target.value; save(); };
   const set=el.querySelector("#ai-set"); if(set) set.onclick=()=>{ const s=el.querySelector("#ai-settings"); s.hidden=!s.hidden; };
@@ -916,7 +934,7 @@ function aiPanel(el){
     try{ const m=await aiCall({messages:[{role:"user",content:"Reply with exactly: OK"}]}); msg.style.color="var(--good)"; msg.textContent="Key hoạt động ("+m.model+")."; el.querySelector("#ai-key").value=""; setTimeout(()=>aiPanel(el),900); }
     catch(e){ msg.style.color="var(--bad)"; msg.textContent=aiErrorText(e); }
   };
-  if(has) chatUI(el.querySelector("#ai-chat"));
+  if(has){ aiFeedback(el.querySelector("#ai-week"),weekPrompt(),"Báo cáo tiến bộ 7 ngày qua"); chatUI(el.querySelector("#ai-chat")); }
 }
 const QUICK=["Dựa vào dữ liệu của tôi, tuần này tôi nên tập trung vào gì?","Tôi sắp họp với Airbus để lấy yêu cầu dashboard reliability. Giúp tôi chuẩn bị 5 câu nói và 3 câu hỏi.","Sửa câu này cho tự nhiên hơn: ","Khi người Ấn nói \"kindly revert\" thì tôi nên trả lời thế nào?","Đóng vai SME hỏi tôi về utilization data, mỗi lượt một câu, rồi chấm câu trả lời của tôi."];
 function chatUI(el){
@@ -1003,6 +1021,16 @@ function bindIO(el){
   el.querySelector("#io-file").onchange=e=>{ const f=e.target.files[0]; if(f) f.text().then(confirmImport); e.target.value=""; };
   el.querySelector("#io-paste").onclick=()=>{ area.innerHTML='<div class="stack" style="gap:8px"><textarea id="io-in" rows="4" class="mono" style="font-size:12px" placeholder="Dán mã tiến độ vào đây"></textarea><div class="row"><button class="btn sm primary" id="io-go">Kiểm tra mã</button></div></div>'; area.querySelector("#io-go").onclick=()=>confirmImport(area.querySelector("#io-in").value.trim()); };
 }
+
+/* Space starts/stops the record button that is on screen */
+document.addEventListener("keydown",e=>{
+  if(e.code!=="Space"||e.repeat||e.metaKey||e.ctrlKey||e.altKey) return;
+  const tag=(e.target.tagName||"").toLowerCase(); if(["input","textarea","select","button","a","summary","label"].includes(tag)||e.target.isContentEditable) return;
+  const recs=[...document.querySelectorAll(".rec")];
+  let b=recs.find(x=>x.getAttribute("aria-pressed")==="true");
+  if(!b){ const h=window.innerHeight; b=recs.find(x=>{ const r=x.getBoundingClientRect(); return r.width>0&&r.top>=0&&r.bottom<=h; }); }
+  if(!b) return; e.preventDefault(); b.click(); b.focus({preventScroll:true});
+});
 
 /* =============================== THEME & BOOT =============================== */
 function applyTheme(){ if(S.theme) document.documentElement.setAttribute("data-theme",S.theme); }

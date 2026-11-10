@@ -12,8 +12,6 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop: weekly AI progress report from practice data
-- [ ] Talk Shop: keyboard shortcut (Space) to start/stop recording, shortcut help
 - [ ] Listen 30: SRS spelling mode (hear word, type it)
 
 ## Follow-ups
@@ -24,6 +22,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Talk Shop: keyboard shortcut (Space) to start/stop recording, shortcut help
+- [x] Talk Shop: weekly AI progress report from practice data
 - [x] Talk Shop: minimal-pair speaking drill (ship/sheep etc.) checked by speech recognition
 - [x] Talk Shop: keep recordings history in IndexedDB, compare day 1 vs today
 - [x] Listen 30: AI explanation of dictation mistakes (GitHub Pages: reuse Talk Shop key; artifact: `sample` capability)
