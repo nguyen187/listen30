@@ -453,13 +453,13 @@ document.getElementById("strip").onclick=e=>{ const b=e.target.closest("[data-d]
 function render(){ renderStrip(); const el=document.getElementById("view"); ({mentor:rMentor,today:rToday,phr:rPhr,role:rRole,talk:rTalk,pron:rPron,prog:rProg})[view](el); document.querySelector('#tabs [aria-current="page"]')?.scrollIntoView({block:'nearest',inline:'nearest'}); }
 
 /* reusable: say-after-me card list */
-function sayList(el,items,{acc="us",onEach,key}={}){
-  el.innerHTML=items.map((it,i)=>`<div class="panel stack" style="padding:14px 16px;background:var(--bg)"><div class="row sayhead" style="justify-content:space-between;flex-wrap:nowrap;align-items:flex-start"><div style="min-width:0"><div class="target">${esc(it[0])}</div><div class="vi">${esc(it[1])}</div></div><div class="row" style="flex-wrap:nowrap"><span class="chip mono" data-best="${i}">${key&&S[key[0]][key[1]+":"+i]!=null?S[key[0]][key[1]+":"+i]+"%":"–"}</span><button class="btn sm play" data-pl="${i}" aria-label="Nghe mẫu"></button><button class="btn sm play" data-sl="${i}">Chậm</button></div></div><div data-sp="${i}"></div></div>`).join("");
+function sayList(el,items,{acc="us",onEach,key,keyIndex}={}){
+  el.innerHTML=items.map((it,i)=>`<div class="panel stack" style="padding:14px 16px;background:var(--bg)"><div class="row sayhead" style="justify-content:space-between;flex-wrap:nowrap;align-items:flex-start"><div style="min-width:0"><div class="target">${esc(it[0])}</div><div class="vi">${esc(it[1])}</div></div><div class="row" style="flex-wrap:nowrap"><span class="chip mono" data-best="${i}">${key&&S[key[0]][key[1]+":"+(keyIndex!=null?keyIndex:i)]!=null?S[key[0]][key[1]+":"+(keyIndex!=null?keyIndex:i)]+"%":"–"}</span><button class="btn sm play" data-pl="${i}" aria-label="Nghe mẫu"></button><button class="btn sm play" data-sl="${i}">Chậm</button></div></div><div data-sp="${i}"></div></div>`).join("");
   el.querySelectorAll("[data-pl]").forEach(b=>b.onclick=()=>speak(items[+b.dataset.pl][0],1,acc));
   el.querySelectorAll("[data-sl]").forEach(b=>b.onclick=()=>speak(items[+b.dataset.sl][0],0.75,acc));
   el.querySelectorAll("[data-sp]").forEach(box=>{ const i=+box.dataset.sp; mountSpeak(box,{target:items[i][0],onResult:(r,resEl)=>{
     if(r.html){ resEl.innerHTML=`<div class="row" style="gap:14px;align-items:flex-start;flex-wrap:nowrap"><span class="score ${r.score>=85?"":""}" style="color:${r.score>=85?"var(--good)":r.score>=60?"var(--accent)":"var(--bad)"}">${r.score}%</span><div class="diff" style="min-width:0">${r.html}</div></div><div class="small muted">${r.score>=85?"Rõ ràng, máy hiểu gần hết.":"Chữ đỏ là chỗ máy không nhận ra: thường là âm cuối hoặc trọng âm. Bấm Chậm, nghe mẫu rồi nói lại."}</div>`;
-      if(key){ const k=key[1]+":"+i; S[key[0]][k]=Math.max(S[key[0]][k]||0,r.score); save(); el.querySelector(`[data-best="${i}"]`).textContent=S[key[0]][k]+"%"; } }
+      if(key){ const k=key[1]+":"+(keyIndex!=null?keyIndex:i); S[key[0]][k]=Math.max(S[key[0]][k]||0,r.score); save(); el.querySelector(`[data-best="${i}"]`).textContent=S[key[0]][k]+"%"; } }
     onEach&&onEach(i,r); }}); });
 }
 
@@ -738,6 +738,7 @@ function analyze(){
   return {P,acts:pickd,used,diag,l30,wpm};
 }
 let mentorEdit=false;
+function potd(){ const flat=PHRASES.flatMap((c,ci)=>c.p.map((_,i)=>({c:ci,i}))); return flat[today()%flat.length]; }
 function rMentor(el){
   const P=S.profile;
   if(!P||mentorEdit){ return mentorSetup(el); }
@@ -746,6 +747,7 @@ function rMentor(el){
    <div class="row" style="justify-content:space-between;align-items:flex-end"><div><div class="label">Mentor · ${new Date().toLocaleDateString("vi-VN",{weekday:"long",day:"numeric",month:"numeric"})}</div><h2>Hôm nay bạn nên làm ${A.acts.length} việc, khoảng ${A.used} phút</h2></div><button class="btn sm ghost" id="mt-edit">Sửa hồ sơ</button></div>
    <div class="panel stack"><div class="small muted">Thứ tự dưới đây đã xếp theo mức ưu tiên, dựa trên mục tiêu và kết quả luyện tập của bạn. Làm từ trên xuống.</div>
     ${A.acts.map((a,i)=>`<div class="row" style="flex-wrap:nowrap;align-items:flex-start;gap:14px;border-top:1px solid var(--line);padding-top:12px"><span class="score mono" style="font-size:26px;min-width:28px">${i+1}</span><div style="flex:1;min-width:0"><b>${esc(a.t)}</b> <span class="chip mono">${a.m} phút</span><div class="small muted">${esc(a.why)}</div></div>${a.href?`<a class="btn sm primary" href="${a.href}">Mở ↗</a>`:`<button class="btn sm primary" data-a="${i}">Làm ngay</button>`}</div>`).join("")}</div>
+   <div class="panel stack" style="gap:8px"><div class="row" style="justify-content:space-between"><h3>Câu nói của ngày</h3><span class="small muted">${esc(PHRASES[potd().c].t)}</span></div><div class="small muted">Nói câu này 3 lần, rồi tìm cơ hội dùng nó trong cuộc họp hôm nay.</div><div id="potd"></div></div>
    <div class="panel stack"><h3>Chẩn đoán</h3>${A.diag.length?`<div class="stack" style="gap:6px">${A.diag.map(([s,t,v])=>`<div class="row" style="justify-content:space-between;flex-wrap:nowrap"><span>${esc(t)}</span><span class="chip ${s} mono">${esc(v)}</span></div>`).join("")}</div>`:`<p class="muted small" style="margin:0">Chưa đủ dữ liệu. Làm các việc ở trên vài ngày, mentor sẽ chỉ ra điểm yếu cụ thể bằng số liệu.</p>`}
     <div class="small muted">Trình độ bạn chọn: ${esc(LEVELS.find(l=>l[0]===A.P.level)?.[1]||"")}. ${esc(LEVEL_FOCUS[A.P.level]||"")}</div></div>
    <div class="panel stack"><h3>Lời khuyên cho vấn đề của bạn</h3><div class="small muted">${esc(PAINS.find(p=>p[0]===A.P.pain)?.[1]||"")}</div><ul class="explain" style="margin:0;padding-left:18px">${(PAIN_TIPS[A.P.pain]||[]).map(t=>`<li>${esc(t)}</li>`).join("")}</ul></div>
@@ -754,6 +756,7 @@ function rMentor(el){
    <div id="ai-host"></div></div>`;
   aiPanel(el.querySelector("#ai-host"));
   el.querySelector("#mt-edit").onclick=()=>{ mentorEdit=true; rMentor(el); };
+  { const p=potd(); sayList(el.querySelector("#potd"),[PHRASES[p.c].p[p.i]],{key:["phr",p.c],keyIndex:p.i}); }
   el.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>A.acts[+b.dataset.a].go());
   el.querySelectorAll("[data-prep]").forEach(b=>b.onclick=()=>{ const s=SITS[+b.dataset.prep], ph=PHRASES[s[2].phr], R=ROLES[s[2].role];
     el.querySelector("#prep").innerHTML=`<div class="stack" style="gap:8px;margin-top:6px"><div class="label">${esc(ph.t)}</div>${ph.p.slice(0,5).map(([en,vi],i)=>`<div class="row" style="flex-wrap:nowrap;gap:10px"><button class="btn sm play" data-pp="${i}" aria-label="Nghe"></button><span style="min-width:0">${esc(en)} <span class="vi">· ${esc(vi)}</span></span></div>`).join("")}
