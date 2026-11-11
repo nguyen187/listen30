@@ -561,7 +561,9 @@ function bindTermDay(el){ const v=termDay(), box=el.querySelector("#td-sp"); if(
   const norm=t=>t.toLowerCase().replace(/[^a-z0-9 ]+/g," ").replace(/\s+/g," ").trim(), squash=t=>norm(t).replace(/ /g,"");
   mountSpeak(box,{onResult:(r,resEl)=>{ if(!r.text){ return; }
     const said=norm(r.text), term=norm(v.w), n=said.split(" ").filter(Boolean).length;
-    const used=said.includes(term)||(term.length<=6&&squash(r.text).includes(squash(v.w)));
+    const LN={ay:"a",bee:"b",be:"b",see:"c",sea:"c",dee:"d",ef:"f",gee:"g",aitch:"h",eye:"i",jay:"j",kay:"k",el:"l",em:"m",en:"n",oh:"o",pee:"p",cue:"q",queue:"q",are:"r",ar:"r",es:"s",ess:"s",tee:"t",tea:"t",you:"u",vee:"v",ex:"x",why:"y",zed:"z",zee:"z",zero:"0",one:"1",two:"2",three:"3",four:"4",five:"5",six:"6",seven:"7",eight:"8",nine:"9"};
+    const saidSq=said.split(" ").map(w=>LN[w]||w).join(""), toks=term.split(" ").filter(t=>t.length>1);
+    const used=said.includes(term)||toks.every(t=>saidSq.includes(t));
     const copied=norm(v.x)===said;
     let msg, ok=false;
     if(!used) msg=`Máy chưa nghe thấy "${esc(v.w)}". ${term.length<=5?"Từ viết tắt: đọc rõ từng chữ cái.":"Nhấn rõ trọng âm của từ."} Thử lại.`;
