@@ -890,8 +890,6 @@ function missedGap(){
 function renderResume(){
   const el=document.getElementById("resume"); if(!el) return;
   const cur=currentDay(), p=dayProgress(cur), {n,doneToday}=streakInfo(), due=dueCards().length;
-  if(view==="today"&&openDay===cur&&!due){ el.innerHTML=""; return; }
-  const left=need(cur)-p;
   const miss=missedGap();
   if(miss&&!doneToday){
     const q=S.days[cur]&&S.days[cur].quick;
@@ -899,6 +897,8 @@ function renderResume(){
     el.querySelector("#rs-quick").onclick=()=>{ D(cur).quick=true; save(); go("today",cur); };
     return;
   }
+  if(view==="today"&&openDay===cur&&!due){ el.innerHTML=""; return; }
+  const left=need(cur)-p;
   const msg = doneToday ? `Hôm nay bạn đã xong một ngày học${n>1?`, chuỗi ${n} ngày liên tục`:""}. Mai học tiếp Ngày ${cur}.`
     : `${n?`Chuỗi ${n} ngày liên tục, đừng để đứt. `:""}${p?`Ngày ${cur} còn ${left} nhiệm vụ.`:`Hôm nay: Ngày ${cur}, ${esc(FOCUS[DAYS[cur-1].f].t)}.`}`;
   el.innerHTML=`<div class="panel row" style="justify-content:space-between;padding:10px 14px;gap:8px 14px"><span class="small">${msg}${due?` · ${due} thẻ từ đến hạn`:""}</span><span class="row">${due?`<button class="btn sm" id="rs-srs">Ôn ${due} thẻ</button>`:""}${doneToday&&!(view!=="today")?"":`<button class="btn sm primary" id="rs-go">${doneToday?`Xem Ngày ${cur}`:(p?"Học tiếp":"Bắt đầu")}</button>`}</span></div>`;
