@@ -630,8 +630,11 @@ Make 3 or 4 exchanges. The partner speaks first in every exchange, then I answer
   rescueDrill(el.querySelector("#rq"));
   el.querySelectorAll("[data-rs]").forEach(b=>b.onclick=()=>{ sel.roleSet=b.dataset.rs; rRole(el); });
   if(sel.roleSet==="l30"){ const L=l30Roles(); if(!L.length){ el.querySelector("#rl").innerHTML='<span class="small muted">Không tải được dữ liệu cuộc họp. Kiểm tra kết nối rồi tải lại trang.</span>'; return; }
+    const wk=l30Weakest(), hasW=r=>wk&&Object.values(r.m.sp).includes(wk.a);
+    if(sel.l30i==null&&wk){ const f=L.findIndex(hasW); if(f>=0) sel.l30i=f; }
     const i=Math.min(sel.l30i||0,L.length-1);
-    el.querySelector("#rl").insertAdjacentHTML("beforebegin",`<div class="cats pick" id="l30cats">${L.map((r,k)=>`<button class="cell" data-l3="${k}" aria-current="${i===k}"><b>${esc(r.t)}</b><span class="small muted">${esc(r.who)}</span>${Object.entries(S.l30role||{}).filter(([k])=>k.split(":")[0]===r.id).length?`<span class="chip ok">Đã tập</span>`:""}</button>`).join("")}</div>`);
+    if(wk) el.querySelector("#rl").insertAdjacentHTML("beforebegin",`<div class="small muted">Theo Listen 30, giọng bạn nghe yếu nhất là <b>${esc(ACCL[wk.a]||wk.a)}</b> (${wk.v}%). Các cuộc họp có giọng này được đánh dấu: tập nói với họ để quen tai.</div>`);
+    el.querySelector("#rl").insertAdjacentHTML("beforebegin",`<div class="cats pick" id="l30cats">${L.map((r,k)=>`<button class="cell" data-l3="${k}" aria-current="${i===k}"><b>${esc(r.t)}</b><span class="small muted">${esc(r.who)}</span>${hasW(r)?`<span class="chip warn">Giọng ${esc(ACCL[wk.a]||wk.a)}</span>`:""}${Object.entries(S.l30role||{}).filter(([k])=>k.split(":")[0]===r.id).length?`<span class="chip ok">Đã tập</span>`:""}</button>`).join("")}</div>`);
     el.querySelectorAll("[data-l3]").forEach(b=>b.onclick=()=>{ sel.l30i=+b.dataset.l3; rRole(el); });
     const M=L[i].m, chars=Object.keys(M.sp); if(!chars.includes(sel.l30me)) sel.l30me=chars.includes("Nguyen")?"Nguyen":chars[0];
     el.querySelector("#rl").insertAdjacentHTML("beforebegin",`<div class="row"><label class="small muted" for="l3-me">Bạn đóng vai</label><select id="l3-me" style="width:auto">${chars.map(c=>`<option ${c===sel.l30me?"selected":""}>${esc(c)}</option>`).join("")}</select><span class="small muted">Những người còn lại nói bằng giọng của họ.</span></div>`);
@@ -652,6 +655,19 @@ function l30RoleFor(m,me){
   });
   const others=Object.keys(m.sp).filter(n=>n!==me);
   return {id:m.id+":"+me,l30:1,t:m.t,who:others.map(n=>n+" – "+ACCL[m.sp[n]]).join(", "),acc:acc(m.sp[others[0]]),ctx:m.ctx+" Bạn là "+me+".",turns};
+}
+/* Weakest accent from Listen 30: accent-game hits plus meeting quiz scores (same rule as Listen 30's Thống kê). */
+function l30Weakest(){
+  const L=readL30(), Ms=window.L30_MEETS||[]; if(!L) return null;
+  const w=L.work||{}, meet=w.meet||{}, game=w.acc||{}; let best=null;
+  ["gb","in","fr","de","es","au"].forEach(a=>{
+    const ms=Ms.filter(m=>Object.values(m.sp).includes(a)); if(!ms.length) return;
+    const sc=ms.map(m=>meet[m.id]).filter(x=>x!=null), g=game[a], parts=[];
+    if(g&&g.n>=3) parts.push(100*g.ok/g.n); if(sc.length) parts.push(sc.reduce((x,y)=>x+y,0)/sc.length);
+    if(!parts.length) return; const v=parts.reduce((x,y)=>x+y,0)/parts.length;
+    if(!best||v<best.v) best={a,v:Math.round(v)};
+  });
+  return best;
 }
 function l30Roles(){ return (window.L30_MEETS||[]).map(m=>({m,t:m.t,who:Object.keys(m.sp).join(", "),id:m.id})); }
 const lvlRate=()=>({easy:0.85,normal:1,hard:1.2})[S.roleLvl||"normal"];
