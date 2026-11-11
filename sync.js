@@ -8,7 +8,8 @@
   const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
   const readLocal = k => { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } };
   const enabled = !!(cfg.url && cfg.anonKey);
-  let sb = null, user = null, timer = null, status = "", loading = null;
+  let sb = null, user = null, timer = null, loading = null;
+  let status = (() => { try { const n = sessionStorage.getItem("cloud.note") || ""; sessionStorage.removeItem("cloud.note"); return n; } catch (e) { return ""; } })();
   let recovering = false;
   const DOMAIN = "@nguyen187.github.io";
   const toEmail = u => u.includes("@") ? u : u + DOMAIN;
@@ -38,16 +39,23 @@
     status = "Đang tải dữ liệu từ tài khoản…"; notify();
     const { data, error } = await sb.from("english_progress").select("listen30,talkshop,updated_at").eq("user_id", user.id).maybeSingle();
     if (error) { status = (error.code === "PGRST205" || error.code === "42P01") ? "Chưa tạo bảng dữ liệu trên Supabase: cần chạy supabase.sql một lần trong SQL Editor." : "Lỗi tải dữ liệu: " + error.message; notify(); return; }
-    let changed = false;
+    let changed = false; const took = [], kept = [];
+    const NAMES = { listen30: "Listen 30", talkshop: "Talk Shop" };
     if (data) {
       for (const [k, col] of KEYS) {
         const remote = data[col], local = readLocal(k);
-        if (remote && (!local || (remote.updatedAt || 0) > (local.updatedAt || 0))) { localStorage.setItem(k, JSON.stringify(remote)); changed = true; }
+        if (remote && (!local || (remote.updatedAt || 0) > (local.updatedAt || 0))) { localStorage.setItem(k, JSON.stringify(remote)); changed = true; took.push(NAMES[col]); }
+        else if (remote && local && (local.updatedAt || 0) > (remote.updatedAt || 0)) kept.push(NAMES[col]);
       }
     }
     await push(true);
-    status = "Đã đồng bộ " + new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }); notify();
-    if (changed && !sessionStorage.getItem("cloud.reloaded")) { sessionStorage.setItem("cloud.reloaded", "1"); location.reload(); }
+    const t = new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    const parts = [];
+    if (took.length) parts.push("Đã lấy tiến độ " + took.join(", ") + " từ tài khoản (mới hơn bản trên máy)");
+    if (kept.length) parts.push("Giữ tiến độ " + kept.join(", ") + " trên máy này (mới hơn) và lưu lên tài khoản");
+    status = (parts.length ? parts.join(". ") + ". " : "") + "Đồng bộ lúc " + t;
+    notify();
+    if (changed && !sessionStorage.getItem("cloud.reloaded")) { sessionStorage.setItem("cloud.reloaded", "1"); sessionStorage.setItem("cloud.note", status); location.reload(); }
   }
 
   async function push(quiet) {

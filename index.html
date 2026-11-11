@@ -6,7 +6,7 @@
 <meta name="description" content="Lộ trình 30 ngày luyện nghe tiếng Anh: chép chính tả, âm nối, ôn từ, shadowing.">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <script src="config.js?v=2"></script>
-<script src="sync.js?v=8"></script>
+<script src="sync.js?v=9"></script>
 </head>
 <body>
 <title>Listen 30</title>
@@ -216,6 +216,7 @@ input[type=text]:focus,select:focus{border-color:var(--accent);outline:none}
       <button class="tab" data-view="setup">Cài đặt</button>
     </nav>
     <button class="btn sm ghost" id="theme-btn" title="Đổi sáng / tối" aria-label="Đổi sáng hoặc tối">Tự động</button>
+    <a class="btn sm ghost" id="cloud-badge" hidden></a>
     <a class="btn sm" href="https://nguyen187.github.io/listen30/speak/" target="_blank" rel="noopener">Luyện nói: Talk Shop ↗</a>
   </header>
   <div class="tape" id="tape" aria-label="30 ngày"></div>
@@ -2237,6 +2238,7 @@ function bindTheme(el, rerender){
   el.querySelectorAll("[data-ac]").forEach(b=>b.onclick=()=>{ S.accent=b.dataset.ac; save(); applyTheme(); rerender(); });
   el.querySelectorAll("[data-fs]").forEach(b=>b.onclick=()=>{ S.fsize=b.dataset.fs; save(); applyTheme(); rerender(); });
 }
+if(ON_PAGES&&window.CloudSync) window.CloudSync.badge(document.getElementById("cloud-badge"),"#setup","chip");
 document.getElementById("theme-btn").onclick=()=>{
   const dark = S.theme==="dark" || (S.theme!=="light" && (document.documentElement.getAttribute("data-theme")==="dark" || (!document.documentElement.getAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches)));
   S.theme = dark?"light":"dark"; save(); applyTheme(); if(view==="setup") render();

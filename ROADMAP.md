@@ -14,8 +14,6 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Listen 30: header account chip like Talk Shop (signed-in name, links to Cài đặt)
-- [ ] Both: after sign-in, show "Tiến độ trên máy này mới hơn / trên tài khoản mới hơn" once so the learner knows which copy was kept
 - [x] Cloud accounts: username + password sign-in (username maps to <name>@nguyen187.github.io, Confirm email off); user created their account on the live site
 
 ## Follow-ups
@@ -27,6 +25,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Listen 30: header account chip (signed-in name or "Đăng nhập", links to Cài đặt)
+- [x] Both: after sync, the account status says which copy was kept (from the account or from this device), survives the reload
 - [x] Talk Shop: header chip shows the signed-in username (or "Đăng nhập") and links to the account box
 - [x] Listen 30: Today page shows a "Đăng nhập để lưu" prompt when signed out (GitHub copy)
 - [x] Both: check the dark theme visually on every tab and fix any low-contrast spots (dark passes; light green/red chips darkened to ≥4.5:1)
