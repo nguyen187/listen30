@@ -16,7 +16,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 - [ ] Talk Shop: show the cloud account status (signed in / not) in the header
 - [ ] Listen 30: show the cloud account box also in the Today page footer when signed out (GitHub copy)
-- [ ] Cloud accounts: config filled (project tktbwlttwikfmqjqkpds). Waiting on the user: run supabase.sql (english_progress table is missing), add redirect URLs, then test email sign-in
+- [ ] Cloud accounts: table created, RLS verified (anonymous insert rejected). Remaining: user signs in with the email link on the live site and confirms sync; Google provider is off (button hidden until enabled)
 
 ## Follow-ups
 

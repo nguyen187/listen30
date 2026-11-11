@@ -9,6 +9,7 @@
   const readLocal = k => { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } };
   const enabled = !!(cfg.url && cfg.anonKey);
   let sb = null, user = null, timer = null, status = "", loading = null;
+  let googleOn = false;
   const listeners = new Set();
   const notify = () => listeners.forEach(fn => { try { fn(); } catch (e) {} });
 
@@ -67,7 +68,7 @@
         el.querySelector('[data-cs="out"]').onclick = async () => { await sb.auth.signOut(); status = ""; notify(); };
       } else {
         el.innerHTML = `<div class="stack" style="gap:8px"><div class="small muted">Đăng nhập để lưu hồ sơ và tiến độ lên tài khoản, dùng tiếp trên máy khác. Không cần mật khẩu: web gửi link đăng nhập qua email.</div>
-          <div class="row"><input type="email" data-cs="email" placeholder="email@congty.com" autocomplete="email" style="flex:1;min-width:200px" aria-label="Email"><button class="btn sm primary" data-cs="link">Gửi link đăng nhập</button><button class="btn sm" data-cs="google">Đăng nhập Google</button></div>
+          <div class="row"><input type="email" data-cs="email" placeholder="email@congty.com" autocomplete="email" style="flex:1;min-width:200px" aria-label="Email"><button class="btn sm primary" data-cs="link">Gửi link đăng nhập</button>${googleOn ? '<button class="btn sm" data-cs="google">Đăng nhập Google</button>' : ""}</div>
           <div class="small" data-cs="msg">${esc(status)}</div></div>`;
         const msg = el.querySelector('[data-cs="msg"]');
         el.querySelector('[data-cs="link"]').onclick = async () => {
@@ -76,7 +77,7 @@
           const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
           msg.textContent = error ? "Không gửi được: " + error.message : "Đã gửi. Mở email và bấm link để đăng nhập (kiểm tra cả mục Spam).";
         };
-        el.querySelector('[data-cs="google"]').onclick = async () => {
+        const gb = el.querySelector('[data-cs="google"]'); if (gb) gb.onclick = async () => {
           const { error } = await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname } });
           if (error) msg.textContent = "Không đăng nhập Google được: " + error.message;
         };
@@ -86,6 +87,7 @@
     if (enabled) sdk().then(draw).catch(e => { el.innerHTML = `<div class="small" style="color:var(--bad)">${esc(e.message)}</div>`; });
   }
 
+  if (enabled) fetch(cfg.url + "/auth/v1/settings", { headers: { apikey: cfg.anonKey } }).then(r => r.json()).then(s => { googleOn = !!(s.external && s.external.google); notify(); }).catch(() => {});
   window.CloudSync = { enabled, mount, queue, get user() { return user; } };
   if (enabled) sdk().then(() => sb.auth.getSession()).then(({ data }) => { if (!user && data.session) { user = data.session.user; notify(); pull(); } }).catch(() => {});
 })();
