@@ -825,17 +825,21 @@ function heatmap(el){
 }
 
 function rPron(el){
+  const weak=Object.entries(S.pron||{}).filter(([k,v])=>/^\d+:\d+$/.test(k)&&v<70).map(([k,v])=>{ const [gi,ii]=k.split(":").map(Number); return [gi,ii,v]; }).filter(([gi,ii])=>PRON[gi]&&PRON[gi].items[ii]).sort((a,b)=>a[2]-b[2]).slice(0,12);
+  if(sel.pron===-1&&!weak.length) sel.pron=0;
   el.innerHTML=`<div class="stack"><div><h2>Phát âm</h2><div class="muted small">Nói từng câu. Chữ đỏ là chỗ máy không nhận ra, thường do âm cuối hoặc trọng âm. Mục tiêu: 100% liên tục ba lần.</div></div>
-   <div class="cats pick">${PRON.map((p,i)=>`<button class="cell" data-p="${i}" aria-current="${sel.pron===i}"><b>${esc(p.t)}</b><span class="small muted">${p.items.length} câu</span></button>`).join("")}</div>
+   <div class="cats pick">${PRON.map((p,i)=>`<button class="cell" data-p="${i}" aria-current="${sel.pron===i}"><b>${esc(p.t)}</b><span class="small muted">${p.items.length} câu</span></button>`).join("")}${weak.length?`<button class="cell" data-p="-1" aria-current="${sel.pron===-1}"><b>Ôn âm yếu</b><span class="small muted">${weak.length} câu dưới 70%</span></button>`:""}</div>
    <div id="pr-heat"></div>
    <details class="panel" id="my-terms"><summary style="cursor:pointer"><b>Thuật ngữ của bạn</b> <span class="small muted">· dán từ hay dùng trong dự án để luyện phát âm</span></summary><div class="stack" style="margin-top:10px;gap:8px"><textarea id="mt-in" rows="4" placeholder="Mỗi dòng một thuật ngữ. Có thể thêm câu ví dụ sau dấu |, ví dụ:
 configuration in parts | We join configuration in parts on MSN and FIN.
 Skywise"></textarea><div class="row"><button class="btn sm primary" id="mt-save">Tạo thẻ luyện</button><span class="small muted" id="mt-msg"></span></div><div id="mt-list" class="stack"></div></div></details>
-   <p class="small muted explain" style="margin:0">${esc(PRON[sel.pron].d)}</p><div id="pr-list" class="stack"></div></div>`;
+   <p class="small muted explain" style="margin:0">${sel.pron===-1?"Những câu phát âm bạn từng nói nhưng điểm cao nhất vẫn dưới 70%, thấp nhất ở trên. Bấm Chậm, nghe kỹ âm cuối và trọng âm rồi nói lại.":esc(PRON[sel.pron].d)}</p><div id="pr-list" class="stack"></div></div>`;
   heatmap(el.querySelector("#pr-heat"));
   myTerms(el);
   el.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{ sel.pron=+b.dataset.p; rPron(el); });
-  sayList(el.querySelector("#pr-list"),PRON[sel.pron].items,{key:["pron",sel.pron]});
+  const list=el.querySelector("#pr-list");
+  if(sel.pron===-1){ weak.forEach(([gi,ii])=>{ const box=document.createElement("div"); box.className="stack"; box.style.gap="4px"; box.innerHTML=`<span class="label">${esc(PRON[gi].t)}</span><div></div>`; list.appendChild(box); sayList(box.lastChild,[PRON[gi].items[ii]],{key:["pron",gi],keyIndex:ii}); }); return; }
+  sayList(list,PRON[sel.pron].items,{key:["pron",sel.pron]});
 }
 
 /* ---------- Progress & settings ---------- */

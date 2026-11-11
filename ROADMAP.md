@@ -14,8 +14,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop: Phát âm — 'Ôn âm yếu' set like Câu mẫu (pron items under 70%)
-- [ ] Listen 30: Ôn từ — 'Nghe trong câu' mode: hear the example sentence, type the missing word
+- [ ] Talk Shop Mentor: when the lowest pron group is fine but 3+ single items are under 70%, suggest 'Ôn âm yếu'
+- [ ] Listen 30: Gym 'Từ trong câu họp' — gap-fill using meeting lines (MEETS) for aviation terms in the learner's cards
 
 ## Follow-ups
 
@@ -26,6 +26,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Talk Shop: Phát âm has an "Ôn âm yếu" set (items under 70%, lowest first)
+- [x] Listen 30: Ôn từ "Nghe câu → điền từ" mode (example sentence with a gap; falls back to spelling when the word is not in the sentence)
 - [x] Talk Shop Mentor: "Ôn N câu mẫu còn yếu" plan item when 3+ phrases are under 70%, opens the weak set
 - [x] Listen 30: Thống kê "Từ đã nhớ chắc" 30-day line (cards store the day they reach Hộp 4)
 - [x] Talk Shop: Câu mẫu has an "Ôn câu yếu" set (best score under 70%, lowest first, up to 12)
