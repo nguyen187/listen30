@@ -1,5 +1,5 @@
 // Cloud sync for Listen 30 and Talk Shop (GitHub Pages only).
-// Signs the learner in with Supabase (email + password) and keeps their progress in one row of
+// Signs the learner in with Supabase (username + password; a username maps to a placeholder email Supabase requires) and keeps their progress in one row of
 // public.english_progress. The newest copy wins: each app object carries its own updatedAt.
 (function () {
   const cfg = window.SB_CONFIG || {};
@@ -10,6 +10,9 @@
   const enabled = !!(cfg.url && cfg.anonKey);
   let sb = null, user = null, timer = null, status = "", loading = null;
   let recovering = false;
+  const DOMAIN = "@users.listen30.example.com";
+  const toEmail = u => u.includes("@") ? u : u + DOMAIN;
+  const shown = u => { const e = (u && u.email) || ""; return e.endsWith(DOMAIN) ? e.slice(0, -DOMAIN.length) : e; };
   const listeners = new Set();
   const notify = () => listeners.forEach(fn => { try { fn(); } catch (e) {} });
 
@@ -64,7 +67,7 @@
       if (!document.body.contains(el)) { listeners.delete(draw); return; }
       if (!enabled) { el.innerHTML = '<div class="small muted">Lưu vào tài khoản chưa được bật: cần điền Supabase URL và anon key trong config.js.</div>'; return; }
       if (user && !recovering) {
-        el.innerHTML = `<div class="stack" style="gap:8px"><div class="row" style="justify-content:space-between"><span>Đã đăng nhập: <b>${esc(user.email || "")}</b></span><span class="row"><button class="btn sm" data-cs="sync">Đồng bộ ngay</button><button class="btn sm ghost" data-cs="out">Đăng xuất</button></span></div><div class="small muted">${esc(status || "Tiến độ được tự lưu lên tài khoản sau mỗi lần thay đổi.")}</div><div class="small muted">Bản ghi âm vẫn chỉ nằm trên máy này.</div></div>`;
+        el.innerHTML = `<div class="stack" style="gap:8px"><div class="row" style="justify-content:space-between"><span>Đã đăng nhập: <b>${esc(shown(user))}</b></span><span class="row"><button class="btn sm" data-cs="sync">Đồng bộ ngay</button><button class="btn sm ghost" data-cs="out">Đăng xuất</button></span></div><div class="small muted">${esc(status || "Tiến độ được tự lưu lên tài khoản sau mỗi lần thay đổi.")}</div><div class="small muted">Bản ghi âm vẫn chỉ nằm trên máy này.</div></div>`;
         el.querySelector('[data-cs="sync"]').onclick = () => pull();
         el.querySelector('[data-cs="out"]').onclick = async () => { await sb.auth.signOut(); status = ""; notify(); };
       } else {
@@ -80,31 +83,32 @@
           };
           return;
         }
-        el.innerHTML = `<div class="stack" style="gap:8px"><div class="small muted">Đăng nhập để lưu hồ sơ và tiến độ lên tài khoản, dùng tiếp trên máy khác. Chưa có tài khoản: nhập email và mật khẩu rồi bấm "Tạo tài khoản".</div>
-          <div class="row"><input type="email" data-cs="email" placeholder="email@congty.com" autocomplete="email" style="flex:1;min-width:180px" aria-label="Email"><input type="password" data-cs="pw" placeholder="Mật khẩu" autocomplete="current-password" style="flex:1;min-width:140px" aria-label="Mật khẩu"></div>
-          <div class="row"><button class="btn sm primary" data-cs="in">Đăng nhập</button><button class="btn sm" data-cs="up">Tạo tài khoản</button><button class="btn sm ghost" data-cs="forgot">Quên mật khẩu</button></div>
+        el.innerHTML = `<div class="stack" style="gap:8px"><div class="small muted">Đăng nhập để lưu tiến độ lên tài khoản, dùng tiếp trên máy khác. Chưa có tài khoản: nhập tên đăng nhập và mật khẩu rồi bấm "Tạo tài khoản".</div>
+          <div class="row"><input type="text" data-cs="user" placeholder="Tên đăng nhập" autocomplete="username" autocapitalize="off" spellcheck="false" style="flex:1;min-width:160px" aria-label="Tên đăng nhập"><input type="password" data-cs="pw" placeholder="Mật khẩu" autocomplete="current-password" style="flex:1;min-width:140px" aria-label="Mật khẩu"></div>
+          <div class="row"><button class="btn sm primary" data-cs="in">Đăng nhập</button><button class="btn sm" data-cs="up">Tạo tài khoản</button></div>
           <div class="small" data-cs="msg">${esc(status)}</div></div>`;
         const msg = el.querySelector('[data-cs="msg"]');
-        const val = () => ({ email: el.querySelector('[data-cs="email"]').value.trim(), password: el.querySelector('[data-cs="pw"]').value });
-        const vi = e => /invalid login/i.test(e.message) ? "Sai email hoặc mật khẩu." : /not confirmed/i.test(e.message) ? "Email chưa xác nhận: mở email và bấm link xác nhận trước." : /already registered/i.test(e.message) ? "Email này đã có tài khoản: bấm Đăng nhập." : e.message;
+        const val = () => {
+          const u = el.querySelector('[data-cs="user"]').value.trim().toLowerCase();
+          return { name: u, email: u ? toEmail(u) : "", password: el.querySelector('[data-cs="pw"]').value };
+        };
+        const bad = u => !/^[a-z0-9._-]{3,32}$/.test(u) && !u.includes("@");
+        const vi = e => /invalid login/i.test(e.message) ? "Sai tên đăng nhập hoặc mật khẩu." : /not confirmed/i.test(e.message) ? "Tài khoản đang chờ xác nhận: chủ project cần tắt \"Confirm email\" trong Supabase." : /already registered/i.test(e.message) ? "Tên này đã có người dùng: bấm Đăng nhập hoặc chọn tên khác." : /sending|confirmation email|rate limit/i.test(e.message) ? "Supabase đang bật xác nhận email: cần tắt \"Confirm email\" (Authentication → Sign In / Providers → Email)." : e.message;
         el.querySelector('[data-cs="pw"]').onkeydown = e => { if (e.key === "Enter") el.querySelector('[data-cs="in"]').click(); };
         el.querySelector('[data-cs="in"]').onclick = async () => {
-          const c = val(); if (!c.email || !c.password) { msg.textContent = "Nhập email và mật khẩu."; return; }
+          const c = val(); if (!c.name || !c.password) { msg.textContent = "Nhập tên đăng nhập và mật khẩu."; return; }
           msg.textContent = "Đang đăng nhập…";
-          const { error } = await sb.auth.signInWithPassword(c);
+          const { error } = await sb.auth.signInWithPassword({ email: c.email, password: c.password });
           if (error) msg.textContent = "Không đăng nhập được: " + vi(error);
         };
         el.querySelector('[data-cs="up"]').onclick = async () => {
-          const c = val(); if (!c.email || c.password.length < 6) { msg.textContent = "Nhập email và mật khẩu ít nhất 6 ký tự."; return; }
+          const c = val();
+          if (bad(c.name)) { msg.textContent = "Tên đăng nhập 3–32 ký tự, chỉ gồm chữ không dấu, số, dấu chấm, gạch dưới hoặc gạch ngang."; return; }
+          if (c.password.length < 6) { msg.textContent = "Mật khẩu cần ít nhất 6 ký tự."; return; }
           msg.textContent = "Đang tạo tài khoản…";
-          const { data, error } = await sb.auth.signUp({ ...c, options: { emailRedirectTo: location.origin + location.pathname } });
+          const { data, error } = await sb.auth.signUp({ email: c.email, password: c.password, options: { data: { username: c.name } } });
           if (error) msg.textContent = "Không tạo được: " + vi(error);
-          else if (!data.session) msg.textContent = data.user && data.user.identities && !data.user.identities.length ? "Email này đã có tài khoản: bấm Đăng nhập." : "Đã tạo. Mở email và bấm link xác nhận một lần (xem cả Spam), sau đó đăng nhập bằng mật khẩu.";
-        };
-        el.querySelector('[data-cs="forgot"]').onclick = async () => {
-          const { email } = val(); if (!email) { msg.textContent = "Nhập email trước rồi bấm Quên mật khẩu."; return; }
-          const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
-          msg.textContent = error ? "Không gửi được: " + error.message : "Đã gửi link đặt lại mật khẩu vào email.";
+          else if (!data.session) msg.textContent = data.user && data.user.identities && !data.user.identities.length ? "Tên này đã có người dùng: bấm Đăng nhập hoặc chọn tên khác." : "Tài khoản đã tạo nhưng đang chờ xác nhận email: cần tắt \"Confirm email\" trong Supabase rồi xác nhận user này trong Authentication → Users.";
         };
       }
     };
