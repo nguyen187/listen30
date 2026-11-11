@@ -832,6 +832,18 @@ Skywise"></textarea><div class="row"><button class="btn sm primary" id="mt-save"
 
 /* ---------- Progress & settings ---------- */
 /* Last 5 weeks of practice from both apps: Talk Shop seconds spoken per day and Listen 30 days finished. */
+function practiceDays(){
+  const ds=S.daySecs||{}, L=readL30(), set=new Set(Object.keys(ds).filter(k=>ds[k]>=30).map(Number));
+  if(L) Object.values(L.days||{}).forEach(d=>{ if(d.doneAt){ const x=new Date(d.doneAt); set.add(Math.floor((x.getTime()-x.getTimezoneOffset()*60000)/86400000)); } });
+  return set;
+}
+/* Gentle nudge: practised before, nothing yesterday, nothing yet today. */
+function missNudge(A){
+  const t=today(), set=practiceDays(); if(!set.size||set.has(t)||set.has(t-1)) return "";
+  const last=Math.max(...[...set].filter(d=>d<t)); if(!isFinite(last)) return "";
+  const gap=t-last-1, two=A.acts.slice(0,2), mins=two.reduce((a,x)=>a+x.m,0);
+  return `<div class="banner stack" style="gap:6px"><b>${gap>=3?`Bạn đã nghỉ ${gap} ngày.`:"Hôm qua bạn nghỉ."} Không sao, quan trọng là quay lại hôm nay.</b><span class="small">Làm bản ngắn khoảng ${Math.min(mins,12)} phút: ${two.map(x=>esc(x.t)).join(" và ")}. Một lần ngắn mỗi ngày giữ tai và miệng quen hơn một buổi dài mỗi tuần.</span><div class="row"><button class="btn sm primary" id="mt-nudge">Bắt đầu bản ngắn</button></div></div>`;
+}
 function practiceCal(){
   const t=today(), ds=S.daySecs||{}, L=readL30(), l30=new Set();
   if(L) Object.values(L.days||{}).forEach(d=>{ if(d.doneAt){ const x=new Date(d.doneAt); l30.add(Math.floor((x.getTime()-x.getTimezoneOffset()*60000)/86400000)); } });
@@ -991,6 +1003,7 @@ function rMentor(el){
   const A=analyze();
   el.innerHTML=`<div class="stack">
    <div class="row" style="justify-content:space-between;align-items:flex-end"><div class="row" style="gap:14px;flex-wrap:nowrap;align-items:center">${goalRing()}${weekBars()}<div><div class="label">Mentor · ${new Date().toLocaleDateString("vi-VN",{weekday:"long",day:"numeric",month:"numeric"})}</div><h2>Hôm nay bạn nên làm ${A.acts.length} việc, khoảng ${A.used} phút</h2></div></div><button class="btn sm ghost" id="mt-edit">Sửa hồ sơ</button></div>
+   ${missNudge(A)}
    <div class="panel stack"><div class="small muted">Thứ tự dưới đây đã xếp theo mức ưu tiên, dựa trên mục tiêu và kết quả luyện tập của bạn. Làm từ trên xuống.</div>
     ${A.acts.map((a,i)=>`<div class="row" style="flex-wrap:nowrap;align-items:flex-start;gap:14px;border-top:1px solid var(--line);padding-top:12px"><span class="score mono" style="font-size:26px;min-width:28px">${i+1}</span><div style="flex:1;min-width:0"><b>${esc(a.t)}</b> <span class="chip mono">${a.m} phút</span><div class="small muted">${esc(a.why)}</div></div>${a.href?`<a class="btn sm primary" href="${a.href}">Mở ↗</a>`:`<button class="btn sm primary" data-a="${i}">Làm ngay</button>`}</div>`).join("")}</div>
    <div class="panel stack" style="gap:8px"><div class="row" style="justify-content:space-between"><h3>Câu nói của ngày</h3><span class="small muted">${esc(PHRASES[potd().c].t)}</span></div><div class="small muted">Nói câu này 3 lần, rồi tìm cơ hội dùng nó trong cuộc họp hôm nay.</div><div id="potd"></div></div>
@@ -1002,6 +1015,7 @@ function rMentor(el){
    <div id="ai-host"></div></div>`;
   aiPanel(el.querySelector("#ai-host"));
   el.querySelector("#mt-edit").onclick=()=>{ mentorEdit=true; rMentor(el); };
+  const nb=el.querySelector("#mt-nudge"); if(nb) nb.onclick=()=>{ const a=A.acts[0]; if(a.go) a.go(); else if(a.href) location.href=a.href; };
   { const p=potd(); sayList(el.querySelector("#potd"),[PHRASES[p.c].p[p.i]],{key:["phr",p.c],keyIndex:p.i}); }
   el.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>A.acts[+b.dataset.a].go());
   el.querySelectorAll("[data-prep]").forEach(b=>b.onclick=()=>{ const s=SITS[+b.dataset.prep], ph=PHRASES[s[2].phr], R=ROLES[s[2].role];
