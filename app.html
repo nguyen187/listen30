@@ -2227,7 +2227,7 @@ function bindTheme(el, rerender){
   el.querySelectorAll("[data-ac]").forEach(b=>b.onclick=()=>{ S.accent=b.dataset.ac; save(); applyTheme(); rerender(); });
   el.querySelectorAll("[data-fs]").forEach(b=>b.onclick=()=>{ S.fsize=b.dataset.fs; save(); applyTheme(); rerender(); });
 }
-if(ON_PAGES&&window.CloudSync) window.CloudSync.badge(document.getElementById("cloud-badge"),"#setup","chip");
+if(/github\.io$/.test(location.hostname)&&window.CloudSync) window.CloudSync.badge(document.getElementById("cloud-badge"),"#setup","chip");
 document.getElementById("theme-btn").onclick=()=>{
   const dark = S.theme==="dark" || (S.theme!=="light" && (document.documentElement.getAttribute("data-theme")==="dark" || (!document.documentElement.getAttribute("data-theme") && matchMedia("(prefers-color-scheme: dark)").matches)));
   S.theme = dark?"light":"dark"; save(); applyTheme(); if(view==="setup") render();
