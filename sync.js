@@ -116,6 +116,24 @@
     if (enabled) sdk().then(draw).catch(e => { el.innerHTML = `<div class="small" style="color:var(--bad)">${esc(e.message)}</div>`; });
   }
 
-  window.CloudSync = { enabled, mount, queue, get user() { return user; } };
+  // Small live status: "chip" for a header (always shown), "prompt" for a nudge shown only when signed out.
+  function badge(el, href, mode) {
+    if (!el || !enabled) return;
+    const draw = () => {
+      if (!document.body.contains(el)) { listeners.delete(draw); return; }
+      if (mode === "prompt") {
+        el.innerHTML = user ? "" : `<div class="row" style="justify-content:space-between;gap:8px"><span class="small muted">Chưa đăng nhập: tiến độ chỉ lưu trên máy này.</span><a class="btn sm" href="${esc(href)}">Đăng nhập để lưu</a></div>`;
+        el.hidden = !!user;
+        return;
+      }
+      el.hidden = false; el.href = href;
+      el.textContent = user ? "☁ " + shown(user) : "Đăng nhập";
+      el.title = user ? (status || "Đã đăng nhập, tiến độ tự lưu lên tài khoản") : "Đăng nhập để lưu tiến độ lên tài khoản";
+    };
+    listeners.add(draw); draw();
+    sdk().then(draw).catch(() => {});
+  }
+
+  window.CloudSync = { enabled, mount, badge, queue, get user() { return user; } };
   if (enabled) sdk().then(() => sb.auth.getSession()).then(({ data }) => { if (!user && data.session) { user = data.session.user; notify(); pull(); } }).catch(() => {});
 })();

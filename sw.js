@@ -1,7 +1,7 @@
 // Offline cache for Listen 30 and Talk Shop (GitHub Pages).
 // Pages: network first, so new versions arrive; cached copy when offline.
 // Fonts: cache first.
-const CACHE = "listen30-v7";
+const CACHE = "listen30-v8";
 const PAGES = ["./", "./index.html", "./speak/", "./speak/index.html", "./meetings.js", "./config.js", "./sync.js"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(PAGES)).then(() => self.skipWaiting()));

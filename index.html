@@ -6,7 +6,7 @@
 <meta name="description" content="Lộ trình 30 ngày luyện nghe tiếng Anh: chép chính tả, âm nối, ôn từ, shadowing.">
 <style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;font:14px system-ui,sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
 <script src="config.js?v=2"></script>
-<script src="sync.js?v=7"></script>
+<script src="sync.js?v=8"></script>
 </head>
 <body>
 <title>Listen 30</title>
@@ -894,6 +894,7 @@ function render(){
   renderTape(); renderResume();
   const el=document.getElementById("view");
   ({today:renderDay,map:renderMap,work:renderWork,real:renderReal,srs:renderSRS,gym:renderGym,stats:renderStats,setup:renderSetup})[view](el);
+  if(view==="today"&&ON_PAGES&&window.CloudSync&&window.CloudSync.enabled){ const n=document.createElement("div"); n.className="panel"; n.style.marginTop="16px"; n.hidden=true; el.appendChild(n); window.CloudSync.badge(n,"#setup","prompt"); }
 }
 
 /* ---------- Day view ---------- */

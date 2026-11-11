@@ -883,6 +883,7 @@ function render(){
   renderTape(); renderResume();
   const el=document.getElementById("view");
   ({today:renderDay,map:renderMap,work:renderWork,real:renderReal,srs:renderSRS,gym:renderGym,stats:renderStats,setup:renderSetup})[view](el);
+  if(view==="today"&&ON_PAGES&&window.CloudSync&&window.CloudSync.enabled){ const n=document.createElement("div"); n.className="panel"; n.style.marginTop="16px"; n.hidden=true; el.appendChild(n); window.CloudSync.badge(n,"#setup","prompt"); }
 }
 
 /* ---------- Day view ---------- */

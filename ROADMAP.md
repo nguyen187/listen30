@@ -14,10 +14,9 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop: show the cloud account status (signed in / not) in the header
-- [ ] Listen 30: show the cloud account box also in the Today page footer when signed out (GitHub copy)
+- [ ] Listen 30: header account chip like Talk Shop (signed-in name, links to Cài đặt)
+- [ ] Both: after sign-in, show "Tiến độ trên máy này mới hơn / trên tài khoản mới hơn" once so the learner knows which copy was kept
 - [x] Cloud accounts: username + password sign-in (username maps to <name>@nguyen187.github.io, Confirm email off); user created their account on the live site
-- [ ] Follow-up: show sync status in the Talk Shop header and a sign-in prompt on Listen 30 Today when signed out
 
 ## Follow-ups
 
@@ -27,6 +26,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Talk Shop: header chip shows the signed-in username (or "Đăng nhập") and links to the account box
+- [x] Listen 30: Today page shows a "Đăng nhập để lưu" prompt when signed out (GitHub copy)
 - [x] Both: check the dark theme visually on every tab and fix any low-contrast spots (dark passes; light green/red chips darkened to ≥4.5:1)
 - [x] Cloud accounts code: sync.js (Supabase email-link / Google sign-in, per-user row with RLS, newest-wins sync of both apps), config.js, supabase.sql
 - [x] Listen 30: pronunciation-free 'listen & repeat' mode on phones (no mic needed: just shadow with model + 3-second pause)
