@@ -2012,7 +2012,7 @@ function accentGame(el){
   let q=0, right=0, answered=false; const wa=weakestAccent();
   const say=(t,a)=>{ const f=S.forceAcc; S.forceAcc="auto"; speak(t,1,a); S.forceAcc=f; };
   function next(){
-    if(q>=10){ S.accentGame=Math.max(S.accentGame||0,right); save(); el.innerHTML=`<div class="row"><span class="score">${right}/10</span><span class="small muted">${right>=8?"Tai bạn phân biệt giọng tốt.":"Nghe lại phần đặc điểm từng giọng bên dưới rồi chơi lại."}</span></div>`; return; }
+    if(q>=10){ S.accentGame=Math.max(S.accentGame||0,right); save(); el.innerHTML=`<div class="row"><span class="score">${right}/10</span><span class="small muted">${right>=8?"Tai bạn phân biệt giọng tốt.":"Nghe lại phần đặc điểm từng giọng bên dưới rồi chơi lại."}</span>${(()=>{ const w=weakestAccent(); return w&&document.getElementById("acc-"+w)?`<button class="btn sm" data-agw="${w}">Xem đặc điểm giọng ${accLabel(w)} ↓</button>`:""; })()}</div>`; const wb=el.querySelector("[data-agw]"); if(wb) wb.onclick=()=>document.getElementById("acc-"+wb.dataset.agw).scrollIntoView({behavior:"smooth",block:"start"}); return; }
     const acc=(wa&&accs.includes(wa)&&Math.random()<0.35)?wa:accs[rnd(0,accs.length-1)], text=pool[q%pool.length]; answered=false;
     el.innerHTML=`<div class="stack" style="gap:8px"><div class="row" style="justify-content:space-between"><span class="label">Câu ${q+1}/10</span><button class="btn sm play" data-agp>Nghe lại</button></div><div class="opts">${accs.map(a=>`<button class="opt" data-a="${a}">${accLabel(a)}</button>`).join("")}</div><div class="small muted" data-agf style="min-height:1.4em"></div></div>`;
     el.querySelector("[data-agp]").onclick=()=>say(text,acc);
@@ -2023,13 +2023,14 @@ function accentGame(el){
   }
   next();
 }
+function accOrder(){ const w=weakestAccent(), ix=ACCENTS.map((_,i)=>i); return w?ix.sort((x,y)=>(ACCENTS[y].k===w)-(ACCENTS[x].k===w)):ix; }
 function wkAccent(body){
   body.innerHTML=`<div class="panel stack" style="gap:10px"><div class="row" style="justify-content:space-between"><div><h3>Đoán giọng</h3><div class="small muted">Nghe một câu, đoán người nói giọng gì. Nhận ra giọng giúp bạn chuẩn bị tai trước mỗi cuộc họp.</div></div><button class="btn sm primary" id="ag-go">Chơi 10 câu${S.accentGame!=null?" · tốt nhất "+S.accentGame+"/10":""}</button></div><div id="ag"></div></div>
   <div class="banner">Giọng Pháp, Đức, Tây Ban Nha ở đây được mô phỏng bằng giọng đọc tiếng Pháp/Đức/TBN đọc câu tiếng Anh, thường nặng hơn người thật. Quen được ở đây thì gặp người thật sẽ dễ hơn. Muốn nghe người thật, xem tab Giọng thật.</div>
-  ${ACCENTS.map((a,ai)=>`<div class="panel stack"><div class="row" style="justify-content:space-between"><div><span class="label">${esc(a.who)}</span><h3>Giọng ${accLabel(a.k)}</h3></div><span class="chip ${voiceOk(a.k)?"ok":"warn"}">${voiceOk(a.k)?"Máy có giọng này":"Máy thiếu giọng, đang dùng giọng thay thế"}</span></div>
+  ${accOrder().map(ai=>{ const a=ACCENTS[ai]; return `<div class="panel stack" id="acc-${a.k}"><div class="row" style="justify-content:space-between"><div><span class="label">${esc(a.who)}</span><h3>Giọng ${accLabel(a.k)}${a.k===weakestAccent()?' <span class="chip warn">bạn nghe yếu nhất</span>':""}</h3></div><span class="chip ${voiceOk(a.k)?"ok":"warn"}">${voiceOk(a.k)?"Máy có giọng này":"Máy thiếu giọng, đang dùng giọng thay thế"}</span></div>
    <ul class="explain" style="margin:0;padding-left:18px">${a.tr.map(t=>`<li>${esc(t)}</li>`).join("")}</ul>
    <div class="label">Câu mẫu: nghe giọng ${accLabel(a.k)} rồi so với giọng Anh chuẩn</div>
-   <div class="stack" style="gap:8px">${a.s.map(([en,vi],si)=>`<div class="sh"><div class="txt">${esc(en)}</div><div class="small muted">${esc(vi)}</div><div class="row"><button class="btn sm primary play" data-a="${ai}" data-s="${si}">Giọng ${accLabel(a.k)}</button><button class="btn sm play" data-a="${ai}" data-s="${si}" data-std="1">Giọng Anh chuẩn</button></div></div>`).join("")}</div></div>`).join("")}
+   <div class="stack" style="gap:8px">${a.s.map(([en,vi],si)=>`<div class="sh"><div class="txt">${esc(en)}</div><div class="small muted">${esc(vi)}</div><div class="row"><button class="btn sm primary play" data-a="${ai}" data-s="${si}">Giọng ${accLabel(a.k)}</button><button class="btn sm play" data-a="${ai}" data-s="${si}" data-std="1">Giọng Anh chuẩn</button></div></div>`).join("")}</div></div>`; }).join("")}
   <div class="panel stack"><h3>Câu cứu nguy khi không nghe kịp</h3><div class="muted small">Thuộc những câu này thì không bao giờ phải giả vờ hiểu trong cuộc họp.</div>
    <div class="stack" style="gap:6px">${RESCUE.map(([en,vi],i)=>`<div class="row" style="flex-wrap:nowrap;gap:10px"><button class="btn sm play" data-r="${i}" aria-label="Nghe"></button><span style="min-width:0">${esc(en)} <span class="muted small">· ${esc(vi)}</span></span></div>`).join("")}</div></div>`;
   body.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{ const a=ACCENTS[+b.dataset.a]; speak(a.s[+b.dataset.s][0], 1, b.dataset.std?"gb":a.k); });

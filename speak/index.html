@@ -64,6 +64,7 @@ button{font:inherit;color:inherit}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .play::before{content:"";width:0;height:0;border-left:8px solid currentColor;border-top:5px solid transparent;border-bottom:5px solid transparent}
 .chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;background:var(--sunken);color:var(--muted)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,28px));gap:5px;align-items:center;justify-items:center} .cal i,.panel .row i[class^=cal-]{display:inline-block;width:22px;height:22px;border-radius:5px;vertical-align:middle} .row.small i[class^=cal-]{width:12px;height:12px;border-radius:3px} .cal-n{background:var(--sunken)} .cal-o{background:var(--accent);opacity:.55} .cal-b{background:var(--accent)} .cal-f{background:transparent;border:1px dashed var(--line)}
 .chip.ok{background:var(--good-soft);color:var(--good)} .chip.warn{background:var(--accent-soft);color:var(--accent)} .chip.bad{background:var(--bad-soft);color:var(--bad)}
 select,textarea,input[type=text]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
 .explain{max-width:68ch}
@@ -830,6 +831,21 @@ Skywise"></textarea><div class="row"><button class="btn sm primary" id="mt-save"
 }
 
 /* ---------- Progress & settings ---------- */
+/* Last 5 weeks of practice from both apps: Talk Shop seconds spoken per day and Listen 30 days finished. */
+function practiceCal(){
+  const t=today(), ds=S.daySecs||{}, L=readL30(), l30=new Set();
+  if(L) Object.values(L.days||{}).forEach(d=>{ if(d.doneAt){ const x=new Date(d.doneAt); l30.add(Math.floor((x.getTime()-x.getTimezoneOffset()*60000)/86400000)); } });
+  const dow=d=>(new Date(d*86400000).getUTCDay()+6)%7, start=t-dow(t)-28, cells=[]; let active=0, streak=0;
+  for(let d=start; d<=t+(6-dow(t)); d++){
+    const sp=d<=t&&(ds[d]||0)>=30, li=d<=t&&l30.has(d), on=sp||li; if(on&&d<=t) active++;
+    const lvl=d>t?"f":sp&&li?"b":on?"o":"n";
+    cells.push(`<i class="cal-${lvl}" title="${new Date(d*86400000).toISOString().slice(5,10).split("-").reverse().join("/")}${sp?" · nói "+Math.round(ds[d]/60)+" phút":""}${li?" · xong 1 ngày Listen 30":""}"${d===t?' style="outline:2px solid var(--accent);outline-offset:1px"':""}></i>`);
+  }
+  for(let d=t-((ds[t]||0)>=30||l30.has(t)?0:1); (ds[d]||0)>=30||l30.has(d); d--) streak++;
+  return `<div class="panel stack" style="gap:8px"><div class="row" style="justify-content:space-between"><div class="label">Ngày luyện tập · 5 tuần gần nhất</div><span class="small muted">${active} ngày có luyện · chuỗi ${streak} ngày</span></div>
+   <div class="cal">${["T2","T3","T4","T5","T6","T7","CN"].map(x=>`<span class="small muted">${x}</span>`).join("")}${cells.join("")}</div>
+   <div class="row small muted" style="gap:14px"><span><i class="cal-o"></i> Talk Shop hoặc Listen 30</span><span><i class="cal-b"></i> cả hai</span><span><i class="cal-n"></i> nghỉ</span></div></div>`;
+}
 function rProg(el){
   const done=Array.from({length:30},(_,i)=>prog(i+1)===TASKS.length).filter(Boolean).length;
   const tl=S.talks.slice(-20), avgW=tl.length?Math.round(tl.reduce((a,b)=>a+b.wpm,0)/tl.length):0;
@@ -838,6 +854,7 @@ function rProg(el){
   const recLangs=[["en-US","Tiếng Anh Mỹ"],["en-GB","Tiếng Anh Anh"],["en-IN","Tiếng Anh Ấn"]];
   el.innerHTML=`<div class="stack"><h2>Tiến độ</h2>
    <div class="kpis"><div class="kpi"><span class="label">Ngày hoàn thành</span><b class="mono">${done}/30</b></div><div class="kpi"><span class="label">Tổng thời gian nói</span><b class="mono">${Math.round((S.secs||0)/60)} phút</b></div><div class="kpi"><span class="label">Tốc độ TB (20 bài gần nhất)</span><b class="mono">${avgW}</b><span class="small muted">từ/phút</span></div><div class="kpi"><span class="label">Độ rõ TB (câu mẫu, phát âm)</span><b class="mono">${avgP}%</b></div></div>
+   ${practiceCal()}
    <div class="panel"><div class="label">Tốc độ nói qua các bài trình bày (từ/phút)</div>${tl.length?`<div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:420px;display:block;margin-top:8px" role="img" aria-label="Tốc độ nói">
      ${[0,120,150,200].map(v=>`<line x1="${pl}" x2="${W-6}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)" ${v===120||v===150?'stroke-dasharray="4 4"':""}/><text x="${pl-6}" y="${y(v)+4}" text-anchor="end" font-size="11" fill="var(--muted)" font-family="JetBrains Mono,monospace">${v}</text>`).join("")}
      ${tl.map((t,i)=>`<rect x="${pl+i*bw+2}" y="${y(t.wpm)}" width="${Math.max(2,bw-4)}" height="${y(0)-y(t.wpm)}" rx="2" fill="${t.wpm>=120&&t.wpm<=160?"var(--good)":"var(--accent)"}"><title>${t.wpm} từ/phút, ${t.f} từ đệm</title></rect>`).join("")}
