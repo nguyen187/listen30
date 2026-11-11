@@ -797,6 +797,9 @@ function sshuffle(a,seed){ const r=seeded(seed); a=a.slice(); for(let i=a.length
 
 /* =============================== DAY PLANS =============================== */
 function dayRate(n){ return WEEKS[wkOf(n)-1].rate; }
+/* Accents used when a drill is set to "Trộn" (mixed). Learner can narrow it in Cài đặt; empty = the drill's default. */
+function mixAccs(def){ const a=(S.mixAccs||[]).filter(x=>ACC_KEYS.includes(x)); return a.length?a:def; }
+function mixLabel(def){ return mixAccs(def).map(accLabel).join(", "); }
 function accentFor(n,i){
   const f=DAYS[n-1].f;
   if(f==="british") return "gb";
@@ -1328,14 +1331,14 @@ function gymMTerm(el){
 }
 function gymDict(el){
   const upto=Math.max(1,currentDay());
-  el.innerHTML=`<div class="row" style="margin-bottom:14px"><label class="small muted" for="gd-acc">Giọng</label><select id="gd-acc" style="width:auto"><option value="mix">Trộn</option><option value="us">Mỹ</option><option value="gb">Anh</option><option value="au">Úc</option></select>
+  el.innerHTML=`<div class="row" style="margin-bottom:14px"><label class="small muted" for="gd-acc">Giọng</label><select id="gd-acc" style="width:auto"><option value="mix">Trộn: ${mixLabel(["us","gb","au"])}</option><option value="us">Mỹ</option><option value="gb">Anh</option><option value="au">Úc</option></select>
    <label class="small muted" for="gd-rate">Tốc độ</label><select id="gd-rate" style="width:auto">${[0.8,0.9,1,1.1,1.2,1.3].map(r=>`<option ${r===1?"selected":""}>${r}</option>`).join("")}</select>
    <label class="small muted" for="gd-src">Câu từ</label><select id="gd-src" style="width:auto"><option value="learned">Ngày 1 → ${upto}</option><option value="all">Cả 30 ngày</option></select></div><div id="gd-w"></div>`;
   const start=()=>{
     const src=el.querySelector("#gd-src").value, acc=el.querySelector("#gd-acc").value, rate=+el.querySelector("#gd-rate").value;
     const last= src==="all"?30:upto, pool=[];
     for(let k=1;k<=last;k++){ const d=DAYS[k-1]; pool.push(...FOCUS[d.f].s, ...d.v.map(x=>x.x)); }
-    const items=shuffle(pool).slice(0,10).map((t,i)=>({text:t,rate,acc:acc==="mix"?["us","gb","au"][i%3]:acc}));
+    const mx=mixAccs(["us","gb","au"]); const items=shuffle(pool).slice(0,10).map((t,i)=>({text:t,rate,acc:acc==="mix"?mx[i%mx.length]:acc}));
     mountDict(el.querySelector("#gd-w"), items, [], sc=>recordMiss(items,sc), ()=>{}, {});
   };
   ["#gd-acc","#gd-rate","#gd-src"].forEach(s=>el.querySelector(s).onchange=start);
@@ -1399,7 +1402,7 @@ function gymMine(el){
   const saved=S.mineText||"";
   el.innerHTML=`<div class="stack" style="gap:10px"><div class="small muted explain">Dán đoạn transcript cuộc họp, email hay tài liệu bạn gặp ở công việc. Web tách thành từng câu, đọc bằng giọng bạn chọn để bạn chép lại. Nội dung chỉ lưu trên trình duyệt này.</div>
    <textarea id="mn-text" rows="6" placeholder="Dán đoạn tiếng Anh vào đây (ví dụ phần transcript Teams)">${esc(saved)}</textarea>
-   <div class="row"><label class="small muted" for="mn-acc">Giọng</label><select id="mn-acc" style="width:auto"><option value="mix">Trộn</option>${["us","gb","in","fr","de","es","au"].map(a=>`<option value="${a}">${accLabel(a)}</option>`).join("")}</select>
+   <div class="row"><label class="small muted" for="mn-acc">Giọng</label><select id="mn-acc" style="width:auto"><option value="mix">Trộn: ${mixLabel(["us","gb","in","fr","de"])}</option>${["us","gb","in","fr","de","es","au"].map(a=>`<option value="${a}">${accLabel(a)}</option>`).join("")}</select>
     <label class="small muted" for="mn-rate">Tốc độ</label><select id="mn-rate" style="width:auto">${[0.8,0.9,1,1.1,1.2].map(r=>`<option ${r===1?"selected":""}>${r}</option>`).join("")}</select>
     <label class="small muted"><input type="checkbox" id="mn-shuf"> Xáo trộn</label>
     <button class="btn primary" id="mn-go">Bắt đầu chép</button><span class="small muted" id="mn-msg"></span></div>
@@ -1410,8 +1413,8 @@ function gymMine(el){
     if(!ss.length){ msg.textContent="Không tìm thấy câu tiếng Anh nào (cần câu 3–35 từ)."; return; }
     if(el.querySelector("#mn-shuf").checked) ss=shuffle(ss);
     msg.textContent=ss.length+" câu";
-    const acc=el.querySelector("#mn-acc").value, rate=+el.querySelector("#mn-rate").value, mix=["us","gb","in","fr","de"];
-    const its=ss.slice(0,40).map((x,i)=>({text:x,rate,acc:acc==="mix"?mix[i%5]:acc}));
+    const acc=el.querySelector("#mn-acc").value, rate=+el.querySelector("#mn-rate").value, mix=mixAccs(["us","gb","in","fr","de"]);
+    const its=ss.slice(0,40).map((x,i)=>({text:x,rate,acc:acc==="mix"?mix[i%mix.length]:acc}));
     mountDict(el.querySelector("#mn-w"), its, [], sc=>recordMiss(its,sc), ()=>{}, {});
     el.querySelector("#mn-w").scrollIntoView({behavior:"smooth",block:"start"});
   };
@@ -1542,6 +1545,8 @@ function renderSetup(el){
     <div class="row" style="flex-wrap:nowrap"><label for="spd" style="width:90px;flex:none">Chỉnh tốc độ</label><select id="spd">${[-0.15,-0.1,-0.05,0,0.05,0.1,0.15].map(v=>`<option value="${v}" ${Math.abs((S.speedAdj||0)-v)<.001?"selected":""}>${v>0?"+":""}${v===0?"Mặc định":v}</option>`).join("")}</select></div>
     ${voices.length?"":`<div class="banner">Chưa tìm thấy giọng tiếng Anh nào. Thử tải lại trang, hoặc mở bằng Chrome.</div>`}
    </div>
+   <div class="panel stack" style="gap:8px"><h3>Giọng khi chọn "Trộn"</h3><p class="muted small" style="margin:0">Chọn những giọng bạn hay gặp trong công việc. Các bài chép chính tả và nghe câu họp ở chế độ Trộn sẽ chỉ dùng các giọng này. Không chọn giọng nào = dùng mặc định của từng bài.</p>
+    <div class="row">${ACC_KEYS.map(a=>`<label class="row" style="gap:6px"><input type="checkbox" data-mix="${a}" ${(S.mixAccs||[]).includes(a)?"checked":""}> ${accLabel(a)}</label>`).join("")}</div></div>
    <div class="panel stack"><h3>Dữ liệu</h3><p class="muted small" style="margin:0">Tiến độ được lưu trên trình duyệt này${cloud?" và đồng bộ riêng tư vào tài khoản Claude của bạn":""}.</p>
     <div class="stack" style="gap:8px">
      ${ON_PAGES&&window.CloudSync?`<div class="stack" style="gap:6px"><b>Tài khoản</b><div id="cloud-acct"></div></div>`:""}
@@ -1557,6 +1562,7 @@ function renderSetup(el){
   ACC_KEYS.forEach(a=>{ el.querySelector("#v-"+a).onchange=e=>{ S.voice[a]=e.target.value; save(); }; });
   el.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>speak("I'm going to grab a coffee. Do you want one?",1,b.dataset.t));
   el.querySelector("#spd").onchange=e=>{ S.speedAdj=+e.target.value; save(); };
+  el.querySelectorAll("[data-mix]").forEach(c=>c.onchange=()=>{ S.mixAccs=[...el.querySelectorAll("[data-mix]:checked")].map(x=>x.dataset.mix); save(); });
   const rs=el.querySelector("#rs"); if(rs) rs.onclick=()=>{ confirmReset=true; renderSetup(el); };
   const no=el.querySelector("#rs-no"); if(no) no.onclick=()=>{ confirmReset=false; renderSetup(el); };
   const yes=el.querySelector("#rs-yes"); if(yes) yes.onclick=()=>{ const v=S.voice; S=blank(); S.voice=v; confirmReset=false; save(); go("today",1); };
@@ -2146,12 +2152,12 @@ function termQuiz(el,gi,body){
   draw(); el.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 function wkDict(body){
-  body.innerHTML=`<div class="panel"><div class="row" style="margin-bottom:14px"><label class="small muted" for="wd-acc">Giọng</label><select id="wd-acc" style="width:auto"><option value="mix">Trộn: Ấn, Pháp, Đức, Anh, Mỹ</option>${["in","fr","de","es","gb","us"].map(a=>`<option value="${a}">${accLabel(a)}</option>`).join("")}</select>
+  body.innerHTML=`<div class="panel"><div class="row" style="margin-bottom:14px"><label class="small muted" for="wd-acc">Giọng</label><select id="wd-acc" style="width:auto"><option value="mix">Trộn: ${mixLabel(["in","fr","de","gb","us"])}</option>${["in","fr","de","es","gb","us"].map(a=>`<option value="${a}">${accLabel(a)}</option>`).join("")}</select>
    <label class="small muted" for="wd-rate">Tốc độ</label><select id="wd-rate" style="width:auto"><option>0.85</option><option selected>1</option><option>1.1</option><option>1.2</option></select></div><div id="wd-w"></div></div>`;
   const start=()=>{
-    const acc=body.querySelector("#wd-acc").value, rate=+body.querySelector("#wd-rate").value, mix=["in","fr","de","gb","us"];
+    const acc=body.querySelector("#wd-acc").value, rate=+body.querySelector("#wd-rate").value, mix=mixAccs(["in","fr","de","gb","us"]);
     const pool=[...MEETS.flatMap(m=>m.lines.map(l=>l[1])), ...TERM_GROUPS.flatMap(g=>g.v.map(v=>v.x)), ...RESCUE.map(r=>r[0])];
-    mountDict(body.querySelector("#wd-w"), shuffle(pool).slice(0,10).map((t,i)=>({text:t,rate,acc:acc==="mix"?mix[i%5]:acc})), [], ()=>{}, ()=>{}, {});
+    mountDict(body.querySelector("#wd-w"), shuffle(pool).slice(0,10).map((t,i)=>({text:t,rate,acc:acc==="mix"?mix[i%mix.length]:acc})), [], ()=>{}, ()=>{}, {});
   };
   body.querySelector("#wd-acc").onchange=start; body.querySelector("#wd-rate").onchange=start; start();
 }

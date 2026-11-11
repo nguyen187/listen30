@@ -14,8 +14,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop Mentor: plan item 'Nói câu với thuật ngữ của ngày' until done today
-- [ ] Listen 30: Cài đặt — choose which accents appear in the mixed-voice drills (default all)
+- [ ] Talk Shop: Mentor profile 'Giọng đồng nghiệp' syncs to Listen 30 mixAccs (one-tap 'Dùng cho Listen 30')
+- [ ] Listen 30: accent game uses only the chosen mixAccs when 3+ are chosen
 
 ## Follow-ups
 
@@ -26,6 +26,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Talk Shop Mentor: "Nói một câu với <term>" plan item until the term of the day is done
+- [x] Listen 30: Cài đặt "Giọng khi chọn Trộn" (S.mixAccs) used by free dictation, own-text and meeting-line dictation; Trộn labels list the accents
 - [x] Talk Shop: Câu mẫu "Thuật ngữ của ngày" — say your own 6+ word sentence using the term; checks the term was heard (acronyms squashed), not the example, long enough; build.sh exports TERM_GROUPS as window.L30_TERMS
 - [x] Talk Shop Mentor: "Listen 30: Thuật ngữ trong họp" plan item when the last score is under 70% (opens ../#gym-mterm)
 - [x] Listen 30: "Thuật ngữ của ngày" shows the meeting line that uses it (play in the speaker's accent) and a button to the drill; #gym-<mode> deep links

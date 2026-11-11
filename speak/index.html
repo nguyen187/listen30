@@ -1007,6 +1007,8 @@ function analyze(){
   // phrases
   const pc=sits.map(s=>s[2].phr).map(i=>({i,v:phrAvg[i]})).sort((a,b)=>(a.v??-1)-(b.v??-1))[0];
   acts.push({p:(P.pain==="fear"||P.pain==="words"?85:60)+(pc.v==null?5:0),m:5,t:`Câu mẫu: ${PHRASES[pc.i].t}`,why:pc.v==null?"Thuộc khung câu cho tình huống bạn hay gặp.":`Độ rõ ${pc.v}%. Nói lại đến khi trên 85%.`,go:()=>{sel.phr=pc.i;go("phr");}});
+  // term of the day (shared with Listen 30)
+  { const td=termDay(); if(td&&!(S.termSaid||{})[today()]) acts.push({p:61,m:3,t:`Nói một câu với "${td.w}"`,why:`Thuật ngữ của ngày: ${td.m}. Tự đặt một câu về việc của bạn, dùng được từ này trong họp mới thật sự nhớ.`,go:()=>{go("phr");}}); }
   // weak pronunciation items
   const weakP=Object.entries(S.pron||{}).filter(([k,v])=>/^\d+:\d+$/.test(k)&&v<70).filter(([k])=>{ const [gi,ii]=k.split(":").map(Number); return PRON[gi]&&PRON[gi].items[ii]; }).length;
   if(weakP>=3) acts.push({p:(P.pain==="pron"?88:64)+Math.min(8,weakP),m:Math.min(8,2+weakP),t:`Ôn ${Math.min(12,weakP)} câu phát âm còn yếu`,why:`${weakP} câu phát âm bạn từng nói vẫn dưới 70%. Bấm Chậm, chú ý âm cuối và trọng âm rồi nói lại.`,go:()=>{sel.pron=-1;go("pron");}});
