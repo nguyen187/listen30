@@ -10,7 +10,7 @@
   const enabled = !!(cfg.url && cfg.anonKey);
   let sb = null, user = null, timer = null, status = "", loading = null;
   let recovering = false;
-  const DOMAIN = "@users.listen30.example.com";
+  const DOMAIN = "@nguyen187.github.io";
   const toEmail = u => u.includes("@") ? u : u + DOMAIN;
   const shown = u => { const e = (u && u.email) || ""; return e.endsWith(DOMAIN) ? e.slice(0, -DOMAIN.length) : e; };
   const listeners = new Set();
