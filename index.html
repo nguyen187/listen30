@@ -1462,6 +1462,7 @@ function renderStats(el){
      ${[1,7,14,21,30].map(d=>`<text x="${pl+(d-1)*bw+bw/2}" y="${H-6}" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="JetBrains Mono, monospace">${d}</text>`).join("")}
     </svg></div><div class="small muted">Vạch đứt = 80%, mức nên đạt trước khi sang tuần mới.</div></div>
    ${heatHTML()}
+   ${accentStatsHTML()}
    ${certHTML()}
    <div class="panel"><h3>Tại sao cách học này hiệu quả</h3><ul class="explain" style="padding-left:18px;margin:8px 0 0">
     <li><b>Chép chính tả</b> buộc tai xử lý từng âm, lộ ra chính xác chỗ bạn đang nghe hụt.</li>
@@ -1912,7 +1913,9 @@ function wkWarm(body){
   };
 }
 function wkMeetList(body){
-  body.innerHTML=`<div class="wk-days" style="margin-top:0">${MEETS.map((m,i)=>{ const sc=S.work.meet[m.id]; return `<button class="dcell" data-m="${i}"><span class="row" style="justify-content:space-between"><span class="dn">HỌP ${i+1}</span>${sc!=null?`<span class="chip ${sc>=80?"ok":"warn"}">${sc}%</span>`:""}</span><b>${esc(m.t)}</b><span class="small muted">${Object.entries(m.sp).map(([n,a])=>esc(n)+" · "+accLabel(a)).join(", ")}</span></button>`; }).join("")}</div>`;
+  const wa=weakestAccent(), pick=wa?MEETS.map((m,i)=>[m,i]).filter(([m])=>Object.values(m.sp).includes(wa)).sort((x,y)=>(S.work.meet[x[0].id]??-1)-(S.work.meet[y[0].id]??-1)).slice(0,3):[];
+  const top=pick.length?`<div class="panel stack" style="gap:8px;margin-bottom:14px"><div><h3>Cuộc họp tuần này</h3><div class="small muted">Giọng bạn nghe yếu nhất lúc này: <b>${accLabel(wa)}</b>. Làm 3 cuộc họp có giọng này, ưu tiên cuộc chưa làm hoặc điểm thấp.</div></div><div class="row">${pick.map(([m,i])=>`<button class="btn sm" data-m="${i}">${esc(m.t)}${S.work.meet[m.id]!=null?" · "+S.work.meet[m.id]+"%":""}</button>`).join("")}</div></div>`:"";
+  body.innerHTML=top+`<div class="wk-days" style="margin-top:0">${MEETS.map((m,i)=>{ const sc=S.work.meet[m.id]; return `<button class="dcell" data-m="${i}"><span class="row" style="justify-content:space-between"><span class="dn">HỌP ${i+1}</span>${sc!=null?`<span class="chip ${sc>=80?"ok":"warn"}">${sc}%</span>`:""}</span><b>${esc(m.t)}</b><span class="small muted">${Object.entries(m.sp).map(([n,a])=>esc(n)+" · "+accLabel(a)).join(", ")}</span></button>`; }).join("")}</div>`;
   body.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>{ meetOpen=+b.dataset.m; wkMeet(body); });
 }
 function wkMeet(body){
@@ -1983,6 +1986,27 @@ function wkMeet(body){
   }
   drawQ();
 }
+/* Per-accent ear: accent game hits plus meeting quiz scores of meetings where that accent speaks. */
+function accentEar(){
+  if(!S.work) S.work={meet:{}}; if(!S.work.meet) S.work.meet={};
+  const out={};
+  ["gb","in","fr","de","es","au"].forEach(a=>{
+    const g=(S.work.acc||{})[a], ms=MEETS.filter(m=>Object.values(m.sp).includes(a)), sc=ms.map(m=>S.work.meet[m.id]).filter(x=>x!=null);
+    const parts=[]; if(g&&g.n>=3) parts.push(100*g.ok/g.n); if(sc.length) parts.push(sc.reduce((x,y)=>x+y,0)/sc.length);
+    out[a]={game:g||null, meets:ms.length, scored:sc.length, meetAvg:sc.length?Math.round(sc.reduce((x,y)=>x+y,0)/sc.length):null, score:parts.length?Math.round(parts.reduce((x,y)=>x+y,0)/parts.length):null};
+  });
+  return out;
+}
+function weakestAccent(){
+  const e=Object.entries(accentEar()).filter(([a,v])=>v.score!=null&&v.meets>0).sort((x,y)=>x[1].score-y[1].score);
+  return e.length?e[0][0]:null;
+}
+function accentStatsHTML(){
+  const e=Object.entries(accentEar()).filter(([,v])=>v.meets>0||v.game);
+  if(!e.some(([,v])=>v.score!=null)) return `<div class="panel stack" style="gap:6px"><h3>Tai nghe theo giọng</h3><div class="small muted">Chơi "Đoán giọng" hoặc làm vài cuộc họp mô phỏng trong mục Công việc để xem bạn nghe giọng nào yếu nhất.</div></div>`;
+  const w=weakestAccent();
+  return `<div class="panel stack" style="gap:8px"><h3>Tai nghe theo giọng</h3><div class="small muted">Gộp từ trò "Đoán giọng" và điểm các cuộc họp có người nói giọng đó.</div>${e.map(([a,v])=>`<div class="row" style="gap:10px;flex-wrap:nowrap"><span style="width:120px;flex:none">${accLabel(a)}${a===w?' <span class="chip warn">yếu nhất</span>':""}</span><span style="flex:1;height:10px;border-radius:5px;background:var(--line);overflow:hidden"><span style="display:block;height:100%;width:${v.score??0}%;background:${v.score==null?"transparent":v.score>=80?"var(--good)":"var(--amber)"}"></span></span><span class="small muted" style="width:150px;flex:none;text-align:right">${v.score==null?"chưa có dữ liệu":v.score+"%"}${v.game?` · đoán ${v.game.ok}/${v.game.n}`:""}${v.scored?` · ${v.scored} họp`:""}</span></div>`).join("")}</div>`;
+}
 function accentGame(el){
   const accs=["us","gb","in","fr","de","es"].filter(a=>a==="us"||voiceOk(a)), pool=shuffle(MEETS.flatMap(m=>m.lines.map(l=>l[1])).filter(x=>x.split(" ").length>=8));
   let q=0, right=0, answered=false;
@@ -1992,7 +2016,7 @@ function accentGame(el){
     const acc=accs[rnd(0,accs.length-1)], text=pool[q%pool.length]; answered=false;
     el.innerHTML=`<div class="stack" style="gap:8px"><div class="row" style="justify-content:space-between"><span class="label">Câu ${q+1}/10</span><button class="btn sm play" data-agp>Nghe lại</button></div><div class="opts">${accs.map(a=>`<button class="opt" data-a="${a}">${accLabel(a)}</button>`).join("")}</div><div class="small muted" data-agf style="min-height:1.4em"></div></div>`;
     el.querySelector("[data-agp]").onclick=()=>say(text,acc);
-    el.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{ if(answered) return; answered=true; const ok=b.dataset.a===acc; if(ok) right++;
+    el.querySelectorAll("[data-a]").forEach(b=>b.onclick=()=>{ if(answered) return; answered=true; const ok=b.dataset.a===acc; if(ok) right++; const st=(S.work.acc=S.work.acc||{}), r=(st[acc]=st[acc]||{n:0,ok:0}); r.n++; if(ok) r.ok++; save();
       b.classList.add(ok?"right":"wrong"); el.querySelector(`[data-a="${acc}"]`).classList.add("right");
       el.querySelector("[data-agf]").innerHTML=`${esc(text)} <button class="btn sm" data-agn style="margin-left:6px">Tiếp →</button>`; el.querySelector("[data-agn]").onclick=()=>{ q++; next(); }; });
     say(text,acc);
