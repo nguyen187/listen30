@@ -13,7 +13,6 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Listen 30: pronunciation-free 'listen & repeat' mode on phones (no mic needed: just shadow with model + 3-second pause)
 - [ ] Both: check the dark theme visually on every tab and fix any low-contrast spots
 
 ## Follow-ups
@@ -24,6 +23,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Listen 30: pronunciation-free 'listen & repeat' mode on phones (no mic needed: just shadow with model + 3-second pause)
 - [x] Talk Shop: Mentor shows a 7-day mini chart of minutes spoken
 - [x] Listen 30: 'Câu hay sai' also pulls from free dictation and own-text sessions (store their misses)
 - [x] Talk Shop: role-play AI feedback compares with the original line from the meeting (already the case: the original line is sent as the reference answer)

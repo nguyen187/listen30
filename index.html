@@ -850,7 +850,7 @@ function wordInfo(w){ for(let i=0;i<DAYS.length;i++){ const v=DAYS[i].v.find(x=>
 
 /* =============================== VIEWS =============================== */
 const VIEWS=["today","map","work","real","srs","gym","stats","setup"];
-function go(v, n){ view=v; if(n) openDay=n; playTok++; warmTok++; if(hasTTS) speechSynthesis.cancel(); noiseStop(); try{ history.replaceState(null,"", v==="today"?"#day-"+(openDay||currentDay()):"#"+v); }catch(e){} render(); window.scrollTo({top:0}); }
+function go(v, n){ view=v; if(n) openDay=n; playTok++; warmTok++; repTok++; if(hasTTS) speechSynthesis.cancel(); noiseStop(); try{ history.replaceState(null,"", v==="today"?"#day-"+(openDay||currentDay()):"#"+v); }catch(e){} render(); window.scrollTo({top:0}); }
 function readHash(){
   const h=location.hash.slice(1);
   const m=h.match(/^day-(\d+)$/); if(m){ const n=+m[1]; if(n>=1&&n<=30){ view="today"; openDay=n; return; } }
@@ -1263,13 +1263,13 @@ function renderSRS(el){
 let gymMode="dict";
 function renderGym(el){
   el.innerHTML=`<div class="stack" style="margin-top:22px"><div><h2>Luyện thêm</h2><div class="muted small">Luyện không giới hạn, không ảnh hưởng tiến độ ngày.</div></div>
-   <div class="tabs" style="align-self:flex-start" id="gym-tabs">${[["dict","Chép chính tả tự do"],["worst","Câu hay sai"],["speed","Đo tốc độ nghe"],["mine","Văn bản của bạn"],["pairs","Cặp âm dễ nhầm"],["nums","Nghe số"]].map(([k,t])=>`<button class="tab" data-g="${k}" aria-current="${gymMode===k?"page":"false"}">${t}</button>`).join("")}</div>
+   <div class="tabs" style="align-self:flex-start" id="gym-tabs">${[["dict","Chép chính tả tự do"],["repeat","Nghe và nhắc lại"],["worst","Câu hay sai"],["speed","Đo tốc độ nghe"],["mine","Văn bản của bạn"],["pairs","Cặp âm dễ nhầm"],["nums","Nghe số"]].map(([k,t])=>`<button class="tab" data-g="${k}" aria-current="${gymMode===k?"page":"false"}">${t}</button>`).join("")}</div>
    <div id="vbar-host"></div>
    <div class="panel" id="gym-body"></div></div>`;
   mountVoiceBar(el.querySelector("#vbar-host"), ["us","gb","au"]);
-  el.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{ gymMode=b.dataset.g; renderGym(el); });
+  el.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{ repTok++; if(hasTTS) speechSynthesis.cancel(); gymMode=b.dataset.g; renderGym(el); });
   const body=el.querySelector("#gym-body");
-  if(gymMode==="dict") gymDict(body); else if(gymMode==="worst") gymWorst(body); else if(gymMode==="speed") gymSpeed(body); else if(gymMode==="mine") gymMine(body); else if(gymMode==="pairs") gymPairs(body); else mountNums(body,10,()=>{});
+  if(gymMode==="dict") gymDict(body); else if(gymMode==="repeat") gymRepeat(body); else if(gymMode==="worst") gymWorst(body); else if(gymMode==="speed") gymSpeed(body); else if(gymMode==="mine") gymMine(body); else if(gymMode==="pairs") gymPairs(body); else mountNums(body,10,()=>{});
 }
 function gymDict(el){
   const upto=Math.max(1,currentDay());
@@ -1359,6 +1359,30 @@ function gymMine(el){
     const its=ss.slice(0,40).map((x,i)=>({text:x,rate,acc:acc==="mix"?mix[i%5]:acc}));
     mountDict(el.querySelector("#mn-w"), its, [], sc=>recordMiss(its,sc), ()=>{}, {});
     el.querySelector("#mn-w").scrollIntoView({behavior:"smooth",block:"start"});
+  };
+}
+let repTok=0;
+function gymRepeat(el){
+  el.innerHTML=`<div class="stack" style="gap:10px"><div class="small muted explain">Không cần micro, hợp khi đi đường hoặc dùng điện thoại. Web đọc một câu, rồi dừng đủ lâu để bạn nhắc lại thành tiếng, rồi đọc lại câu đó để bạn so, rồi sang câu mới. 10 câu, khoảng 5 phút.</div>
+   <div class="row"><label class="small muted" for="rp-src">Câu từ</label><select id="rp-src" style="width:auto"><option value="day">Ngày đang học</option><option value="work">Họp công việc</option><option value="worst">Câu hay sai</option></select>
+    <label class="small muted"><input type="checkbox" id="rp-cap" checked> Hiện chữ sau khi nhắc</label>
+    <button class="btn primary play" id="rp-go">Bắt đầu</button><button class="btn" id="rp-stop">Dừng</button></div>
+   <div id="rp-box" class="panel" style="background:var(--bg);min-height:4em;font-size:17px"><span class="small muted">Sẵn sàng.</span></div></div>`;
+  const box=el.querySelector("#rp-box");
+  el.querySelector("#rp-stop").onclick=()=>{ repTok++; if(hasTTS) speechSynthesis.cancel(); box.innerHTML='<span class="small muted">Đã dừng.</span>'; };
+  el.querySelector("#rp-go").onclick=async()=>{
+    const src=el.querySelector("#rp-src").value, cap=()=>el.querySelector("#rp-cap").checked, n=currentDay();
+    let items = src==="work" ? shuffle(MEETS.flatMap(m=>m.lines.map(([w,t])=>({text:t,acc:m.sp[w],rate:1})))).slice(0,10)
+      : src==="worst" ? worstSentences().map(x=>({text:x.text,acc:x.acc,rate:x.rate}))
+      : shuffle(dictItems(n)).slice(0,10);
+    if(!items.length){ box.innerHTML='<span class="small muted">Chưa có câu nào ở mục này.</span>'; return; }
+    const tok=++repTok, wait=ms=>new Promise(r=>setTimeout(r,ms));
+    for(let i=0;i<items.length;i++){ if(tok!==repTok) return; const it=items[i];
+      box.innerHTML=`<div class="label">Câu ${i+1}/${items.length} · nghe</div>`; await speak(it.text,it.rate||1,it.acc||"us"); if(tok!==repTok) return;
+      const pause=Math.max(2500,it.text.split(" ").length*480);
+      box.innerHTML=`<div class="label">Câu ${i+1}/${items.length} · đến lượt bạn nhắc lại</div><div class="mono small muted">${"●".repeat(Math.round(pause/1000))}</div>`; await wait(pause); if(tok!==repTok) return;
+      box.innerHTML=`<div class="label">Câu ${i+1}/${items.length} · nghe lại để so</div>${cap()?`<div>${esc(it.text)}</div>`:""}`; await speak(it.text,it.rate||1,it.acc||"us"); if(tok!==repTok) return; await wait(900); }
+    if(tok===repTok) box.innerHTML='<b>Xong 10 câu.</b> <span class="small muted">Làm thêm một lượt, hoặc chọn nguồn câu khác.</span>';
   };
 }
 function gymPairs(el){
