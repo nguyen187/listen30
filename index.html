@@ -846,7 +846,7 @@ function currentDay(){ for(let n=1;n<=30;n++) if(dayProgress(n)<need(n)) return 
 /* =============================== SRS =============================== */
 const INTERVALS=[1,2,4,7,15,30,60];
 function addCards(n){
-  DAYS[n-1].v.forEach(v=>{ if(!S.cards[v.w]) S.cards[v.w]={box:0,due:today()+1,d:n}; });
+  DAYS[n-1].v.forEach(v=>{ if(!S.cards[v.w]) S.cards[v.w]={box:0,due:today()+1,d:n,a:today()}; });
 }
 function dueCards(){ const t=today(); return Object.entries(S.cards).filter(([,c])=>c.due<=t).map(([w])=>w); }
 function wordInfo(w){ for(let i=0;i<DAYS.length;i++){ const v=DAYS[i].v.find(x=>x.w===w); if(v) return Object.assign({day:i+1},v); }
@@ -1216,10 +1216,18 @@ function renderMap(el){
 
 /* ---------- SRS view ---------- */
 let srsReturn=null;
+/* Words added in the last 7 days and how far they've got (box 2+ = remembered at least twice). */
+function weekWordsHTML(){
+  const t=today(), wk=Object.entries(S.cards).filter(([,c])=>c.a!=null&&c.a>=t-6);
+  if(!wk.length) return "";
+  const kept=wk.filter(([,c])=>c.box>=2).length, shaky=wk.filter(([,c])=>c.box<2).map(([w])=>w).slice(0,8);
+  return `<div class="panel stack" style="gap:6px"><div class="row" style="justify-content:space-between"><h3>Từ của tuần</h3><span class="small muted">7 ngày qua</span></div><div class="small">Thêm <b>${wk.length}</b> từ mới, đã nhớ chắc <b>${kept}</b> từ (qua ít nhất 2 lần ôn).</div>${shaky.length?`<div class="small muted">Cần ôn thêm: ${shaky.map(w=>`<span class="chip">${esc(w)}</span>`).join(" ")}</div>`:""}</div>`;
+}
 function renderSRS(el){
   const due=shuffle(dueCards());
   const boxes=[0,0,0,0,0,0,0]; Object.values(S.cards).forEach(c=>boxes[Math.min(6,c.box)]++);
   el.innerHTML=`<div class="stack" style="margin-top:22px"><div class="row" style="justify-content:space-between"><div><h2>Ôn từ</h2><div class="muted small">${Object.keys(S.cards).length} từ trong hộp · ${due.length} thẻ đến hạn hôm nay</div></div>${srsReturn?`<button class="btn" id="srs-back">← Quay lại Ngày ${srsReturn}</button>`:""}</div>
+   ${weekWordsHTML()}
    <div class="boxes">${boxes.map((b,i)=>`<div><span class="label">Hộp ${i+1}</span><b class="mono">${b}</b><span class="small muted">${INTERVALS[i]} ngày</span></div>`).join("")}</div>
    <div class="row"><span class="label">Cách ôn</span><button class="btn sm ${S.srsMode==="spell"?"":"primary"}" data-mode="mean">Nghe → nhớ nghĩa</button><button class="btn sm ${S.srsMode==="spell"?"primary":""}" data-mode="spell">Nghe → gõ đúng từ</button></div>
    <div class="panel" id="srs-card"></div></div>`;
@@ -2062,7 +2070,7 @@ function wkTerms(body){
   body.querySelectorAll("[data-tw]").forEach(b=>b.onclick=()=>{ const [v]=get(b.dataset.tw); speak(v.w,0.9,"us"); });
   body.querySelectorAll("[data-tx]").forEach(b=>b.onclick=()=>{ const [v,i]=get(b.dataset.tx); speak(v.x,1,accs[i%5]); });
   body.querySelectorAll("[data-quiz]").forEach(b=>b.onclick=()=>termQuiz(body.querySelector(`[data-qz="${b.dataset.quiz}"]`),+b.dataset.quiz,body));
-  body.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{ TERM_GROUPS[+b.dataset.add].v.forEach(v=>{ if(!S.cards[v.w]) S.cards[v.w]={box:0,due:today(),d:0}; }); save(); wkTerms(body); });
+  body.querySelectorAll("[data-add]").forEach(b=>b.onclick=()=>{ TERM_GROUPS[+b.dataset.add].v.forEach(v=>{ if(!S.cards[v.w]) S.cards[v.w]={box:0,due:today(),d:0,a:today()}; }); save(); wkTerms(body); });
 }
 function termQuiz(el,gi,body){
   const g=TERM_GROUPS[gi], order=shuffle(g.v.map((_,i)=>i)).slice(0,10), accs=["in","fr","gb","us","de"];

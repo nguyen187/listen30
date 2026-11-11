@@ -14,8 +14,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop: Lịch sử ghi âm — per-label progress line (first vs latest score / wpm, +N%)
-- [ ] Listen 30: Ôn từ — 'Từ của tuần' summary card on Mondays (words added last week, how many mastered)
+- [ ] Talk Shop: Câu mẫu — 'Ôn câu cũ' mode replaying phrases scored under 70% (spaced like vocab cards)
+- [ ] Listen 30: Ôn từ — tap a 'Cần ôn thêm' chip to hear the word and its example sentence
 
 ## Follow-ups
 
@@ -26,6 +26,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Talk Shop: Lịch sử ghi âm shows per-bài progress chips (độ rõ / từ/phút vs lần đầu)
+- [x] Listen 30: Ôn từ shows "Từ của tuần" (words added in 7 days, how many kept, which to review); cards now store their add date
 - [x] Listen 30: missed-day banner on the resume bar (also on Today) with a one-tap 15-minute session
 - [x] Talk Shop: practice calendar days are clickable and filter Lịch sử ghi âm to that day
 - [x] Listen 30: Thống kê calendar (already 8 weeks) now also counts Talk Shop speaking days (light = one app, dark = both)

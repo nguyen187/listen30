@@ -1405,9 +1405,14 @@ async function drawRecs(el){
   const groups={}; all.forEach(r=>{ (groups[r.label]=groups[r.label]||[]).push(r); });
   const fmt=t=>new Date(t).toLocaleDateString("vi-VN",{day:"numeric",month:"numeric"})+" "+new Date(t).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"});
   const row=(r,tag)=>`<div class="row" style="flex-wrap:nowrap;gap:8px;align-items:flex-start"><button class="btn sm play" data-rec="${r.id}" aria-label="Nghe bản ghi"></button><div style="min-width:0"><span class="small muted">${tag?tag+" · ":""}${fmt(r.ts)} · ${r.dur}s${r.score!=null?" · "+r.score+"%":""}${r.wpm?" · "+r.wpm+" từ/phút":""}</span><div class="small">${esc(r.text||"(không nhận dạng được)")}</div></div></div>`;
+  const gain=g=>{ const a=g[0], b=g[g.length-1], parts=[];
+    if(a.score!=null&&b.score!=null){ const d=b.score-a.score; parts.push(`<span class="chip ${d>0?"ok":d<0?"bad":""} mono">độ rõ ${d>0?"+":""}${d}%</span>`); }
+    if(a.wpm&&b.wpm){ const d=b.wpm-a.wpm; parts.push(`<span class="chip ${d>0?"ok":""} mono">${d>0?"+":""}${d} từ/phút</span>`); }
+    if(a.dur&&b.dur&&!parts.length){ const d=b.dur-a.dur; parts.push(`<span class="chip mono">${d>0?"+":""}${d}s</span>`); }
+    return `<div class="row" style="gap:6px"><span class="small muted">${g.length} lần tập · so lần đầu:</span>${parts.join("")||'<span class="small muted">chưa có số liệu để so</span>'}</div>`; };
   const labels=Object.keys(groups).sort((a,b)=>groups[b][groups[b].length-1].ts-groups[a][groups[a].length-1].ts);
   box.innerHTML=(recConfirm?`<div class="banner row" style="justify-content:space-between;margin-bottom:8px"><span>Xoá toàn bộ ${all.length} bản ghi trên máy này? Không hoàn tác được.</span><span class="row"><button class="btn sm" id="rec-yes" style="border-color:var(--bad);color:var(--bad)">Xoá</button><button class="btn sm ghost" id="rec-no">Huỷ</button></span></div>`:"")+
-    `<div class="stack" style="gap:12px">${labels.slice(0,15).map(l=>{ const g=groups[l]; return `<div class="stack" style="gap:6px;border-top:1px solid var(--line);padding-top:10px"><b class="small">${esc(l)}</b>${g.length>1?row(g[0],"Lần đầu")+row(g[g.length-1],"Mới nhất"):row(g[0],"")}</div>`; }).join("")}</div>`;
+    `<div class="stack" style="gap:12px">${labels.slice(0,15).map(l=>{ const g=groups[l]; return `<div class="stack" style="gap:6px;border-top:1px solid var(--line);padding-top:10px"><b class="small">${esc(l)}</b>${g.length>1?gain(g)+row(g[0],"Lần đầu")+row(g[g.length-1],"Mới nhất"):row(g[0],"")}</div>`; }).join("")}</div>`;
   const urls={}; let cur=null;
   box.querySelectorAll("[data-rec]").forEach(b=>b.onclick=()=>{ const r=all.find(x=>x.id===+b.dataset.rec); if(!r) return; if(cur){ cur.pause(); } urls[r.id]=urls[r.id]||URL.createObjectURL(r.blob); cur=new Audio(urls[r.id]); cur.play().catch(()=>{}); });
   const y=box.querySelector("#rec-yes"); if(y) y.onclick=async()=>{ recConfirm=false; await recClear(); drawRecs(el); };
