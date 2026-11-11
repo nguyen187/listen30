@@ -14,8 +14,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop Mentor: plan item 'Thuật ngữ trong họp' (links to Listen 30 gym) when the Listen 30 meeting-term score is under 70%
-- [ ] Listen 30: Today page 'Từ của ngày' links to the gym drill when that word appears in a meeting line
+- [ ] Talk Shop: Câu mẫu — speak the term of the day in a sentence (mic), scored on using the term
+- [ ] Listen 30: Cài đặt — choose which accents appear in the mixed-voice drills (default all)
 
 ## Follow-ups
 
@@ -26,6 +26,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Talk Shop Mentor: "Listen 30: Thuật ngữ trong họp" plan item when the last score is under 70% (opens ../#gym-mterm)
+- [x] Listen 30: "Thuật ngữ của ngày" shows the meeting line that uses it (play in the speaker's accent) and a button to the drill; #gym-<mode> deep links
 - [x] Listen 30: "Thuật ngữ trong họp" stores last/best score; Thống kê shows term quiz vs meeting-line score and nudges when the gap is big
 - [x] Talk Shop: weekly AI report lists the weakest phrases and pronunciation lines (under 70%) and asks for tips
 - [x] Talk Shop Mentor: "Ôn N câu phát âm còn yếu" plan item (3+ items under 70%)

@@ -847,6 +847,7 @@ function go(v, n){ view=v; if(n) openDay=n; playTok++; warmTok++; repTok++; if(h
 function readHash(){
   const h=location.hash.slice(1);
   const m=h.match(/^day-(\d+)$/); if(m){ const n=+m[1]; if(n>=1&&n<=30){ view="today"; openDay=n; return; } }
+  const g=h.match(/^gym-(\w+)$/); if(g){ view="gym"; gymMode=g[1]; return; }
   if(VIEWS.includes(h)) view=h;
 }
 window.addEventListener("hashchange",()=>{ readHash(); render(); });
@@ -912,8 +913,12 @@ function refreshTrackHeads(n){
   const done=document.getElementById("day-done"); if(done) done.hidden = dayProgress(n)<need(n);
 }
 function wotd(){ const flat=TERM_GROUPS.flatMap(g=>g.v); return flat[today()%flat.length]; }
-function wotdHTML(){ const v=wotd(); return `<div class="panel row" style="margin-top:12px;justify-content:space-between;gap:8px 14px;padding:12px 16px"><div style="min-width:0"><span class="label">Thuật ngữ của ngày</span><div><b style="font-family:var(--f-display);font-size:19px">${esc(v.w)}</b> <span class="small muted">· ${esc(v.m)}</span></div><div class="small">${esc(v.x)}</div></div><div class="row"><button class="btn sm play" id="wd-w" aria-label="Nghe thuật ngữ"></button><button class="btn sm" id="wd-x">Nghe câu</button><a class="btn sm ghost" href="https://youglish.com/pronounce/${encodeURIComponent(v.w)}/english" target="_blank" rel="noopener">Giọng thật ↗</a></div></div>`; }
-function bindWotd(){ const v=wotd(), w=document.getElementById("wd-w"), x=document.getElementById("wd-x"); if(w) w.onclick=()=>speak(v.w,0.9,"gb"); if(x) x.onclick=()=>speak(v.x,1,["in","fr","gb","us","de"][today()%5]); }
+function wotdMeet(v){ const re=new RegExp("\\b"+v.w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+"\\b","i"); for(const m of MEETS) for(const [who,t] of m.lines) if(re.test(t)) return {m,who,t,acc:m.sp[who]||"us"}; return null; }
+function wotdHTML(){ const v=wotd(), mm=wotdMeet(v); return `<div class="panel row" style="margin-top:12px;justify-content:space-between;gap:8px 14px;padding:12px 16px"><div style="min-width:0"><span class="label">Thuật ngữ của ngày</span><div><b style="font-family:var(--f-display);font-size:19px">${esc(v.w)}</b> <span class="small muted">· ${esc(v.m)}</span></div><div class="small">${esc(v.x)}</div></div><div class="row"><button class="btn sm play" id="wd-w" aria-label="Nghe thuật ngữ"></button><button class="btn sm" id="wd-x">Nghe câu</button><a class="btn sm ghost" href="https://youglish.com/pronounce/${encodeURIComponent(v.w)}/english" target="_blank" rel="noopener">Giọng thật ↗</a></div>${mm?`<div class="small" style="flex-basis:100%;border-top:1px solid var(--line);padding-top:8px">Trong cuộc họp "${esc(mm.m.t)}", ${esc(mm.who)} (giọng ${accLabel(mm.acc)}) nói: <span class="muted">${esc(mm.t)}</span> <span class="row" style="display:inline-flex;margin-left:4px"><button class="btn sm play" id="wd-m">Nghe</button><button class="btn sm" id="wd-g">Luyện thuật ngữ trong họp</button></span></div>`:""}</div>`; }
+function bindWotd(){ const v=wotd(), w=document.getElementById("wd-w"), x=document.getElementById("wd-x"); if(w) w.onclick=()=>speak(v.w,0.9,"gb"); if(x) x.onclick=()=>speak(v.x,1,["in","fr","gb","us","de"][today()%5]);
+  const mm=wotdMeet(v), m=document.getElementById("wd-m"), g=document.getElementById("wd-g");
+  if(m&&mm) m.onclick=()=>{ const f=S.forceAcc; S.forceAcc="auto"; speak(mm.t,1,mm.acc); S.forceAcc=f; };
+  if(g) g.onclick=()=>{ gymMode="mterm"; go("gym"); }; }
 function renderDay(el){
   const n=openDay||currentDay(); openDay=n;
   const day=DAYS[n-1], fo=FOCUS[day.f], wk=WEEKS[wkOf(n)-1];
