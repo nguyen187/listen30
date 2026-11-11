@@ -979,6 +979,9 @@ function analyze(){
   // phrases
   const pc=sits.map(s=>s[2].phr).map(i=>({i,v:phrAvg[i]})).sort((a,b)=>(a.v??-1)-(b.v??-1))[0];
   acts.push({p:(P.pain==="fear"||P.pain==="words"?85:60)+(pc.v==null?5:0),m:5,t:`Câu mẫu: ${PHRASES[pc.i].t}`,why:pc.v==null?"Thuộc khung câu cho tình huống bạn hay gặp.":`Độ rõ ${pc.v}%. Nói lại đến khi trên 85%.`,go:()=>{sel.phr=pc.i;go("phr");}});
+  // weak pronunciation items
+  const weakP=Object.entries(S.pron||{}).filter(([k,v])=>/^\d+:\d+$/.test(k)&&v<70).filter(([k])=>{ const [gi,ii]=k.split(":").map(Number); return PRON[gi]&&PRON[gi].items[ii]; }).length;
+  if(weakP>=3) acts.push({p:(P.pain==="pron"?88:64)+Math.min(8,weakP),m:Math.min(8,2+weakP),t:`Ôn ${Math.min(12,weakP)} câu phát âm còn yếu`,why:`${weakP} câu phát âm bạn từng nói vẫn dưới 70%. Bấm Chậm, chú ý âm cuối và trọng âm rồi nói lại.`,go:()=>{sel.pron=-1;go("pron");}});
   // weak phrases review
   const weakN=Object.entries(S.phr||{}).filter(([k,v])=>{ const [ci,pi]=k.split(":").map(Number); return v<70&&PHRASES[ci]&&PHRASES[ci].p[pi]; }).length;
   if(weakN>=3) acts.push({p:(P.pain==="pron"||P.pain==="words"?80:63)+Math.min(8,weakN),m:Math.min(8,2+weakN),t:`Ôn ${Math.min(12,weakN)} câu mẫu còn yếu`,why:`${weakN} câu bạn từng nói vẫn dưới 70% độ rõ. Nói lại từng câu, nghe mẫu Chậm trước khi nói.`,go:()=>{sel.phr=-1;go("phr");}});

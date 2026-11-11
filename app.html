@@ -1284,13 +1284,41 @@ function renderSRS(el){
 let gymMode="dict";
 function renderGym(el){
   el.innerHTML=`<div class="stack" style="margin-top:22px"><div><h2>Luyện thêm</h2><div class="muted small">Luyện không giới hạn, không ảnh hưởng tiến độ ngày.</div></div>
-   <div class="tabs" style="align-self:flex-start" id="gym-tabs">${[["dict","Chép chính tả tự do"],["repeat","Nghe và nhắc lại"],["worst","Câu hay sai"],["speed","Đo tốc độ nghe"],["mine","Văn bản của bạn"],["pairs","Cặp âm dễ nhầm"],["nums","Nghe số"]].map(([k,t])=>`<button class="tab" data-g="${k}" aria-current="${gymMode===k?"page":"false"}">${t}</button>`).join("")}</div>
+   <div class="tabs" style="align-self:flex-start" id="gym-tabs">${[["dict","Chép chính tả tự do"],["repeat","Nghe và nhắc lại"],["worst","Câu hay sai"],["speed","Đo tốc độ nghe"],["mine","Văn bản của bạn"],["pairs","Cặp âm dễ nhầm"],["nums","Nghe số"],["mterm","Thuật ngữ trong họp"]].map(([k,t])=>`<button class="tab" data-g="${k}" aria-current="${gymMode===k?"page":"false"}">${t}</button>`).join("")}</div>
    <div id="vbar-host"></div>
    <div class="panel" id="gym-body"></div></div>`;
   mountVoiceBar(el.querySelector("#vbar-host"), ["us","gb","au"]);
   el.querySelectorAll("[data-g]").forEach(b=>b.onclick=()=>{ repTok++; if(hasTTS) speechSynthesis.cancel(); gymMode=b.dataset.g; renderGym(el); });
   const body=el.querySelector("#gym-body");
-  if(gymMode==="dict") gymDict(body); else if(gymMode==="repeat") gymRepeat(body); else if(gymMode==="worst") gymWorst(body); else if(gymMode==="speed") gymSpeed(body); else if(gymMode==="mine") gymMine(body); else if(gymMode==="pairs") gymPairs(body); else mountNums(body,10,()=>{});
+  if(gymMode==="dict") gymDict(body); else if(gymMode==="repeat") gymRepeat(body); else if(gymMode==="worst") gymWorst(body); else if(gymMode==="speed") gymSpeed(body); else if(gymMode==="mine") gymMine(body); else if(gymMode==="pairs") gymPairs(body); else if(gymMode==="mterm") gymMTerm(body); else mountNums(body,10,()=>{});
+}
+/* Aviation terms heard inside real meeting lines: hear the line in the speaker's accent, type the missing term. Terms already in the learner's cards come first. */
+function gymMTerm(el){
+  const esc2=w=>w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"), pool=[];
+  TERM_GROUPS.forEach(g=>g.v.forEach(v=>{ const re=new RegExp("\\b"+esc2(v.w)+"\\b","i");
+    MEETS.forEach(m=>m.lines.forEach(([who,t])=>{ if(re.test(t)) pool.push({v,t,acc:m.sp[who]||"us",mt:m.t,re}); })); }));
+  if(!pool.length){ el.innerHTML='<span class="muted small">Chưa có câu họp nào chứa thuật ngữ.</span>'; return; }
+  const mine=shuffle(pool.filter(x=>S.cards[x.v.w])), rest=shuffle(pool.filter(x=>!S.cards[x.v.w])), seen=new Set(), items=[];
+  [...mine,...rest].forEach(x=>{ if(items.length<10&&!seen.has(x.v.w)){ seen.add(x.v.w); items.push(x); } });
+  let q=0, right=0;
+  const clean=t=>t.toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
+  function next(){
+    if(q>=items.length){ el.innerHTML=`<div class="stack" style="gap:10px"><div class="row"><span class="score">${right}/${items.length}</span><span class="small muted">${right>=8?"Bạn bắt được thuật ngữ ngay trong câu nói thật.":"Thuật ngữ trong câu nói nhanh khó nghe hơn khi đứng riêng. Chơi lại, nghe chậm khi cần."}</span></div><button class="btn sm primary" id="mt-again">Chơi lượt mới</button></div>`; el.querySelector("#mt-again").onclick=()=>gymMTerm(el); return; }
+    const it=items[q], gap=it.t.replace(it.re,"_____");
+    el.innerHTML=`<div class="stack" style="gap:10px"><div class="row" style="justify-content:space-between"><span class="label">Câu ${q+1}/${items.length} · ${esc(it.mt)} · giọng ${accLabel(it.acc)}</span><span class="row"><button class="btn sm play" id="mt-p">Nghe</button><button class="btn sm play" id="mt-s">Chậm</button></span></div>
+      <div style="font-size:17px">${esc(gap)}</div><div class="small muted">Gõ thuật ngữ còn thiếu rồi bấm Enter.${S.cards[it.v.w]?" (Từ trong hộp ôn của bạn)":""}</div>
+      <input type="text" id="mt-in" autocomplete="off" autocapitalize="off" spellcheck="false" style="max-width:320px"><div id="mt-r"></div></div>`;
+    const inp=el.querySelector("#mt-in"), say=r=>{ const f=S.forceAcc; S.forceAcc="auto"; speak(it.t,r,it.acc); S.forceAcc=f; inp.focus(); };
+    el.querySelector("#mt-p").onclick=()=>say(1); el.querySelector("#mt-s").onclick=()=>say(0.75);
+    let done=false;
+    inp.onkeydown=e=>{ if(e.key!=="Enter") return; e.preventDefault(); if(done){ q++; next(); return; } done=true; inp.readOnly=true;
+      const ok=clean(inp.value)===clean(it.v.w); if(ok) right++;
+      el.querySelector("#mt-r").innerHTML=`<div class="stack" style="gap:4px"><span class="chip ${ok?"ok":""}" style="align-self:flex-start;${ok?"":"background:var(--bad-soft);color:var(--bad)"}">${ok?"Đúng":"Chưa đúng"}</span><div><b>${esc(it.v.w)}</b> · ${esc(it.v.m)}</div><div class="small muted">${esc(it.t)}</div>${!ok&&!S.cards[it.v.w]?`<button class="btn sm" id="mt-add" style="align-self:flex-start">Thêm vào hộp ôn</button>`:""}<span class="small muted">Enter để sang câu tiếp</span></div>`;
+      const ad=el.querySelector("#mt-add"); if(ad) ad.onclick=()=>{ S.cards[it.v.w]={box:0,due:today(),d:0,a:today()}; save(); ad.textContent="Đã thêm"; ad.disabled=true; inp.focus(); };
+    };
+    say(1);
+  }
+  next();
 }
 function gymDict(el){
   const upto=Math.max(1,currentDay());
