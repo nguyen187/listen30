@@ -2211,16 +2211,18 @@ const REAL_SRC=[
   ["Easy English","Phỏng vấn ngẫu nhiên trên đường phố, nói tự nhiên, có phụ đề.","https://www.youtube.com/results?search_query=Easy+English+street+interview"],
   ["BBC 6 Minute English","Hai người dẫn nói chuyện tự nhiên 6 phút, có transcript.","https://www.bbc.co.uk/learningenglish/english/features/6-minute-english"]]},
  {t:"Hàng không, giọng thật",items:[
-  ["LiveATC Delhi","Liên lạc không lưu trực tiếp ở Delhi: giọng Ấn, số hiệu chuyến, NATO.","https://www.liveatc.net/search/?icao=VIDP"],
-  ["LiveATC Paris CDG","Không lưu Paris: phi công và kiểm soát viên giọng Pháp.","https://www.liveatc.net/search/?icao=LFPG"],
-  ["LiveATC Frankfurt","Không lưu Frankfurt: giọng Đức.","https://www.liveatc.net/search/?icao=EDDF"],
-  ["Airbus Skywise (YouTube)","Video và webinar của Airbus, kỹ sư Pháp nói tiếng Anh.","https://www.youtube.com/results?search_query=Airbus+Skywise"],
+  ["LiveATC Delhi","Liên lạc không lưu trực tiếp ở Delhi: giọng Ấn, số hiệu chuyến, NATO.","https://www.liveatc.net/search/?icao=VIDP","in"],
+  ["LiveATC Paris CDG","Không lưu Paris: phi công và kiểm soát viên giọng Pháp.","https://www.liveatc.net/search/?icao=LFPG","fr"],
+  ["LiveATC Frankfurt","Không lưu Frankfurt: giọng Đức.","https://www.liveatc.net/search/?icao=EDDF","de"],
+  ["Airbus Skywise (YouTube)","Video và webinar của Airbus, kỹ sư Pháp nói tiếng Anh.","https://www.youtube.com/results?search_query=Airbus+Skywise","fr"],
   ["Hội thảo MRO (YouTube)","Panel thảo luận ngành bảo dưỡng: nhiều giọng, nói tự nhiên như họp.","https://www.youtube.com/results?search_query=MRO+conference+panel+discussion"],
   ["Mentour Pilot","Phi công giải thích sự cố hàng không, tiếng Anh rõ, giọng Bắc Âu.","https://www.youtube.com/results?search_query=Mentour+Pilot"]]},
  {t:"Theo giọng",items:[
-  ["Kỹ sư Ấn Độ trình bày","Tìm video kỹ sư, IT Ấn Độ thuyết trình bằng tiếng Anh.","https://www.youtube.com/results?search_query=Indian+aviation+engineer+presentation+english"],
-  ["Người Pháp nói tiếng Anh","Phỏng vấn kỹ sư, lãnh đạo Airbus và Safran.","https://www.youtube.com/results?search_query=Airbus+engineer+interview+english"],
-  ["Người Đức nói tiếng Anh","Lufthansa Technik giới thiệu dịch vụ và công nghệ.","https://www.youtube.com/results?search_query=Lufthansa+Technik"]]}
+  ["Kỹ sư Ấn Độ trình bày","Tìm video kỹ sư, IT Ấn Độ thuyết trình bằng tiếng Anh.","https://www.youtube.com/results?search_query=Indian+aviation+engineer+presentation+english","in"],
+  ["Người Pháp nói tiếng Anh","Phỏng vấn kỹ sư, lãnh đạo Airbus và Safran.","https://www.youtube.com/results?search_query=Airbus+engineer+interview+english","fr"],
+  ["Người Tây Ban Nha nói tiếng Anh","Kỹ sư và quản lý Iberia, Air Europa trình bày bằng tiếng Anh.","https://www.youtube.com/results?search_query=Iberia+engineering+english+interview","es"],
+  ["LiveATC Madrid","Không lưu Madrid: giọng Tây Ban Nha.","https://www.liveatc.net/search/?icao=LEMD","es"],
+  ["Người Đức nói tiếng Anh","Lufthansa Technik giới thiệu dịch vụ và công nghệ.","https://www.youtube.com/results?search_query=Lufthansa+Technik","de"]]}
 ];
 let realPlayer=null, realLoop={a:null,b:null}, realTick=null, ytReady=null;
 function loadYT(){
@@ -2255,7 +2257,10 @@ function renderReal(el){
    </div>
    <div class="panel stack"><h3>Nghe một cụm từ do nhiều người thật nói</h3><div class="muted small">YouGlish tìm cụm từ trong hàng nghìn video thật, lọc theo giọng.</div>
     <div class="row"><input type="text" id="yg-q" aria-label="Cụm từ cần nghe" value="aircraft on ground" style="flex:1;min-width:180px;width:auto"><select id="yg-acc" style="width:auto" aria-label="Giọng trên YouGlish"><option value="us">Mỹ</option><option value="uk">Anh</option><option value="aus">Úc</option><option value="">Mọi giọng</option></select><a class="btn primary" id="yg-go" target="_blank" rel="noopener" href="#">Mở YouGlish ↗</a></div></div>
-   ${REAL_SRC.map(g=>`<div class="panel stack"><h3>${esc(g.t)}</h3><div class="vgrid">${g.items.map(([t,d,u])=>`<a class="vcard" href="${u}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><b>${esc(t)} ↗</b><span class="small muted">${esc(d)}</span></a>`).join("")}</div></div>`).join("")}
+   ${(()=>{ const ch=(S.mixAccs||[]), card=([t,d,u,a])=>`<a class="vcard" href="${u}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit"><b>${esc(t)} ↗</b><span class="small muted">${esc(d)}</span>${a?`<span class="chip" style="align-self:flex-start">Giọng ${accLabel(a)}</span>`:""}</a>`;
+      const mine=ch.length?REAL_SRC.flatMap(g=>g.items).filter(it=>it[3]&&ch.includes(it[3])):[];
+      return (mine.length?`<div class="panel stack"><h3>Cho giọng đồng nghiệp của bạn</h3><div class="small muted">Theo các giọng bạn chọn ở Cài đặt → "Giọng khi chọn Trộn": ${ch.map(accLabel).join(", ")}.</div><div class="vgrid">${mine.map(card).join("")}</div></div>`:"")
+        + REAL_SRC.map(g=>`<div class="panel stack"><h3>${esc(g.t)}</h3><div class="vgrid">${g.items.map(card).join("")}</div></div>`).join(""); })()}
   </div>`;
   const yg=()=>{ const q=el.querySelector("#yg-q").value.trim()||"aircraft on ground", a=el.querySelector("#yg-acc").value; el.querySelector("#yg-go").href=`https://youglish.com/pronounce/${encodeURIComponent(q)}/english${a?"/"+a:""}`; };
   el.querySelector("#yg-q").oninput=yg; el.querySelector("#yg-acc").onchange=yg; yg();

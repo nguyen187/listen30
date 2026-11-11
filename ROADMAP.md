@@ -14,8 +14,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Listen 30: Real voices tab — filter suggested real-voice links by the chosen accents
-- [ ] Talk Shop: Nhập vai bộ Listen 30 — filter meetings by chosen colleague accents (chip row)
+- [ ] Listen 30: Họp mô phỏng list — same accent filter chips as Talk Shop
+- [ ] Talk Shop: Trình bày — 'Nói trước gương' timer mode (60/90/120 s countdown with key points hidden)
 
 ## Follow-ups
 
@@ -26,6 +26,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Listen 30: Giọng thật tags links by accent (added Spanish sources) and shows "Cho giọng đồng nghiệp của bạn" from mixAccs
+- [x] Talk Shop: Listen 30 role-plays have accent filter chips (★ = profile colleague accent)
 - [x] Talk Shop Mentor: "Dùng cho Listen 30" copies profile colleague accents into Listen 30 mixAccs (bumps updatedAt for sync)
 - [x] Listen 30: accent game asks only the chosen accents when 3+ are chosen (and have voices)
 - [x] Talk Shop Mentor: "Nói một câu với <term>" plan item until the term of the day is done
