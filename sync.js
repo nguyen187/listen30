@@ -32,7 +32,7 @@
     if (!sb || !user) return;
     status = "Đang tải dữ liệu từ tài khoản…"; notify();
     const { data, error } = await sb.from("english_progress").select("listen30,talkshop,updated_at").eq("user_id", user.id).maybeSingle();
-    if (error) { status = "Lỗi tải dữ liệu: " + error.message; notify(); return; }
+    if (error) { status = (error.code === "PGRST205" || error.code === "42P01") ? "Chưa tạo bảng dữ liệu trên Supabase: cần chạy supabase.sql một lần trong SQL Editor." : "Lỗi tải dữ liệu: " + error.message; notify(); return; }
     let changed = false;
     if (data) {
       for (const [k, col] of KEYS) {
@@ -50,7 +50,7 @@
     const row = { user_id: user.id, updated_at: new Date().toISOString() };
     for (const [k, col] of KEYS) { const v = readLocal(k); if (v) row[col] = v; }
     const { error } = await sb.from("english_progress").upsert(row, { onConflict: "user_id" });
-    status = error ? "Lỗi lưu: " + error.message : "Đã lưu lên tài khoản " + new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
+    status = error ? ((error.code === "PGRST205" || error.code === "42P01") ? "Chưa tạo bảng dữ liệu trên Supabase: cần chạy supabase.sql một lần." : "Lỗi lưu: " + error.message) : "Đã lưu lên tài khoản " + new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
     if (!quiet || error) notify();
   }
 

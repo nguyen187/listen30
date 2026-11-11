@@ -14,8 +14,9 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Cloud accounts: config filled (project tktbwlttwikfmqjqkpds, table exists). Remaining: user tests email sign-in on the live site; confirm redirect URLs are allowed
-- [ ] Both: check the dark theme visually on every tab and fix any low-contrast spots
+- [ ] Talk Shop: show the cloud account status (signed in / not) in the header
+- [ ] Listen 30: show the cloud account box also in the Today page footer when signed out (GitHub copy)
+- [ ] Cloud accounts: config filled (project tktbwlttwikfmqjqkpds). Waiting on the user: run supabase.sql (english_progress table is missing), add redirect URLs, then test email sign-in
 
 ## Follow-ups
 
@@ -25,6 +26,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Both: check the dark theme visually on every tab and fix any low-contrast spots (dark passes; light green/red chips darkened to ≥4.5:1)
 - [x] Cloud accounts code: sync.js (Supabase email-link / Google sign-in, per-user row with RLS, newest-wins sync of both apps), config.js, supabase.sql
 - [x] Listen 30: pronunciation-free 'listen & repeat' mode on phones (no mic needed: just shadow with model + 3-second pause)
 - [x] Talk Shop: Mentor shows a 7-day mini chart of minutes spoken
