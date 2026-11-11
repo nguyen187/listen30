@@ -643,6 +643,7 @@ let cloud=null, uid=null, saveT=null, saving=false, pending=false;
 function save(){
   S.updatedAt=Date.now();
   try{ localStorage.setItem(LS_KEY, JSON.stringify(S)); }catch(e){}
+  if(window.CloudSync) window.CloudSync.queue();
   if(cloud){ clearTimeout(saveT); saveT=setTimeout(pushCloud,1500); }
 }
 async function pushCloud(){
@@ -1474,6 +1475,7 @@ function renderSetup(el){
    </div>
    <div class="panel stack"><h3>Dữ liệu</h3><p class="muted small" style="margin:0">Tiến độ được lưu trên trình duyệt này${cloud?" và đồng bộ riêng tư vào tài khoản Claude của bạn":""}.</p>
     <div class="stack" style="gap:8px">
+     ${ON_PAGES&&window.CloudSync?`<div class="stack" style="gap:6px"><b>Tài khoản</b><div id="cloud-acct"></div></div>`:""}
      <div class="banner small stack" style="gap:6px"><b>Bạn đang dùng ${ON_PAGES?"bản GitHub":"bản trên Claude"}.</b><span>${ON_PAGES?"Tiến độ lưu trong trình duyệt này. Bản GitHub có ghi âm, phát YouTube và dùng được khi mất mạng.":"Tiến độ lưu trong trình duyệt và đồng bộ riêng vào tài khoản Claude của bạn. Bản trên Claude có AI giải thích lỗi không cần API key."}</span><span>Hai bản không tự đồng bộ với nhau. Để chuyển: bấm nút dưới đây (mã tiến độ được sao chép), mở bản kia, vào Cài đặt → "Nhập bằng cách dán mã".</span><div class="row"><button class="btn sm primary" id="io-move">Sao chép mã và mở ${ON_PAGES?"bản trên Claude":"bản GitHub"}</button><a class="btn sm ghost" href="${ON_PAGES?"https://claude.ai/artifact/PFFtUErYMHeMGTzuHqe2ig#setup":"https://nguyen187.github.io/listen30/#setup"}" target="_blank" rel="noopener">Chỉ mở bản kia ↗</a></div></div>
      <div class="small muted">Chuyển tiến độ sang máy khác: xuất ở máy này, rồi nhập ở máy kia (dán mã hoặc chọn file).</div>
      <div class="row"><button class="btn sm" id="io-exp">Xuất tiến độ</button><label class="btn sm" for="io-file">Nhập từ file</label><input type="file" id="io-file" accept=".json,application/json,text/plain" hidden><button class="btn sm" id="io-paste">Nhập bằng cách dán mã</button></div>
@@ -1482,6 +1484,7 @@ function renderSetup(el){
     <div id="reset-zone">${confirmReset?`<div class="confirm"><span>Xoá toàn bộ tiến độ và từ đã học? Không hoàn tác được.</span><button class="btn" id="rs-yes" style="border-color:var(--bad);color:var(--bad)">Xoá hết</button><button class="btn ghost" id="rs-no">Huỷ</button></div>`:`<button class="btn" id="rs">Học lại từ đầu</button>`}</div></div></div>`;
   bindTheme(el, ()=>renderSetup(el));
   bindIO(el);
+  if(window.CloudSync&&el.querySelector("#cloud-acct")) window.CloudSync.mount(el.querySelector("#cloud-acct"));
   ACC_KEYS.forEach(a=>{ el.querySelector("#v-"+a).onchange=e=>{ S.voice[a]=e.target.value; save(); }; });
   el.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>speak("I'm going to grab a coffee. Do you want one?",1,b.dataset.t));
   el.querySelector("#spd").onchange=e=>{ S.speedAdj=+e.target.value; save(); };

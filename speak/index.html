@@ -147,6 +147,8 @@ select,textarea,input[type=text]{font:inherit;color:var(--ink);background:var(--
 </div>
 
 <script src="../meetings.js"></script>
+<script src="../config.js"></script>
+<script src="../sync.js"></script>
 <script type="module">
 import Anthropic, { AuthenticationError, PermissionDeniedError, RateLimitError, BadRequestError, NotFoundError, InternalServerError, AnthropicError, APIUserAbortError } from "https://cdn.jsdelivr.net/npm/@anthropic-ai/sdk@1.3.0/+esm";
 window.AIX = { Anthropic, AuthenticationError, PermissionDeniedError, RateLimitError, BadRequestError, NotFoundError, InternalServerError, AnthropicError, APIUserAbortError };
@@ -339,7 +341,7 @@ const LS="talkshop.v1";
 const today=()=>{ const d=new Date(); return Math.floor((d.getTime()-d.getTimezoneOffset()*60000)/86400000); };
 function blank(){ return {days:{},talks:[],phr:{},pron:{},role:{},customRoles:[],miss:{},seen:{},theme:null,voice:{},recLang:"en-US",secs:0}; }
 let S=blank(); try{ const r=localStorage.getItem(LS); if(r) S=Object.assign(blank(),JSON.parse(r)); }catch(e){}
-function save(){ try{ localStorage.setItem(LS,JSON.stringify(S)); }catch(e){} }
+function save(){ S.updatedAt=Date.now(); try{ localStorage.setItem(LS,JSON.stringify(S)); }catch(e){} if(window.CloudSync) window.CloudSync.queue(); }
 const TASKS=[["warm","Khởi động: câu mẫu","Nói 5 câu theo chủ đề hôm nay"],["pron","Phát âm","4 câu luyện âm khó"],["role","Nhập vai cuộc họp","Đối đáp với đồng nghiệp ảo"],["talk","Trình bày tự do","Nói liền một mạch có bấm giờ"]];
 function D(n){ if(!S.days[n]) S.days[n]={t:{},c:{}}; return S.days[n]; }
 function prog(n){ const d=S.days[n]; return d?TASKS.filter(([k])=>d.t[k]).length:0; }
@@ -833,9 +835,10 @@ function rProg(el){
    </div>
    <div class="panel stack"><div class="row" style="justify-content:space-between"><h3>Thẻ tiến độ để chia sẻ</h3><span class="row"><button class="btn sm primary" id="sc-copy">Sao chép ảnh</button><button class="btn sm" id="sc-dl">Tải ảnh PNG</button></span></div><canvas id="sc-cv" width="1200" height="630" style="width:100%;max-width:600px;height:auto;border-radius:10px;border:1px solid var(--line)" role="img" aria-label="Ảnh thẻ tiến độ"></canvas><span class="small muted" id="sc-msg">Dán vào Teams hoặc chat nhóm để giữ động lực.</span></div>
    <div class="panel stack"><div class="row" style="justify-content:space-between"><h3>Lịch sử ghi âm</h3><span class="row"><button class="btn sm" id="tx-dl">Tải bản chép lời (.txt)</button><button class="btn sm ghost" id="rec-clear">Xoá lịch sử</button></span></div><div class="small muted">Giữ 60 bản ghi gần nhất trên máy này. Nghe lại bản đầu tiên và bản mới nhất của cùng một bài để thấy mình tiến bộ.</div><div id="rec-list"><span class="small muted">Đang tải…</span></div></div>
+   <div class="panel stack"><h3>Tài khoản</h3><div id="cloud-acct"></div></div>
    <div class="panel stack"><h3>Chuyển tiến độ sang máy khác</h3><div class="small muted">Xuất một file gồm tiến độ Talk Shop và Listen 30, rồi nhập ở máy kia. API key không nằm trong file.</div>
     <div class="row"><button class="btn sm" id="io-exp">Tải file tiến độ</button><button class="btn sm" id="io-copy">Sao chép mã</button><label class="btn sm" for="io-file">Nhập từ file</label><input type="file" id="io-file" accept=".json,application/json,text/plain" hidden><button class="btn sm" id="io-paste">Dán mã</button></div><div id="io-area"></div></div></div>`;
-  bindIO(el); drawRecs(el); shareCard(el);
+  bindIO(el); drawRecs(el); shareCard(el); if(window.CloudSync) window.CloudSync.mount(el.querySelector("#cloud-acct"));
   el.querySelector("#tx-dl").onclick=async()=>{ const recs=(await recAll()).sort((a,b)=>a.ts-b.ts), fmt=t=>new Date(t).toLocaleString("vi-VN");
     const lines=["TALK SHOP · BẢN CHÉP LỜI","Xuất lúc "+fmt(Date.now()),""];
     if((S.journal||[]).length){ lines.push("== NHẬT KÝ NÓI =="); S.journal.forEach(j=>{ lines.push(new Date(j.d*86400000).toLocaleDateString("vi-VN")+" · "+j.wpm+" từ/phút","Q: "+j.q,j.text,""); }); }

@@ -8,11 +8,13 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 - `index.html` — Listen 30 on GitHub Pages (generated).
 - `meetings.js` — mock meetings exported from app.html by build.sh (used by Talk Shop role-plays).
 - `speak/index.html` — Talk Shop (speaking + mentor), GitHub Pages only (needs the microphone).
+- Cloud: `config.js` (Supabase URL + anon key), `sync.js`, `supabase.sql` (table + row level security).
 - Storage: `listen30.v1`, `talkshop.v1`, `talkshop.key`, `talkshop.chat` in localStorage (same origin on GitHub Pages).
 - Live: https://nguyen187.github.io/listen30/ and https://nguyen187.github.io/listen30/speak/
 
 ## Backlog (top = next)
 
+- [ ] Cloud accounts: user creates a Supabase project, runs supabase.sql, fills config.js, allows the GitHub Pages URL as an auth redirect; then test sign-in and sync end to end
 - [ ] Both: check the dark theme visually on every tab and fix any low-contrast spots
 
 ## Follow-ups
@@ -23,6 +25,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Cloud accounts code: sync.js (Supabase email-link / Google sign-in, per-user row with RLS, newest-wins sync of both apps), config.js, supabase.sql
 - [x] Listen 30: pronunciation-free 'listen & repeat' mode on phones (no mic needed: just shadow with model + 3-second pause)
 - [x] Talk Shop: Mentor shows a 7-day mini chart of minutes spoken
 - [x] Listen 30: 'Câu hay sai' also pulls from free dictation and own-text sessions (store their misses)
