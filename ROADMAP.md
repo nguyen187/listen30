@@ -4,7 +4,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## How the code is laid out
 
-- `app.html` — Listen 30 page body (also published as the Claude artifact https://claude.ai/artifact/PFFtUErYMHeMGTzuHqe2ig). Source of truth is the scratchpad copy `listen30.html` during a session; copy it here, then run `./build.sh` to regenerate `index.html`.
+- `app.html` — Listen 30 page body (also published as the Claude artifact https://claude.ai/artifact/PFFtUErYMHeMGTzuHqe2ig). Source of truth is `app.html`; during a session it is edited in a scratchpad copy `listen30.html` (artifact publishes pass the artifact URL); copy it here, then run `./build.sh` to regenerate `index.html`.
 - `index.html` — Listen 30 on GitHub Pages (generated).
 - `meetings.js` — mock meetings exported from app.html by build.sh (used by Talk Shop role-plays).
 - `speak/index.html` — Talk Shop (speaking + mentor), GitHub Pages only (needs the microphone).
@@ -13,8 +13,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop: Listen 30 role-plays — let the learner pick which character to play (not only Nguyen)
-- [ ] Listen 30: summary task without AI — keyword checklist from the meeting quiz answers
+- [ ] Service worker: also cache meetings.js so Listen 30 role-plays work offline
+- [ ] Talk Shop: role-play AI feedback compares with the original line from the meeting
 
 ## Follow-ups
 
@@ -24,6 +24,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Listen 30: summary task without AI — keyword checklist from the meeting quiz answers
+- [x] Talk Shop: Listen 30 role-plays — let the learner pick which character to play (not only Nguyen)
 - [x] Talk Shop: role-play from the Listen 30 meetings (reuse the 20 meetings as speaking role-plays)
 - [x] Listen 30: listening comprehension 'summary' task — after a meeting, record or type a 2-sentence summary, AI checks it
 - [x] Talk Shop: Mentor AI "rewrite my sentence 3 ways" quick tool (formal, neutral, casual)

@@ -600,7 +600,7 @@ function rRole(el){
     <div class="stack" style="margin-top:10px;gap:10px"><div class="small muted">Mô tả cuộc họp sắp tới: họp với ai, về việc gì, bạn cần đạt được gì. Mentor sẽ viết kịch bản để bạn tập trước.</div>
      <textarea id="gen-desc" rows="3" placeholder="Ví dụ: Thứ Năm họp với Julien (Airbus) để thống nhất cách tính MTBUR cho đội A350, tôi muốn đề xuất loại bỏ NFF và xin thêm dữ liệu shop findings."></textarea>
      <div class="row"><label class="small muted" for="gen-acc">Giọng đối tác</label><select id="gen-acc"><option value="">Mentor tự chọn</option>${Object.keys(ACCL).map(a=>`<option value="${a}">${ACCL[a]}</option>`).join("")}</select><button class="btn primary" id="gen-go">Tạo kịch bản</button><span class="small" id="gen-msg"></span></div></div></details>
-   <div class="row"><button class="btn sm ${sel.roleSet!=="l30"?"primary":""}" data-rs="base">Bài nhập vai</button><button class="btn sm ${sel.roleSet==="l30"?"primary":""}" data-rs="l30">Đóng vai Nguyen trong các cuộc họp của Listen 30</button></div>
+   <div class="row"><button class="btn sm ${sel.roleSet!=="l30"?"primary":""}" data-rs="base">Bài nhập vai</button><button class="btn sm ${sel.roleSet==="l30"?"primary":""}" data-rs="l30">Đóng vai trong các cuộc họp của Listen 30</button></div>
    <div class="cats pick" ${sel.roleSet==="l30"?"hidden":""}>${R.map((r,i)=>{ const b=roleBest(i); return `<button class="cell" data-r="${i}" aria-current="${sel.role===i}"><b>${esc(r.t)}</b><span class="small muted">${esc(r.who)} · ${ACCL[r.acc]||""}</span><span class="row" style="gap:4px">${i>=ROLES.length?'<span class="chip warn">Của bạn</span>':""}${b!=null?`<span class="chip ${b>=75?"ok":"warn"}">${b}% ý chính</span>`:""}</span></button>`; }).join("")}</div>
    <div class="panel" id="rl"></div>${sel.role>=ROLES.length?`<div class="row"><button class="btn sm ghost" id="rl-del">Xoá bài nhập vai này</button></div>`:""}</div>`;
   el.querySelectorAll("[data-r]").forEach(b=>b.onclick=()=>{ sel.role=+b.dataset.r; rRole(el); });
@@ -628,26 +628,29 @@ Make 3 or 4 exchanges. The partner speaks first in every exchange, then I answer
   el.querySelectorAll("[data-rs]").forEach(b=>b.onclick=()=>{ sel.roleSet=b.dataset.rs; rRole(el); });
   if(sel.roleSet==="l30"){ const L=l30Roles(); if(!L.length){ el.querySelector("#rl").innerHTML='<span class="small muted">Không tải được dữ liệu cuộc họp. Kiểm tra kết nối rồi tải lại trang.</span>'; return; }
     const i=Math.min(sel.l30i||0,L.length-1);
-    el.querySelector("#rl").insertAdjacentHTML("beforebegin",`<div class="cats pick" id="l30cats">${L.map((r,k)=>`<button class="cell" data-l3="${k}" aria-current="${i===k}"><b>${esc(r.t)}</b><span class="small muted">${esc(r.who)}</span>${(S.l30role||{})[r.id]!=null?`<span class="chip ${(S.l30role[r.id])>=75?"ok":"warn"}">${S.l30role[r.id]}% ý chính</span>`:""}</button>`).join("")}</div>`);
+    el.querySelector("#rl").insertAdjacentHTML("beforebegin",`<div class="cats pick" id="l30cats">${L.map((r,k)=>`<button class="cell" data-l3="${k}" aria-current="${i===k}"><b>${esc(r.t)}</b><span class="small muted">${esc(r.who)}</span>${Object.entries(S.l30role||{}).filter(([k])=>k.split(":")[0]===r.id).length?`<span class="chip ok">Đã tập</span>`:""}</button>`).join("")}</div>`);
     el.querySelectorAll("[data-l3]").forEach(b=>b.onclick=()=>{ sel.l30i=+b.dataset.l3; rRole(el); });
-    roleWidget(el.querySelector("#rl"),-1,null,L[i]); return; }
+    const M=L[i].m, chars=Object.keys(M.sp); if(!chars.includes(sel.l30me)) sel.l30me=chars.includes("Nguyen")?"Nguyen":chars[0];
+    el.querySelector("#rl").insertAdjacentHTML("beforebegin",`<div class="row"><label class="small muted" for="l3-me">Bạn đóng vai</label><select id="l3-me" style="width:auto">${chars.map(c=>`<option ${c===sel.l30me?"selected":""}>${esc(c)}</option>`).join("")}</select><span class="small muted">Những người còn lại nói bằng giọng của họ.</span></div>`);
+    el.querySelector("#l3-me").onchange=e=>{ sel.l30me=e.target.value; replayStop(); rRole(el); };
+    roleWidget(el.querySelector("#rl"),-1,null,l30RoleFor(M,sel.l30me)); return; }
   roleWidget(el.querySelector("#rl"),sel.role);
 }
 const STOPW=new Set("about after again their there which would could should these those where while with from that this have will your just into than then them they were what when also been being only some more most very much such each other over under".split(" "));
-function l30Roles(){
-  const M=window.L30_MEETS||[]; const acc=a=>ACCL[a]?a:"us";
-  return M.filter(m=>m.lines.some(l=>l[0]==="Nguyen")).map(m=>{
-    const turns=[]; m.lines.forEach(([w,t])=>{
-      if(w==="Nguyen"){ const kw=[...new Set(t.toLowerCase().replace(/[^a-z' ]/g," ").split(/\s+/).filter(x=>x.length>=5&&!STOPW.has(x)))].slice(0,3);
-        if(!turns.length) turns.push({p:"Over to you, Nguyen.",acc:"gb"});
-        if(turns[turns.length-1].y){ turns.push({p:"Okay, go on.",acc:"gb"}); }
-        turns.push({y:"Đến lượt bạn (vai Nguyen). Nói ý của Nguyen bằng lời của bạn. Ý chính: "+kw.join(", "),m:t,k:kw.length?kw:["okay"]}); }
-      else turns.push({p:t,acc:acc(m.sp[w])});
-    });
-    const others=Object.keys(m.sp).filter(n=>n!=="Nguyen");
-    return {id:m.id,l30:1,t:m.t,who:others.join(", ")+" (giọng "+others.map(n=>ACCL[m.sp[n]]).join(", ")+")",acc:acc(m.sp[others[0]]),ctx:m.ctx+" Bạn là Nguyen.",turns};
+function replayStop(){ if(hasTTS) speechSynthesis.cancel(); }
+function l30RoleFor(m,me){
+  const acc=a=>ACCL[a]?a:"us"; const turns=[];
+  m.lines.forEach(([w,t])=>{
+    if(w===me){ const kw=[...new Set(t.toLowerCase().replace(/[^a-z' ]/g," ").split(/\s+/).filter(x=>x.length>=5&&!STOPW.has(x)))].slice(0,3);
+      if(!turns.length) turns.push({p:"Over to you, "+me+".",acc:"gb"});
+      if(turns[turns.length-1].y) turns.push({p:"Okay, go on.",acc:"gb"});
+      turns.push({y:`Đến lượt bạn (vai ${me}). Nói ý của ${me} bằng lời của bạn. Ý chính: `+kw.join(", "),m:t,k:kw.length?kw:["okay"]}); }
+    else turns.push({p:t,acc:acc(m.sp[w])});
   });
+  const others=Object.keys(m.sp).filter(n=>n!==me);
+  return {id:m.id+":"+me,l30:1,t:m.t,who:others.join(", ")+" (giọng "+others.map(n=>ACCL[m.sp[n]]).join(", ")+")",acc:acc(m.sp[others[0]]),ctx:m.ctx+" Bạn là "+me+".",turns};
 }
+function l30Roles(){ return (window.L30_MEETS||[]).map(m=>({m,t:m.t,who:Object.keys(m.sp).join(", "),id:m.id})); }
 const lvlRate=()=>({easy:0.85,normal:1,hard:1.2})[S.roleLvl||"normal"];
 function roleWidget(el,ri,onDone){
   const R=(arguments[3])||allRoles()[ri]; let step=0; const covers=[]; const takes={}; let replayTok=0;
@@ -672,7 +675,7 @@ function roleWidget(el,ri,onDone){
     el.querySelectorAll("[data-show]").forEach(b=>b.onclick=()=>{ const i=+b.dataset.show; el.querySelector(`[data-txt="${i}"]`).textContent=R.turns[i].p; });
     if(S.roleLvl==="easy") el.querySelectorAll("[data-show]").forEach(x=>x.click());
     const cur=R.turns[step];
-    if(cur&&cur.p){ speak(cur.p,lvlRate(),cur.acc||R.acc).then(()=>{ if(R.turns[step]===cur){ step++; if(step<R.turns.length) draw(); else finish(); } }); }
+    if(cur&&cur.p){ speak(cur.p,lvlRate(),cur.acc||R.acc).then(()=>{ if(!document.body.contains(el)) return; if(R.turns[step]===cur){ step++; if(step<R.turns.length) draw(); else finish(); } }); }
     if(cur&&cur.y){ const box=el.querySelector("#rl-sp"); mountSpeak(box,{onBlob:b=>{ takes[step]=b; },label:R.t+" · lượt "+(Math.floor(step/2)+1),kind:"role",keys:cur.k,onResult:(r,resEl)=>{
       const hits=r.hits||cur.k.map(k=>({k:k.split("|")[0],hit:false})), cover=r.cover||0;
       resEl.innerHTML=`<div class="stack" style="gap:8px"><div class="row"><span class="label">Ý chính</span>${hits.map(h=>`<span class="chip ${h.hit?"ok":"bad"}">${h.hit?"✓":"✗"} ${esc(h.k)}</span>`).join("")}</div>

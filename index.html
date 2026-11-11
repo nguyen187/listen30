@@ -1897,13 +1897,17 @@ function wkMeet(body){
    <div class="row"><button class="btn sm primary" id="mn-cmp">So với cuộc họp</button>${(ON_PAGES?!!pagesKey():!!(window.claude&&window.claude.use))?'<button class="btn sm" id="mn-ai">Claude chấm biên bản</button>':""}</div><div id="mn-out"></div>
    <h3 style="margin-top:8px">Tóm tắt 2 câu</h3><div class="small muted">Câu 1: vấn đề hoặc mục đích cuộc họp. Câu 2: kết luận hoặc bước tiếp theo. Viết bằng tiếng Anh như khi báo lại cho sếp.</div>
    <textarea id="sm-in" rows="2" placeholder="The airline has an AOG in Delhi because of a hydraulic pump failure. Airbus will ship a new pump from Hamburg to arrive on Thursday."></textarea>
-   <div class="row">${(ON_PAGES?!!pagesKey():!!(window.claude&&window.claude.use))?'<button class="btn sm primary" id="sm-ai">Claude chấm tóm tắt</button>':'<button class="btn sm" id="sm-ref">Xem gợi ý</button>'}</div><div id="sm-out"></div></div>`;
+   <div class="row">${(ON_PAGES?!!pagesKey():!!(window.claude&&window.claude.use))?'<button class="btn sm primary" id="sm-ai">Claude chấm tóm tắt</button>':'<button class="btn sm" id="sm-ref">Kiểm tra từ khoá</button>'}</div><div id="sm-out"></div></div>`;
   const now=body.querySelector("#mt-now"), linesEl=body.querySelector("#mt-lines");
   { const nOut=body.querySelector("#mn-out"), notes=body.querySelector("#mn-notes");
     const commits=m.lines.filter(([,t])=>/\b(I'll|I will|we'll|will|can you|could you|please|let's|kindly)\b/i.test(t));
     body.querySelector("#mn-cmp").onclick=()=>{ nOut.innerHTML=`<div class="small"><b>Những câu có cam kết hoặc yêu cầu trong cuộc họp:</b>${commits.map(([w,t])=>`<div style="margin-top:4px">• <b>${esc(w)}:</b> ${esc(t)}</div>`).join("")}<div class="muted" style="margin-top:6px">Đối chiếu: bạn đã ghi đủ ai, việc gì, hạn khi nào chưa?</div></div>`; };
     const smOut=body.querySelector("#sm-out"), smIn=body.querySelector("#sm-in");
-    const smRef=body.querySelector("#sm-ref"); if(smRef) smRef.onclick=()=>{ smOut.innerHTML=`<div class="small"><b>Bối cảnh:</b> ${esc(m.ctx)}<br><b>Gợi ý:</b> dựa vào câu trả lời đúng của phần câu hỏi để viết câu 2 (ai làm gì, khi nào).</div>`; };
+    const smRef=body.querySelector("#sm-ref"); if(smRef) smRef.onclick=()=>{
+      const stop=new Set("the a an of to and or in on at by for with from is are was were be it its this that what which who how when why does do did".split(" "));
+      const keys=[...new Set(m.qs.flatMap(q=>q[1][q[2]].toLowerCase().replace(/[^a-z0-9%., ]/g," ").split(/\s+/)).filter(w=>w&&(w.length>=4||/\d/.test(w))&&!stop.has(w)).map(w=>w.replace(/[.,]$/,"")))].slice(0,10);
+      const txt=" "+smIn.value.toLowerCase()+" ", hit=keys.filter(k=>txt.includes(k));
+      smOut.innerHTML=`<div class="small stack" style="gap:6px"><div><b>${hit.length}/${keys.length} ý chính</b> (lấy từ đáp án đúng của phần câu hỏi):</div><div class="row">${keys.map(k=>`<span class="chip ${hit.includes(k)?"ok":"bad"}">${hit.includes(k)?"✓":"✗"} ${esc(k)}</span>`).join("")}</div><div class="muted">Bối cảnh: ${esc(m.ctx)}</div></div>`; };
     const smAi=body.querySelector("#sm-ai"); if(smAi) smAi.onclick=async()=>{ if(!smIn.value.trim()){ smIn.focus(); return; } smOut.innerHTML='<span class="small muted">Claude đang đọc…</span>';
       try{ const t=await aiAsk(`Transcript of a mock meeting:\n${m.lines.map(([w,t])=>w+": "+t).join("\n")}\n\nA Vietnamese learner wrote this 2-sentence summary for their manager:\n"""${smIn.value}"""\n\nIn Vietnamese, briefly: is it accurate and complete (main issue + decision/next step)? Point out wrong facts or missing points. Then give a better 2-sentence English summary, each sentence on its own line starting with "> ".`,txt=>{ smOut.innerHTML=aiMd(txt); }); smOut.innerHTML=aiMd(t); smOut.querySelectorAll("[data-say]").forEach(b=>b.onclick=()=>speak(b.dataset.say,1,"us")); }
       catch(e){ smOut.innerHTML=`<span class="small" style="color:var(--bad)">${aiErrMsg(e)}</span>`; } };
