@@ -1272,7 +1272,7 @@ function gymDict(el){
     const last= src==="all"?30:upto, pool=[];
     for(let k=1;k<=last;k++){ const d=DAYS[k-1]; pool.push(...FOCUS[d.f].s, ...d.v.map(x=>x.x)); }
     const items=shuffle(pool).slice(0,10).map((t,i)=>({text:t,rate,acc:acc==="mix"?["us","gb","au"][i%3]:acc}));
-    mountDict(el.querySelector("#gd-w"), items, [], ()=>{}, ()=>{}, {});
+    mountDict(el.querySelector("#gd-w"), items, [], sc=>recordMiss(items,sc), ()=>{}, {});
   };
   ["#gd-acc","#gd-rate","#gd-src"].forEach(s=>el.querySelector(s).onchange=start);
   start();
@@ -1285,12 +1285,20 @@ function worstSentences(){
   const out=[];
   for(let n=1;n<=30;n++){ const d=S.days[n]; if(!d||!d.dict||!d.dict.length) continue; const its=dictItems(n);
     d.dict.forEach((sc,i)=>{ if(sc!=null&&sc<90&&its[i]) out.push(Object.assign({score:sc,day:n},its[i])); }); }
+  Object.values(S.extraMiss||{}).forEach(x=>out.push(Object.assign({day:"Luyện thêm"},x)));
   return out.sort((a,b)=>a.score-b.score).slice(0,10);
+}
+function recordMiss(items,scores){
+  if(!S.extraMiss) S.extraMiss={};
+  scores.forEach((sc,i)=>{ if(sc==null||!items[i]) return; const k=items[i].text;
+    if(sc<90) S.extraMiss[k]={text:k,rate:items[i].rate,acc:items[i].acc,score:sc}; else delete S.extraMiss[k]; });
+  const all=Object.values(S.extraMiss).sort((a,b)=>a.score-b.score); if(all.length>40){ S.extraMiss={}; all.slice(0,40).forEach(x=>S.extraMiss[x.text]=x); }
+  save();
 }
 function gymWorst(el){
   const w=worstSentences();
   if(!w.length){ el.innerHTML='<div class="small muted">Chưa có câu nào dưới 90%. Làm phần Chép chính tả trong các ngày học, những câu bạn nghe sai sẽ được gom về đây để ôn lại.</div>'; return; }
-  el.innerHTML=`<div class="stack" style="gap:10px"><div class="small muted explain">10 câu bạn chép sai nhiều nhất trong lộ trình (điểm thấp nhất trước), đọc lại đúng giọng và tốc độ lần đầu. Ôn mỗi tuần một lần.</div><div class="row">${w.map(x=>`<span class="chip mono">Ngày ${x.day}: ${x.score}%</span>`).join("")}</div><div id="ws-w"></div></div>`;
+  el.innerHTML=`<div class="stack" style="gap:10px"><div class="small muted explain">10 câu bạn chép sai nhiều nhất trong lộ trình (điểm thấp nhất trước), đọc lại đúng giọng và tốc độ lần đầu. Ôn mỗi tuần một lần.</div><div class="row">${w.map(x=>`<span class="chip mono">${typeof x.day==="number"?"Ngày "+x.day:x.day}: ${x.score}%</span>`).join("")}</div><div id="ws-w"></div></div>`;
   mountDict(el.querySelector("#ws-w"), w.map(x=>({text:x.text,rate:x.rate,acc:x.acc})), [], ()=>{}, ()=>{}, {});
 }
 const SPEED_STEPS=[0.9,1.0,1.1,1.2,1.3,1.4,1.5,1.6];
@@ -1339,7 +1347,8 @@ function gymMine(el){
     if(el.querySelector("#mn-shuf").checked) ss=shuffle(ss);
     msg.textContent=ss.length+" câu";
     const acc=el.querySelector("#mn-acc").value, rate=+el.querySelector("#mn-rate").value, mix=["us","gb","in","fr","de"];
-    mountDict(el.querySelector("#mn-w"), ss.slice(0,40).map((x,i)=>({text:x,rate,acc:acc==="mix"?mix[i%5]:acc})), [], ()=>{}, ()=>{}, {});
+    const its=ss.slice(0,40).map((x,i)=>({text:x,rate,acc:acc==="mix"?mix[i%5]:acc}));
+    mountDict(el.querySelector("#mn-w"), its, [], sc=>recordMiss(its,sc), ()=>{}, {});
     el.querySelector("#mn-w").scrollIntoView({behavior:"smooth",block:"start"});
   };
 }
