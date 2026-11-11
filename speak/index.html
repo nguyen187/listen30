@@ -975,6 +975,9 @@ function analyze(){
   // phrases
   const pc=sits.map(s=>s[2].phr).map(i=>({i,v:phrAvg[i]})).sort((a,b)=>(a.v??-1)-(b.v??-1))[0];
   acts.push({p:(P.pain==="fear"||P.pain==="words"?85:60)+(pc.v==null?5:0),m:5,t:`Câu mẫu: ${PHRASES[pc.i].t}`,why:pc.v==null?"Thuộc khung câu cho tình huống bạn hay gặp.":`Độ rõ ${pc.v}%. Nói lại đến khi trên 85%.`,go:()=>{sel.phr=pc.i;go("phr");}});
+  // weak phrases review
+  const weakN=Object.entries(S.phr||{}).filter(([k,v])=>{ const [ci,pi]=k.split(":").map(Number); return v<70&&PHRASES[ci]&&PHRASES[ci].p[pi]; }).length;
+  if(weakN>=3) acts.push({p:(P.pain==="pron"||P.pain==="words"?80:63)+Math.min(8,weakN),m:Math.min(8,2+weakN),t:`Ôn ${Math.min(12,weakN)} câu mẫu còn yếu`,why:`${weakN} câu bạn từng nói vẫn dưới 70% độ rõ. Nói lại từng câu, nghe mẫu Chậm trước khi nói.`,go:()=>{sel.phr=-1;go("phr");}});
   // listening (Listen 30)
   if(l30){
     if(l30.dictAvg!=null) diag.push([l30.dictAvg>=85?"ok":l30.dictAvg>=65?"warn":"bad","Nghe chép chính tả (Listen 30)",`${l30.dictAvg}%`]);
