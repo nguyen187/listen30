@@ -1,5 +1,5 @@
 // Cloud sync for Listen 30 and Talk Shop (GitHub Pages only).
-// Signs the learner in with Supabase (email link or Google) and keeps their progress in one row of
+// Signs the learner in with Supabase (email + password) and keeps their progress in one row of
 // public.english_progress. The newest copy wins: each app object carries its own updatedAt.
 (function () {
   const cfg = window.SB_CONFIG || {};
@@ -9,7 +9,7 @@
   const readLocal = k => { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } };
   const enabled = !!(cfg.url && cfg.anonKey);
   let sb = null, user = null, timer = null, status = "", loading = null;
-  let googleOn = false;
+  let recovering = false;
   const listeners = new Set();
   const notify = () => listeners.forEach(fn => { try { fn(); } catch (e) {} });
 
@@ -22,6 +22,7 @@
     }).then(() => {
       sb = window.supabase.createClient(cfg.url, cfg.anonKey, { auth: { persistSession: true, detectSessionInUrl: true, flowType: "pkce" } });
       sb.auth.onAuthStateChange((ev, session) => {
+        if (ev === "PASSWORD_RECOVERY") recovering = true;
         const was = user && user.id; user = session ? session.user : null; notify();
         if (user && user.id !== was) pull();
       });
@@ -62,24 +63,48 @@
     const draw = () => {
       if (!document.body.contains(el)) { listeners.delete(draw); return; }
       if (!enabled) { el.innerHTML = '<div class="small muted">Lưu vào tài khoản chưa được bật: cần điền Supabase URL và anon key trong config.js.</div>'; return; }
-      if (user) {
-        el.innerHTML = `<div class="stack" style="gap:8px"><div class="row" style="justify-content:space-between"><span>Đã đăng nhập: <b>${esc(user.email || "tài khoản Google")}</b></span><span class="row"><button class="btn sm" data-cs="sync">Đồng bộ ngay</button><button class="btn sm ghost" data-cs="out">Đăng xuất</button></span></div><div class="small muted">${esc(status || "Tiến độ được tự lưu lên tài khoản sau mỗi lần thay đổi.")}</div><div class="small muted">Bản ghi âm vẫn chỉ nằm trên máy này.</div></div>`;
+      if (user && !recovering) {
+        el.innerHTML = `<div class="stack" style="gap:8px"><div class="row" style="justify-content:space-between"><span>Đã đăng nhập: <b>${esc(user.email || "")}</b></span><span class="row"><button class="btn sm" data-cs="sync">Đồng bộ ngay</button><button class="btn sm ghost" data-cs="out">Đăng xuất</button></span></div><div class="small muted">${esc(status || "Tiến độ được tự lưu lên tài khoản sau mỗi lần thay đổi.")}</div><div class="small muted">Bản ghi âm vẫn chỉ nằm trên máy này.</div></div>`;
         el.querySelector('[data-cs="sync"]').onclick = () => pull();
         el.querySelector('[data-cs="out"]').onclick = async () => { await sb.auth.signOut(); status = ""; notify(); };
       } else {
-        el.innerHTML = `<div class="stack" style="gap:8px"><div class="small muted">Đăng nhập để lưu hồ sơ và tiến độ lên tài khoản, dùng tiếp trên máy khác. Không cần mật khẩu: web gửi link đăng nhập qua email.</div>
-          <div class="row"><input type="email" data-cs="email" placeholder="email@congty.com" autocomplete="email" style="flex:1;min-width:200px" aria-label="Email"><button class="btn sm primary" data-cs="link">Gửi link đăng nhập</button>${googleOn ? '<button class="btn sm" data-cs="google">Đăng nhập Google</button>' : ""}</div>
+        if (recovering) {
+          el.innerHTML = `<div class="stack" style="gap:8px"><div class="small muted">Đặt mật khẩu mới cho tài khoản.</div>
+            <div class="row"><input type="password" data-cs="np" placeholder="Mật khẩu mới (ít nhất 6 ký tự)" autocomplete="new-password" style="flex:1;min-width:200px" aria-label="Mật khẩu mới"><button class="btn sm primary" data-cs="setpw">Lưu mật khẩu</button></div>
+            <div class="small" data-cs="msg"></div></div>`;
+          const m = el.querySelector('[data-cs="msg"]');
+          el.querySelector('[data-cs="setpw"]').onclick = async () => {
+            const pw = el.querySelector('[data-cs="np"]').value; if (pw.length < 6) { m.textContent = "Mật khẩu cần ít nhất 6 ký tự."; return; }
+            const { error } = await sb.auth.updateUser({ password: pw });
+            if (error) m.textContent = "Không đổi được: " + error.message; else { recovering = false; status = "Đã đổi mật khẩu."; notify(); }
+          };
+          return;
+        }
+        el.innerHTML = `<div class="stack" style="gap:8px"><div class="small muted">Đăng nhập để lưu hồ sơ và tiến độ lên tài khoản, dùng tiếp trên máy khác. Chưa có tài khoản: nhập email và mật khẩu rồi bấm "Tạo tài khoản".</div>
+          <div class="row"><input type="email" data-cs="email" placeholder="email@congty.com" autocomplete="email" style="flex:1;min-width:180px" aria-label="Email"><input type="password" data-cs="pw" placeholder="Mật khẩu" autocomplete="current-password" style="flex:1;min-width:140px" aria-label="Mật khẩu"></div>
+          <div class="row"><button class="btn sm primary" data-cs="in">Đăng nhập</button><button class="btn sm" data-cs="up">Tạo tài khoản</button><button class="btn sm ghost" data-cs="forgot">Quên mật khẩu</button></div>
           <div class="small" data-cs="msg">${esc(status)}</div></div>`;
         const msg = el.querySelector('[data-cs="msg"]');
-        el.querySelector('[data-cs="link"]').onclick = async () => {
-          const email = el.querySelector('[data-cs="email"]').value.trim(); if (!email) return;
-          msg.textContent = "Đang gửi…";
-          const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + location.pathname } });
-          msg.textContent = error ? "Không gửi được: " + error.message : "Đã gửi. Mở email và bấm link để đăng nhập (kiểm tra cả mục Spam).";
+        const val = () => ({ email: el.querySelector('[data-cs="email"]').value.trim(), password: el.querySelector('[data-cs="pw"]').value });
+        const vi = e => /invalid login/i.test(e.message) ? "Sai email hoặc mật khẩu." : /not confirmed/i.test(e.message) ? "Email chưa xác nhận: mở email và bấm link xác nhận trước." : /already registered/i.test(e.message) ? "Email này đã có tài khoản: bấm Đăng nhập." : e.message;
+        el.querySelector('[data-cs="pw"]').onkeydown = e => { if (e.key === "Enter") el.querySelector('[data-cs="in"]').click(); };
+        el.querySelector('[data-cs="in"]').onclick = async () => {
+          const c = val(); if (!c.email || !c.password) { msg.textContent = "Nhập email và mật khẩu."; return; }
+          msg.textContent = "Đang đăng nhập…";
+          const { error } = await sb.auth.signInWithPassword(c);
+          if (error) msg.textContent = "Không đăng nhập được: " + vi(error);
         };
-        const gb = el.querySelector('[data-cs="google"]'); if (gb) gb.onclick = async () => {
-          const { error } = await sb.auth.signInWithOAuth({ provider: "google", options: { redirectTo: location.origin + location.pathname } });
-          if (error) msg.textContent = "Không đăng nhập Google được: " + error.message;
+        el.querySelector('[data-cs="up"]').onclick = async () => {
+          const c = val(); if (!c.email || c.password.length < 6) { msg.textContent = "Nhập email và mật khẩu ít nhất 6 ký tự."; return; }
+          msg.textContent = "Đang tạo tài khoản…";
+          const { data, error } = await sb.auth.signUp({ ...c, options: { emailRedirectTo: location.origin + location.pathname } });
+          if (error) msg.textContent = "Không tạo được: " + vi(error);
+          else if (!data.session) msg.textContent = data.user && data.user.identities && !data.user.identities.length ? "Email này đã có tài khoản: bấm Đăng nhập." : "Đã tạo. Mở email và bấm link xác nhận một lần (xem cả Spam), sau đó đăng nhập bằng mật khẩu.";
+        };
+        el.querySelector('[data-cs="forgot"]').onclick = async () => {
+          const { email } = val(); if (!email) { msg.textContent = "Nhập email trước rồi bấm Quên mật khẩu."; return; }
+          const { error } = await sb.auth.resetPasswordForEmail(email, { redirectTo: location.origin + location.pathname });
+          msg.textContent = error ? "Không gửi được: " + error.message : "Đã gửi link đặt lại mật khẩu vào email.";
         };
       }
     };
@@ -87,7 +112,6 @@
     if (enabled) sdk().then(draw).catch(e => { el.innerHTML = `<div class="small" style="color:var(--bad)">${esc(e.message)}</div>`; });
   }
 
-  if (enabled) fetch(cfg.url + "/auth/v1/settings", { headers: { apikey: cfg.anonKey } }).then(r => r.json()).then(s => { googleOn = !!(s.external && s.external.google); notify(); }).catch(() => {});
   window.CloudSync = { enabled, mount, queue, get user() { return user; } };
   if (enabled) sdk().then(() => sb.auth.getSession()).then(({ data }) => { if (!user && data.session) { user = data.session.user; notify(); pull(); } }).catch(() => {});
 })();
