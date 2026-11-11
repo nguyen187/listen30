@@ -16,7 +16,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 - [ ] Talk Shop: show the cloud account status (signed in / not) in the header
 - [ ] Listen 30: show the cloud account box also in the Today page footer when signed out (GitHub copy)
-- [ ] Cloud accounts: table created, RLS verified (anonymous insert rejected). Remaining: user signs in with the email link on the live site and confirms sync; Google provider is off (button hidden until enabled)
+- [x] Cloud accounts: username + password sign-in (username maps to <name>@nguyen187.github.io, Confirm email off); user created their account on the live site
+- [ ] Follow-up: show sync status in the Talk Shop header and a sign-in prompt on Listen 30 Today when signed out
 
 ## Follow-ups
 
