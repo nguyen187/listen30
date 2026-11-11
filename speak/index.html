@@ -648,7 +648,7 @@ function l30RoleFor(m,me){
     else turns.push({p:t,acc:acc(m.sp[w])});
   });
   const others=Object.keys(m.sp).filter(n=>n!==me);
-  return {id:m.id+":"+me,l30:1,t:m.t,who:others.join(", ")+" (giọng "+others.map(n=>ACCL[m.sp[n]]).join(", ")+")",acc:acc(m.sp[others[0]]),ctx:m.ctx+" Bạn là "+me+".",turns};
+  return {id:m.id+":"+me,l30:1,t:m.t,who:others.map(n=>n+" – "+ACCL[m.sp[n]]).join(", "),acc:acc(m.sp[others[0]]),ctx:m.ctx+" Bạn là "+me+".",turns};
 }
 function l30Roles(){ return (window.L30_MEETS||[]).map(m=>({m,t:m.t,who:Object.keys(m.sp).join(", "),id:m.id})); }
 const lvlRate=()=>({easy:0.85,normal:1,hard:1.2})[S.roleLvl||"normal"];
