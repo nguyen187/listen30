@@ -1,8 +1,8 @@
 // Offline cache for Listen 30 and Talk Shop (GitHub Pages).
 // Pages: network first, so new versions arrive; cached copy when offline.
 // Fonts: cache first.
-const CACHE = "listen30-v1";
-const PAGES = ["./", "./index.html", "./speak/", "./speak/index.html"];
+const CACHE = "listen30-v2";
+const PAGES = ["./", "./index.html", "./speak/", "./speak/index.html", "./meetings.js"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(PAGES)).then(() => self.skipWaiting()));
 });
@@ -14,7 +14,7 @@ self.addEventListener("fetch", e => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   const isFont = /fonts\.(googleapis|gstatic)\.com$/.test(url.hostname);
-  const isOwnPage = url.origin === self.location.origin && (req.mode === "navigate" || /\.html$|\/$/.test(url.pathname));
+  const isOwnPage = url.origin === self.location.origin && (req.mode === "navigate" || /\.html$|\/$|meetings\.js$/.test(url.pathname));
   if (isFont) {
     e.respondWith(caches.match(req).then(hit => hit || fetch(req).then(res => { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); return res; })));
   } else if (isOwnPage) {
