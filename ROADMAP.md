@@ -20,6 +20,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Follow-ups
 
+- [ ] Listen 30 artifact: file downloads (export, certificate) do nothing in the Claude viewer; declare the downloads capability and save via window.claude.downloads.save there
 - [ ] Talk Shop: test AI role-play generation and Q&A with a real key (needs the user's key; check JSON schema is accepted)
 
 - [ ] Listen 30 artifact: test the "Vì sao mình nghe sai?" answer through the sample capability (needs the user's claude.ai session)
