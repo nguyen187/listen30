@@ -1,6 +1,6 @@
 // Cloud sync for Listen 30 and Talk Shop (GitHub Pages only).
 // Signs the learner in with Supabase (email link or Google) and keeps their progress in one row of
-// public.progress. The newest copy wins: each app object carries its own updatedAt.
+// public.english_progress. The newest copy wins: each app object carries its own updatedAt.
 (function () {
   const cfg = window.SB_CONFIG || {};
   const KEYS = [["listen30.v1", "listen30"], ["talkshop.v1", "talkshop"]];
@@ -31,7 +31,7 @@
   async function pull() {
     if (!sb || !user) return;
     status = "Đang tải dữ liệu từ tài khoản…"; notify();
-    const { data, error } = await sb.from("progress").select("listen30,talkshop,updated_at").eq("user_id", user.id).maybeSingle();
+    const { data, error } = await sb.from("english_progress").select("listen30,talkshop,updated_at").eq("user_id", user.id).maybeSingle();
     if (error) { status = "Lỗi tải dữ liệu: " + error.message; notify(); return; }
     let changed = false;
     if (data) {
@@ -49,7 +49,7 @@
     if (!sb || !user) return;
     const row = { user_id: user.id, updated_at: new Date().toISOString() };
     for (const [k, col] of KEYS) { const v = readLocal(k); if (v) row[col] = v; }
-    const { error } = await sb.from("progress").upsert(row, { onConflict: "user_id" });
+    const { error } = await sb.from("english_progress").upsert(row, { onConflict: "user_id" });
     status = error ? "Lỗi lưu: " + error.message : "Đã lưu lên tài khoản " + new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
     if (!quiet || error) notify();
   }
