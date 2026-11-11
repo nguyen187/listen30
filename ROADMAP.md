@@ -14,7 +14,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Cloud accounts: user creates a Supabase project, runs supabase.sql, fills config.js, allows the GitHub Pages URL as an auth redirect; then test sign-in and sync end to end
+- [ ] Cloud accounts: config filled (project tktbwlttwikfmqjqkpds, table exists). Remaining: user tests email sign-in on the live site; confirm redirect URLs are allowed
 - [ ] Both: check the dark theme visually on every tab and fix any low-contrast spots
 
 ## Follow-ups
