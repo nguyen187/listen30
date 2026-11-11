@@ -14,8 +14,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop Mentor: plan item "Nghe giọng X yếu" linking straight to a marked Listen 30 role-play
-- [ ] Listen 30: accent game asks more often about the weakest accent (weighted pick)
+- [ ] Listen 30: accent tips panel — after the game, show 3 traits of the weakest accent (sounds, rhythm, typical phrases) with play buttons
+- [ ] Talk Shop: Tiến độ shows a 30-day calendar of practice days (both apps), like a streak grid
 
 ## Follow-ups
 
@@ -26,6 +26,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Talk Shop Mentor: plan item and diagnosis line for the weakest Listen 30 accent, opening the marked role-plays
+- [x] Listen 30: accent game asks the weakest accent about 35% of the time
 - [x] Talk Shop: Listen 30 role-plays mark meetings with the weakest Listen 30 accent and open the first one by default
 - [x] Listen 30: accent game stores hits per accent (S.work.acc); Thống kê shows "Tai nghe theo giọng" (game + meeting scores)
 - [x] Listen 30: "Cuộc họp tuần này" on the meeting list — 3 meetings with the weakest accent, unscored/low first
