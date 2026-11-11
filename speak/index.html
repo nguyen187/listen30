@@ -64,7 +64,7 @@ button{font:inherit;color:inherit}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 .play::before{content:"";width:0;height:0;border-left:8px solid currentColor;border-top:5px solid transparent;border-bottom:5px solid transparent}
 .chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:999px;font-size:12px;font-weight:600;background:var(--sunken);color:var(--muted)}
-.cal{display:grid;grid-template-columns:repeat(7,minmax(0,28px));gap:5px;align-items:center;justify-items:center} .cal i,.panel .row i[class^=cal-]{display:inline-block;width:22px;height:22px;border-radius:5px;vertical-align:middle} .row.small i[class^=cal-]{width:12px;height:12px;border-radius:3px} .cal-n{background:var(--sunken)} .cal-o{background:var(--accent);opacity:.55} .cal-b{background:var(--accent)} .cal-f{background:transparent;border:1px dashed var(--line)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,28px));gap:5px;align-items:center;justify-items:center} .cal i,.panel .row i[class^=cal-]{display:inline-block;width:22px;height:22px;border-radius:5px;vertical-align:middle} .row.small i[class^=cal-]{width:12px;height:12px;border-radius:3px} .cal-n{background:var(--sunken)} .cal i[data-today]{outline:2px solid var(--accent);outline-offset:1px} .cal-o{background:var(--accent);opacity:.55} .cal-b{background:var(--accent)} .cal-f{background:transparent;border:1px dashed var(--line)}
 .chip.ok{background:var(--good-soft);color:var(--good)} .chip.warn{background:var(--accent-soft);color:var(--accent)} .chip.bad{background:var(--bad-soft);color:var(--bad)}
 select,textarea,input[type=text]{font:inherit;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
 .explain{max-width:68ch}
@@ -851,12 +851,12 @@ function practiceCal(){
   for(let d=start; d<=t+(6-dow(t)); d++){
     const sp=d<=t&&(ds[d]||0)>=30, li=d<=t&&l30.has(d), on=sp||li; if(on&&d<=t) active++;
     const lvl=d>t?"f":sp&&li?"b":on?"o":"n";
-    cells.push(`<i class="cal-${lvl}" title="${new Date(d*86400000).toISOString().slice(5,10).split("-").reverse().join("/")}${sp?" · nói "+Math.round(ds[d]/60)+" phút":""}${li?" · xong 1 ngày Listen 30":""}"${d===t?' style="outline:2px solid var(--accent);outline-offset:1px"':""}></i>`);
+    cells.push(`<i class="cal-${lvl}"${d<=t&&on?` data-calday="${d}" role="button" tabindex="0" style="cursor:pointer"`:""} title="${new Date(d*86400000).toISOString().slice(5,10).split("-").reverse().join("/")}${sp?" · nói "+Math.round(ds[d]/60)+" phút":""}${li?" · xong 1 ngày Listen 30":""}"${d===t?' data-today="1"':""}></i>`);
   }
   for(let d=t-((ds[t]||0)>=30||l30.has(t)?0:1); (ds[d]||0)>=30||l30.has(d); d--) streak++;
   return `<div class="panel stack" style="gap:8px"><div class="row" style="justify-content:space-between"><div class="label">Ngày luyện tập · 5 tuần gần nhất</div><span class="small muted">${active} ngày có luyện · chuỗi ${streak} ngày</span></div>
    <div class="cal">${["T2","T3","T4","T5","T6","T7","CN"].map(x=>`<span class="small muted">${x}</span>`).join("")}${cells.join("")}</div>
-   <div class="row small muted" style="gap:14px"><span><i class="cal-o"></i> Talk Shop hoặc Listen 30</span><span><i class="cal-b"></i> cả hai</span><span><i class="cal-n"></i> nghỉ</span></div></div>`;
+   <div class="row small muted" style="gap:14px"><span><i class="cal-o"></i> Talk Shop hoặc Listen 30</span><span><i class="cal-b"></i> cả hai</span><span><i class="cal-n"></i> nghỉ</span><span>Bấm một ngày để nghe lại bản ghi âm hôm đó</span></div></div>`;
 }
 function rProg(el){
   const done=Array.from({length:30},(_,i)=>prog(i+1)===TASKS.length).filter(Boolean).length;
@@ -884,6 +884,7 @@ function rProg(el){
    <div class="panel stack"><h3>Tài khoản</h3><div id="cloud-acct"></div></div>
    <div class="panel stack"><h3>Chuyển tiến độ sang máy khác</h3><div class="small muted">Xuất một file gồm tiến độ Talk Shop và Listen 30, rồi nhập ở máy kia. API key không nằm trong file.</div>
     <div class="row"><button class="btn sm" id="io-exp">Tải file tiến độ</button><button class="btn sm" id="io-copy">Sao chép mã</button><label class="btn sm" for="io-file">Nhập từ file</label><input type="file" id="io-file" accept=".json,application/json,text/plain" hidden><button class="btn sm" id="io-paste">Dán mã</button></div><div id="io-area"></div></div></div>`;
+  el.querySelectorAll("[data-calday]").forEach(c=>{ const open=()=>{ recDay=+c.dataset.calday; drawRecs(el); el.querySelector("#rec-list").scrollIntoView({behavior:"smooth",block:"center"}); }; c.onclick=open; c.onkeydown=e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); open(); } }; });
   bindIO(el); drawRecs(el); shareCard(el); if(window.CloudSync) window.CloudSync.mount(el.querySelector("#cloud-acct"));
   el.querySelector("#tx-dl").onclick=async()=>{ const recs=(await recAll()).sort((a,b)=>a.ts-b.ts), fmt=t=>new Date(t).toLocaleString("vi-VN");
     const lines=["TALK SHOP · BẢN CHÉP LỜI","Xuất lúc "+fmt(Date.now()),""];
@@ -1386,9 +1387,18 @@ function shareCard(el){
   el.querySelector("#sc-copy").onclick=()=>{ cv.toBlob(async b=>{ try{ await navigator.clipboard.write([new ClipboardItem({"image/png":b})]); msg.textContent="Đã sao chép ảnh. Dán (Cmd/Ctrl+V) vào Teams."; }catch(e){ msg.textContent="Trình duyệt không cho sao chép ảnh. Dùng nút Tải ảnh PNG."; } },"image/png"); };
 }
 let recConfirm=false;
+let recDay=null; const tsDay=t=>{ const x=new Date(t); return Math.floor((x.getTime()-x.getTimezoneOffset()*60000)/86400000); };
 async function drawRecs(el){
   const box=el.querySelector("#rec-list"); if(!box) return;
   const all=(await recAll()).sort((a,b)=>a.ts-b.ts);
+  if(recDay!=null){
+    const day=all.filter(r=>tsDay(r.ts)===recDay), lab=new Date(recDay*86400000).toISOString().slice(5,10).split("-").reverse().join("/");
+    const fmtT=t=>new Date(t).toLocaleTimeString("vi-VN",{hour:"2-digit",minute:"2-digit"});
+    box.innerHTML=`<div class="row" style="justify-content:space-between;margin-bottom:8px"><b class="small">Ngày ${lab} · ${day.length} bản ghi</b><button class="btn sm ghost" id="rec-all">Xem tất cả</button></div>`+(day.length?`<div class="stack" style="gap:8px">${day.map(r=>`<div class="row" style="flex-wrap:nowrap;gap:8px;align-items:flex-start"><button class="btn sm play" data-rec="${r.id}" aria-label="Nghe bản ghi"></button><div style="min-width:0"><span class="small muted">${esc(r.label||"")} · ${fmtT(r.ts)} · ${r.dur}s${r.score!=null?" · "+r.score+"%":""}</span><div class="small">${esc(r.text||"(không nhận dạng được)")}</div></div></div>`).join("")}</div>`:'<span class="small muted">Ngày này không có bản ghi âm trên máy này (có thể bạn luyện ở Listen 30 hoặc ở máy khác).</span>');
+    box.querySelector("#rec-all").onclick=()=>{ recDay=null; drawRecs(el); };
+    let cur=null; box.querySelectorAll("[data-rec]").forEach(b=>b.onclick=()=>{ const r=day.find(x=>x.id===+b.dataset.rec); if(!r) return; if(cur) cur.pause(); cur=new Audio(URL.createObjectURL(r.blob)); cur.play().catch(()=>{}); });
+    return;
+  }
   const clr=el.querySelector("#rec-clear");
   clr.onclick=()=>{ recConfirm=true; drawRecs(el); };
   if(!all.length){ box.innerHTML='<span class="small muted">Chưa có bản ghi nào. Các bài nói của bạn sẽ được lưu ở đây.</span>'; return; }

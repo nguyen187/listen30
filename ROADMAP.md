@@ -14,8 +14,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Listen 30: Today page shows the same missed-day nudge (short session button) when yesterday had no practice
-- [ ] Talk Shop: practice calendar cells open that day's recordings in Lịch sử ghi âm
+- [ ] Talk Shop: Lịch sử ghi âm — per-label progress line (first vs latest score / wpm, +N%)
+- [ ] Listen 30: Ôn từ — 'Từ của tuần' summary card on Mondays (words added last week, how many mastered)
 
 ## Follow-ups
 
@@ -26,6 +26,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Listen 30: missed-day banner on the resume bar (also on Today) with a one-tap 15-minute session
+- [x] Talk Shop: practice calendar days are clickable and filter Lịch sử ghi âm to that day
 - [x] Listen 30: Thống kê calendar (already 8 weeks) now also counts Talk Shop speaking days (light = one app, dark = both)
 - [x] Talk Shop Mentor: missed-day banner with a short-session button (first plan item)
 - [x] Listen 30: weakest accent panel moves to the top of Giọng đồng nghiệp with a chip; game end links to it

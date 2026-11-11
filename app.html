@@ -869,11 +869,25 @@ function streakInfo(){
   let n=0, t=today(); const doneToday=dset.has(t); if(!doneToday) t--; while(dset.has(t)){ n++; t--; }
   return {n,doneToday};
 }
+/* Days since the learner last practised (Listen 30 day finished, or 30s+ speaking in Talk Shop), when they skipped yesterday and nothing yet today. */
+function missedGap(){
+  const set=new Set(Object.values(S.days).filter(d=>d.doneAt).map(d=>dayStamp(d.doneAt)));
+  try{ const ts=(JSON.parse(localStorage.getItem("talkshop.v1")||"null")||{}).daySecs||{}; Object.keys(ts).forEach(k=>{ if(ts[k]>=30) set.add(+k); }); }catch(e){}
+  const t=today(); if(!set.size||set.has(t)||set.has(t-1)) return 0;
+  const past=[...set].filter(d=>d<t); return past.length?t-Math.max(...past)-1:0;
+}
 function renderResume(){
   const el=document.getElementById("resume"); if(!el) return;
   const cur=currentDay(), p=dayProgress(cur), {n,doneToday}=streakInfo(), due=dueCards().length;
   if(view==="today"&&openDay===cur&&!due){ el.innerHTML=""; return; }
   const left=need(cur)-p;
+  const miss=missedGap();
+  if(miss&&!doneToday){
+    const q=S.days[cur]&&S.days[cur].quick;
+    el.innerHTML=`<div class="banner row" style="justify-content:space-between;gap:8px 14px"><span class="small"><b>${miss>=3?`Bạn đã nghỉ ${miss} ngày.`:"Hôm qua bạn nghỉ."}</b> Không sao, quay lại bằng bản ngắn 15 phút: ôn từ, học quy tắc, chép chính tả.</span><button class="btn sm primary" id="rs-quick">${q?`Học tiếp Ngày ${cur}`:"Bắt đầu bản 15 phút"}</button></div>`;
+    el.querySelector("#rs-quick").onclick=()=>{ D(cur).quick=true; save(); go("today",cur); };
+    return;
+  }
   const msg = doneToday ? `Hôm nay bạn đã xong một ngày học${n>1?`, chuỗi ${n} ngày liên tục`:""}. Mai học tiếp Ngày ${cur}.`
     : `${n?`Chuỗi ${n} ngày liên tục, đừng để đứt. `:""}${p?`Ngày ${cur} còn ${left} nhiệm vụ.`:`Hôm nay: Ngày ${cur}, ${esc(FOCUS[DAYS[cur-1].f].t)}.`}`;
   el.innerHTML=`<div class="panel row" style="justify-content:space-between;padding:10px 14px;gap:8px 14px"><span class="small">${msg}${due?` · ${due} thẻ từ đến hạn`:""}</span><span class="row">${due?`<button class="btn sm" id="rs-srs">Ôn ${due} thẻ</button>`:""}${doneToday&&!(view!=="today")?"":`<button class="btn sm primary" id="rs-go">${doneToday?`Xem Ngày ${cur}`:(p?"Học tiếp":"Bắt đầu")}</button>`}</span></div>`;
