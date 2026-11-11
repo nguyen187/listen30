@@ -14,8 +14,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop: Câu mẫu — 'Ôn câu cũ' mode replaying phrases scored under 70% (spaced like vocab cards)
-- [ ] Listen 30: Ôn từ — tap a 'Cần ôn thêm' chip to hear the word and its example sentence
+- [ ] Talk Shop Mentor: plan item 'Ôn N câu yếu' when 3+ phrases are under 70%
+- [ ] Listen 30: Thống kê — words mastered over time (cards reaching box 3+), small line chart
 
 ## Follow-ups
 
@@ -26,6 +26,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Talk Shop: Câu mẫu has an "Ôn câu yếu" set (best score under 70%, lowest first, up to 12)
+- [x] Listen 30: "Cần ôn thêm" chips play the word, then its example, and show the meaning
 - [x] Talk Shop: Lịch sử ghi âm shows per-bài progress chips (độ rõ / từ/phút vs lần đầu)
 - [x] Listen 30: Ôn từ shows "Từ của tuần" (words added in 7 days, how many kept, which to review); cards now store their add date
 - [x] Listen 30: missed-day banner on the resume bar (also on Today) with a one-tap 15-minute session

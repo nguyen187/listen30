@@ -549,10 +549,18 @@ function rToday(el){
 
 /* ---------- Phrases ---------- */
 function rPhr(el){
+  const weak=Object.entries(S.phr||{}).filter(([,v])=>v<70).map(([k,v])=>{ const [ci,pi]=k.split(":").map(Number); return [ci,pi,v]; }).filter(([ci,pi])=>PHRASES[ci]&&PHRASES[ci].p[pi]).sort((a,b)=>a[2]-b[2]).slice(0,12);
+  if(sel.phr===-1&&!weak.length) sel.phr=0;
   el.innerHTML=`<div class="stack"><div><h2>Câu mẫu theo tình huống</h2><div class="muted small">Nghe mẫu, rồi tự nói. Thuộc những câu này là có sẵn "khung" để nói trong mọi cuộc họp.</div></div>
-   <div class="cats pick">${PHRASES.map((c,i)=>`<button class="cell" data-c="${i}" aria-current="${sel.phr===i}"><b>${esc(c.t)}</b><span class="small muted">${c.p.length} câu</span></button>`).join("")}</div><div id="ph-list" class="stack"></div></div>`;
+   <div class="cats pick">${PHRASES.map((c,i)=>`<button class="cell" data-c="${i}" aria-current="${sel.phr===i}"><b>${esc(c.t)}</b><span class="small muted">${c.p.length} câu</span></button>`).join("")}${weak.length?`<button class="cell" data-c="-1" aria-current="${sel.phr===-1}"><b>Ôn câu yếu</b><span class="small muted">${weak.length} câu dưới 70%</span></button>`:""}</div><div id="ph-list" class="stack"></div></div>`;
   el.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{ sel.phr=+b.dataset.c; rPhr(el); });
-  sayList(el.querySelector("#ph-list"),PHRASES[sel.phr].p,{key:["phr",sel.phr]});
+  const list=el.querySelector("#ph-list");
+  if(sel.phr===-1){
+    list.innerHTML=`<div class="small muted">Những câu bạn từng nói nhưng điểm cao nhất vẫn dưới 70%, thấp nhất ở trên. Nói lại đến khi qua 70% thì câu tự rời khỏi danh sách (lần mở sau).</div>`;
+    weak.forEach(([ci,pi])=>{ const box=document.createElement("div"); box.className="stack"; box.style.gap="4px"; box.innerHTML=`<span class="label">${esc(PHRASES[ci].t)}</span><div></div>`; list.appendChild(box); sayList(box.lastChild,[PHRASES[ci].p[pi]],{key:["phr",ci],keyIndex:pi}); });
+    return;
+  }
+  sayList(list,PHRASES[sel.phr].p,{key:["phr",sel.phr]});
 }
 
 /* ---------- Role-play ---------- */

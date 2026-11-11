@@ -1217,11 +1217,12 @@ function renderMap(el){
 /* ---------- SRS view ---------- */
 let srsReturn=null;
 /* Words added in the last 7 days and how far they've got (box 2+ = remembered at least twice). */
+let wwTok=0;
 function weekWordsHTML(){
   const t=today(), wk=Object.entries(S.cards).filter(([,c])=>c.a!=null&&c.a>=t-6);
   if(!wk.length) return "";
   const kept=wk.filter(([,c])=>c.box>=2).length, shaky=wk.filter(([,c])=>c.box<2).map(([w])=>w).slice(0,8);
-  return `<div class="panel stack" style="gap:6px"><div class="row" style="justify-content:space-between"><h3>Từ của tuần</h3><span class="small muted">7 ngày qua</span></div><div class="small">Thêm <b>${wk.length}</b> từ mới, đã nhớ chắc <b>${kept}</b> từ (qua ít nhất 2 lần ôn).</div>${shaky.length?`<div class="small muted">Cần ôn thêm: ${shaky.map(w=>`<span class="chip">${esc(w)}</span>`).join(" ")}</div>`:""}</div>`;
+  return `<div class="panel stack" style="gap:6px"><div class="row" style="justify-content:space-between"><h3>Từ của tuần</h3><span class="small muted">7 ngày qua</span></div><div class="small">Thêm <b>${wk.length}</b> từ mới, đã nhớ chắc <b>${kept}</b> từ (qua ít nhất 2 lần ôn).</div>${shaky.length?`<div class="small muted">Cần ôn thêm (bấm để nghe từ và câu ví dụ): ${shaky.map(w=>`<button class="chip" data-ww="${esc(w)}" style="cursor:pointer;border:0">${esc(w)}</button>`).join(" ")}</div><div class="small" id="ww-out" style="min-height:1.2em"></div>`:""}</div>`;
 }
 function renderSRS(el){
   const due=shuffle(dueCards());
@@ -1232,6 +1233,7 @@ function renderSRS(el){
    <div class="row"><span class="label">Cách ôn</span><button class="btn sm ${S.srsMode==="spell"?"":"primary"}" data-mode="mean">Nghe → nhớ nghĩa</button><button class="btn sm ${S.srsMode==="spell"?"primary":""}" data-mode="spell">Nghe → gõ đúng từ</button></div>
    <div class="panel" id="srs-card"></div></div>`;
   el.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>{ S.srsMode=b.dataset.mode; save(); renderSRS(el); });
+  el.querySelectorAll("[data-ww]").forEach(b=>b.onclick=()=>{ const w=b.dataset.ww, info=wordInfo(w)||{w,m:"",x:""}; const o=el.querySelector("#ww-out"); if(o) o.innerHTML=`<b>${esc(w)}</b>${info.m?" · "+esc(info.m):""}${info.x?`<div class="muted">${esc(info.x)}</div>`:""}`; const tok=++wwTok; speak(w,0.9).then(()=>{ if(info.x&&tok===wwTok) speak(info.x,1); }); });
   const bk=el.querySelector("#srs-back"); if(bk) bk.onclick=()=>go("today",srsReturn);
   const box=el.querySelector("#srs-card"); let i=0;
   function finish(){
