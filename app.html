@@ -2090,7 +2090,7 @@ function accentStatsHTML(){
   return `<div class="panel stack" style="gap:8px"><h3>Tai nghe theo giọng</h3><div class="small muted">Gộp từ trò "Đoán giọng" và điểm các cuộc họp có người nói giọng đó.</div>${e.map(([a,v])=>`<div class="row" style="gap:10px;flex-wrap:nowrap"><span style="width:120px;flex:none">${accLabel(a)}${a===w?' <span class="chip warn">yếu nhất</span>':""}</span><span style="flex:1;height:10px;border-radius:5px;background:var(--line);overflow:hidden"><span style="display:block;height:100%;width:${v.score??0}%;background:${v.score==null?"transparent":v.score>=80?"var(--good)":"var(--amber)"}"></span></span><span class="small muted" style="width:150px;flex:none;text-align:right">${v.score==null?"chưa có dữ liệu":v.score+"%"}${v.game?` · đoán ${v.game.ok}/${v.game.n}`:""}${v.scored?` · ${v.scored} họp`:""}</span></div>`).join("")}</div>`;
 }
 function accentGame(el){
-  const accs=["us","gb","in","fr","de","es"].filter(a=>a==="us"||voiceOk(a)), pool=shuffle(MEETS.flatMap(m=>m.lines.map(l=>l[1])).filter(x=>x.split(" ").length>=8));
+  const ok=a=>a==="us"||voiceOk(a), chosen=(S.mixAccs||[]).filter(a=>["us","gb","in","fr","de","es","au"].includes(a)&&ok(a)), accs=chosen.length>=3?chosen:["us","gb","in","fr","de","es"].filter(ok), pool=shuffle(MEETS.flatMap(m=>m.lines.map(l=>l[1])).filter(x=>x.split(" ").length>=8));
   let q=0, right=0, answered=false; const wa=weakestAccent();
   const say=(t,a)=>{ const f=S.forceAcc; S.forceAcc="auto"; speak(t,1,a); S.forceAcc=f; };
   function next(){

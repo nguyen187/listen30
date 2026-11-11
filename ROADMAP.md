@@ -14,8 +14,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop: Mentor profile 'Giọng đồng nghiệp' syncs to Listen 30 mixAccs (one-tap 'Dùng cho Listen 30')
-- [ ] Listen 30: accent game uses only the chosen mixAccs when 3+ are chosen
+- [ ] Listen 30: Real voices tab — filter suggested real-voice links by the chosen accents
+- [ ] Talk Shop: Nhập vai bộ Listen 30 — filter meetings by chosen colleague accents (chip row)
 
 ## Follow-ups
 
@@ -26,6 +26,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Talk Shop Mentor: "Dùng cho Listen 30" copies profile colleague accents into Listen 30 mixAccs (bumps updatedAt for sync)
+- [x] Listen 30: accent game asks only the chosen accents when 3+ are chosen (and have voices)
 - [x] Talk Shop Mentor: "Nói một câu với <term>" plan item until the term of the day is done
 - [x] Listen 30: Cài đặt "Giọng khi chọn Trộn" (S.mixAccs) used by free dictation, own-text and meeting-line dictation; Trộn labels list the accents
 - [x] Talk Shop: Câu mẫu "Thuật ngữ của ngày" — say your own 6+ word sentence using the term; checks the term was heard (acronyms squashed), not the example, long enough; build.sh exports TERM_GROUPS as window.L30_TERMS
