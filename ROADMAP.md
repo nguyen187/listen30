@@ -14,7 +14,6 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Both: "Đổi mật khẩu" in the signed-in account box (sb.auth.updateUser), since username accounts have no email reset
 - [ ] Talk Shop: weekly AI report also uses Listen 30 progress (days done, worst dictation words) when both are on the same origin
 - [ ] Listen 30: "Cuộc họp tuần này" — pick 3 meetings matching the learner's weakest accent from the accent game stats
 
@@ -27,6 +26,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Both: "Đổi mật khẩu" in the signed-in account box (new password typed twice, sb.auth.updateUser)
 - [x] Cloud accounts: username + password sign-in (username maps to <name>@nguyen187.github.io, Confirm email off); user created their account on the live site
 - [x] Listen 30: header account chip (signed-in name or "Đăng nhập", links to Cài đặt)
 - [x] Both: after sync, the account status says which copy was kept (from the account or from this device), survives the reload

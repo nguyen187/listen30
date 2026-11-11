@@ -75,8 +75,16 @@
       if (!document.body.contains(el)) { listeners.delete(draw); return; }
       if (!enabled) { el.innerHTML = '<div class="small muted">Lưu vào tài khoản chưa được bật: cần điền Supabase URL và anon key trong config.js.</div>'; return; }
       if (user && !recovering) {
-        el.innerHTML = `<div class="stack" style="gap:8px"><div class="row" style="justify-content:space-between"><span>Đã đăng nhập: <b>${esc(shown(user))}</b></span><span class="row"><button class="btn sm" data-cs="sync">Đồng bộ ngay</button><button class="btn sm ghost" data-cs="out">Đăng xuất</button></span></div><div class="small muted">${esc(status || "Tiến độ được tự lưu lên tài khoản sau mỗi lần thay đổi.")}</div><div class="small muted">Bản ghi âm vẫn chỉ nằm trên máy này.</div></div>`;
+        el.innerHTML = `<div class="stack" style="gap:8px"><div class="row" style="justify-content:space-between"><span>Đã đăng nhập: <b>${esc(shown(user))}</b></span><span class="row"><button class="btn sm" data-cs="sync">Đồng bộ ngay</button><button class="btn sm ghost" data-cs="pwopen">Đổi mật khẩu</button><button class="btn sm ghost" data-cs="out">Đăng xuất</button></span></div><div class="row" data-cs="pwrow" hidden><input type="password" data-cs="np1" placeholder="Mật khẩu mới (ít nhất 6 ký tự)" autocomplete="new-password" style="flex:1;min-width:160px" aria-label="Mật khẩu mới"><input type="password" data-cs="np2" placeholder="Nhập lại" autocomplete="new-password" style="flex:1;min-width:120px" aria-label="Nhập lại mật khẩu mới"><button class="btn sm primary" data-cs="pwsave">Lưu</button></div><div class="small muted">${esc(status || "Tiến độ được tự lưu lên tài khoản sau mỗi lần thay đổi.")}</div><div class="small muted">Bản ghi âm vẫn chỉ nằm trên máy này.</div></div>`;
         el.querySelector('[data-cs="sync"]').onclick = () => pull();
+        el.querySelector('[data-cs="pwopen"]').onclick = () => { const r = el.querySelector('[data-cs="pwrow"]'); r.hidden = !r.hidden; if (!r.hidden) el.querySelector('[data-cs="np1"]').focus(); };
+        el.querySelector('[data-cs="pwsave"]').onclick = async () => {
+          const a = el.querySelector('[data-cs="np1"]').value, b = el.querySelector('[data-cs="np2"]').value;
+          if (a.length < 6) { status = "Mật khẩu mới cần ít nhất 6 ký tự."; notify(); return; }
+          if (a !== b) { status = "Hai lần nhập mật khẩu không khớp."; notify(); return; }
+          const { error } = await sb.auth.updateUser({ password: a });
+          status = error ? "Không đổi được mật khẩu: " + (/different from the old/i.test(error.message) ? "mật khẩu mới phải khác mật khẩu cũ." : error.message) : "Đã đổi mật khẩu. Lần sau đăng nhập bằng mật khẩu mới."; notify();
+        };
         el.querySelector('[data-cs="out"]').onclick = async () => { await sb.auth.signOut(); status = ""; notify(); };
       } else {
         if (recovering) {
