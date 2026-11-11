@@ -1154,7 +1154,9 @@ function weekPrompt(){
   const L=readL30(); let l30="Listen 30: no data.";
   if(L){ const days=Object.entries(L.days||{}); const dt=days.filter(([,d])=>d.doneAt&&Math.floor((d.doneAt-new Date(d.doneAt).getTimezoneOffset()*60000)/86400000)>=t-6).length;
     const dict=days.flatMap(([,d])=>(d.dict||[]).filter(x=>x!=null)); const meet=Object.entries((L.work||{}).meet||{});
-    l30=`Listen 30: ${days.filter(([,d])=>d.doneAt).length}/30 days done in total, ${dt} completed in the last 7 days; average dictation accuracy ${dict.length?Math.round(dict.reduce((a,b)=>a+b,0)/dict.length)+"%":"n/a"}; meeting quiz scores: ${meet.length?meet.map(([k,v])=>k+" "+v+"%").join(", "):"none yet"}.`; }
+    l30=`Listen 30: ${days.filter(([,d])=>d.doneAt).length}/30 days done in total, ${dt} completed in the last 7 days; average dictation accuracy ${dict.length?Math.round(dict.reduce((a,b)=>a+b,0)/dict.length)+"%":"n/a"}; meeting quiz scores: ${meet.length?meet.map(([k,v])=>k+" "+v+"%").join(", "):"none yet"}.`;
+    const miss=Object.values(L.extraMiss||{}).sort((a,b)=>a.score-b.score).slice(0,5); if(miss.length) l30+=` Hardest dictation lines (score): ${miss.map(x=>`"${x.text}" ${x.score}%`).join("; ")}.`;
+    const tq=Object.entries(L.termQuiz||{}); if(tq.length) l30+=` Aviation term quiz best scores by group: ${tq.map(([g,v])=>"group "+(+g+1)+" "+v+"%").join(", ")}.`; }
   const A=analyze();
   return `Write my weekly English progress report.
 Talk Shop, last 7 days: ${tw.length} talks, average ${av(tw,"wpm")??"n/a"} words per minute, ${av(tw,"f")??"n/a"} fillers per talk, ${av(tw,"c")??"n/a"}% target terms used.

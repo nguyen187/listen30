@@ -14,8 +14,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Talk Shop: weekly AI report also uses Listen 30 progress (days done, worst dictation words) when both are on the same origin
-- [ ] Listen 30: "Cuộc họp tuần này" — pick 3 meetings matching the learner's weakest accent from the accent game stats
+- [ ] Listen 30: store accent game results per accent (S.work.acc), show them in Thống kê
+- [ ] Listen 30: "Cuộc họp tuần này" — pick 3 meetings matching the weakest accent from those stats
 
 ## Follow-ups
 
@@ -26,6 +26,7 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Talk Shop: weekly AI report adds Listen 30 hardest dictation lines and term-quiz scores (days done, accuracy and meeting scores were already in)
 - [x] Both: "Đổi mật khẩu" in the signed-in account box (new password typed twice, sb.auth.updateUser)
 - [x] Cloud accounts: username + password sign-in (username maps to <name>@nguyen187.github.io, Confirm email off); user created their account on the live site
 - [x] Listen 30: header account chip (signed-in name or "Đăng nhập", links to Cài đặt)
