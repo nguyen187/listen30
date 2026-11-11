@@ -1303,7 +1303,8 @@ function gymMTerm(el){
   let q=0, right=0;
   const clean=t=>t.toLowerCase().replace(/[^a-z0-9]+/g," ").trim();
   function next(){
-    if(q>=items.length){ el.innerHTML=`<div class="stack" style="gap:10px"><div class="row"><span class="score">${right}/${items.length}</span><span class="small muted">${right>=8?"Bạn bắt được thuật ngữ ngay trong câu nói thật.":"Thuật ngữ trong câu nói nhanh khó nghe hơn khi đứng riêng. Chơi lại, nghe chậm khi cần."}</span></div><button class="btn sm primary" id="mt-again">Chơi lượt mới</button></div>`; el.querySelector("#mt-again").onclick=()=>gymMTerm(el); return; }
+    if(q>=items.length){ const pct=Math.round(100*right/items.length); if(!S.work) S.work={meet:{}}; const prev=S.work.mterm||{}; S.work.mterm={best:Math.max(prev.best||0,pct),last:pct,n:(prev.n||0)+1}; save();
+      el.innerHTML=`<div class="stack" style="gap:10px"><div class="row"><span class="score">${right}/${items.length}</span><span class="small muted">${right>=8?"Bạn bắt được thuật ngữ ngay trong câu nói thật.":"Thuật ngữ trong câu nói nhanh khó nghe hơn khi đứng riêng. Chơi lại, nghe chậm khi cần."}</span></div><button class="btn sm primary" id="mt-again">Chơi lượt mới</button></div>`; el.querySelector("#mt-again").onclick=()=>gymMTerm(el); return; }
     const it=items[q], gap=it.t.replace(it.re,"_____");
     el.innerHTML=`<div class="stack" style="gap:10px"><div class="row" style="justify-content:space-between"><span class="label">Câu ${q+1}/${items.length} · ${esc(it.mt)} · giọng ${accLabel(it.acc)}</span><span class="row"><button class="btn sm play" id="mt-p">Nghe</button><button class="btn sm play" id="mt-s">Chậm</button></span></div>
       <div style="font-size:17px">${esc(gap)}</div><div class="small muted">Gõ thuật ngữ còn thiếu rồi bấm Enter.${S.cards[it.v.w]?" (Từ trong hộp ôn của bạn)":""}</div>
@@ -1509,6 +1510,7 @@ function renderStats(el){
     </svg></div><div class="small muted">Vạch đứt = 80%, mức nên đạt trước khi sang tuần mới.</div></div>
    ${heatHTML()}
    ${masteredHTML()}
+   ${termsHTML()}
    ${accentStatsHTML()}
    ${certHTML()}
    <div class="panel"><h3>Tại sao cách học này hiệu quả</h3><ul class="explain" style="padding-left:18px;margin:8px 0 0">
@@ -1518,6 +1520,7 @@ function renderStats(el){
     <li><b>Shadowing</b> nối âm thanh với cơ miệng, giúp não nhận ra âm nhanh hơn.</li>
     <li><b>Nghe thả trôi</b> với nội dung thật mỗi ngày tạo khối lượng nghe đủ lớn để quen tốc độ thật.</li></ul>
     <p class="small muted" style="margin-bottom:0">30 ngày đều đặn sẽ nâng khả năng nghe rõ rệt. Để nghe trọn mọi giọng, mọi chủ đề cần nhiều tháng — hãy tiếp tục phần Ôn từ và Nghe thả trôi sau khi xong khoá.</p></div></div>`;
+  const smt=el.querySelector("#st-mterm"); if(smt) smt.onclick=()=>{ gymMode="mterm"; go("gym"); };
 }
 
 /* ---------- Setup ---------- */
@@ -2049,6 +2052,13 @@ function weakestAccent(){
   return e.length?e[0][0]:null;
 }
 /* Words remembered for good (reached box 4 = remembered 3+ times in a row), cumulative over the last 30 days. */
+/* Terms alone (term quiz) vs terms inside fast meeting speech (gym drill). */
+function termsHTML(){
+  const tq=Object.values(S.termQuiz||{}), qa=tq.length?Math.round(tq.reduce((a,b)=>a+b,0)/tq.length):null, mt=(S.work||{}).mterm;
+  if(qa==null&&!mt) return "";
+  const gapNote = qa!=null&&qa>=80&&(!mt||mt.last<70) ? `<div class="banner small">Bạn biết thuật ngữ khi đứng riêng (${qa}%) nhưng ${mt?`chỉ bắt được ${mt.last}% khi nghe trong câu họp`:"chưa thử nghe chúng trong câu họp"}. Luyện "Thuật ngữ trong họp" để tai quen tốc độ thật. <button class="btn sm primary" id="st-mterm" style="margin-left:6px">Luyện ngay</button></div>` : "";
+  return `<div class="panel stack" style="gap:8px"><h3>Thuật ngữ ngành</h3><div class="row" style="gap:18px"><span><span class="label">Quiz thuật ngữ (TB)</span><b class="mono" style="font-size:22px;display:block">${qa!=null?qa+"%":"–"}</b></span><span><span class="label">Nghe trong câu họp</span><b class="mono" style="font-size:22px;display:block">${mt?mt.last+"%":"–"}</b>${mt?`<span class="small muted">tốt nhất ${mt.best}% · ${mt.n} lượt</span>`:""}</span></div>${gapNote}</div>`;
+}
 function masteredHTML(){
   const cards=Object.values(S.cards); if(!cards.length) return "";
   const t=today(), base=cards.filter(c=>c.box>=3&&!c.m).length, days=Array.from({length:30},(_,i)=>t-29+i);

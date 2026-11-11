@@ -1224,8 +1224,11 @@ function weekPrompt(){
     l30=`Listen 30: ${days.filter(([,d])=>d.doneAt).length}/30 days done in total, ${dt} completed in the last 7 days; average dictation accuracy ${dict.length?Math.round(dict.reduce((a,b)=>a+b,0)/dict.length)+"%":"n/a"}; meeting quiz scores: ${meet.length?meet.map(([k,v])=>k+" "+v+"%").join(", "):"none yet"}.`;
     const miss=Object.values(L.extraMiss||{}).sort((a,b)=>a.score-b.score).slice(0,5); if(miss.length) l30+=` Hardest dictation lines (score): ${miss.map(x=>`"${x.text}" ${x.score}%`).join("; ")}.`;
     const tq=Object.entries(L.termQuiz||{}); if(tq.length) l30+=` Aviation term quiz best scores by group: ${tq.map(([g,v])=>"group "+(+g+1)+" "+v+"%").join(", ")}.`; }
+  const wPh=Object.entries(S.phr||{}).filter(([k,v])=>v<70).map(([k,v])=>{ const [ci,pi]=k.split(":").map(Number); return PHRASES[ci]&&PHRASES[ci].p[pi]?`"${PHRASES[ci].p[pi][0]}" ${v}%`:null; }).filter(Boolean).slice(0,5);
+  const wPr=Object.entries(S.pron||{}).filter(([k,v])=>/^\d+:\d+$/.test(k)&&v<70).map(([k,v])=>{ const [gi,ii]=k.split(":").map(Number); return PRON[gi]&&PRON[gi].items[ii]?`"${PRON[gi].items[ii][0]}" (${PRON[gi].t}) ${v}%`:null; }).filter(Boolean).slice(0,5);
+  const weakLine=(wPh.length||wPr.length)?`\nStill weak (best score under 70%): ${wPh.length?"phrases "+wPh.join("; "):""}${wPh.length&&wPr.length?". ":""}${wPr.length?"pronunciation "+wPr.join("; "):""}. Give a concrete tip for these.`:"";
   const A=analyze();
-  return `Write my weekly English progress report.
+  return `Write my weekly English progress report.${weakLine}
 Talk Shop, last 7 days: ${tw.length} talks, average ${av(tw,"wpm")??"n/a"} words per minute, ${av(tw,"f")??"n/a"} fillers per talk, ${av(tw,"c")??"n/a"}% target terms used.
 Talk Shop, the 7 days before: ${tp.length} talks, average ${av(tp,"wpm")??"n/a"} words per minute, ${av(tp,"f")??"n/a"} fillers per talk.
 Current diagnosis: ${A.diag.map(([s,t2,v])=>t2+": "+v).join("; ")||"not enough data"}.

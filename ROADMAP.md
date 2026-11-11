@@ -14,8 +14,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Backlog (top = next)
 
-- [ ] Listen 30: Thống kê shows best score of 'Thuật ngữ trong họp' and suggests it when term quiz is high but meeting-line score is low
-- [ ] Talk Shop: Mentor weekly AI report includes weak pron/phrase counts
+- [ ] Talk Shop Mentor: plan item 'Thuật ngữ trong họp' (links to Listen 30 gym) when the Listen 30 meeting-term score is under 70%
+- [ ] Listen 30: Today page 'Từ của ngày' links to the gym drill when that word appears in a meeting line
 
 ## Follow-ups
 
@@ -26,6 +26,8 @@ Autonomous development backlog. Each loop iteration: take the first unchecked it
 
 ## Done
 
+- [x] Listen 30: "Thuật ngữ trong họp" stores last/best score; Thống kê shows term quiz vs meeting-line score and nudges when the gap is big
+- [x] Talk Shop: weekly AI report lists the weakest phrases and pronunciation lines (under 70%) and asks for tips
 - [x] Talk Shop Mentor: "Ôn N câu phát âm còn yếu" plan item (3+ items under 70%)
 - [x] Listen 30: Luyện thêm "Thuật ngữ trong họp" — aviation terms gapped inside meeting lines, spoken in the speaker's accent; own cards first; add missed terms to the review box
 - [x] Talk Shop: Phát âm has an "Ôn âm yếu" set (items under 70%, lowest first)
