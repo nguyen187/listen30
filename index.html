@@ -1420,7 +1420,7 @@ function heatHTML(){
   const set=new Set(Object.values(S.days).filter(d=>d.doneAt).map(d=>dayStamp(d.doneAt))), t=today();
   let ts={}; try{ ts=(JSON.parse(localStorage.getItem("talkshop.v1")||"null")||{}).daySecs||{}; }catch(e){}
   const spoke=day=>(ts[day]||0)>=30, hasTS=Object.keys(ts).length>0;
-  const start=t-55-((new Date().getDay()+6)%7); const cols=[];
+  const start=t-49-((new Date().getDay()+6)%7); const cols=[];
   for(let w=0;w<8;w++){ const cells=[]; for(let d=0;d<7;d++){ const day=start+w*7+d; if(day>t){ cells.push('<i style="visibility:hidden"></i>'); continue; }
     const on=set.has(day), sp=spoke(day); cells.push(`<i title="${new Date(day*86400000).toLocaleDateString("vi-VN")}${on?": xong lộ trình":""}${sp?(on?", ":": ")+"nói "+Math.round(ts[day]/60)+" phút ở Talk Shop":""}" style="background:${on||sp?"var(--accent)":"var(--sunken)"};${hasTS&&on!==sp?"opacity:.5;":""}${day===t?"outline:2px solid var(--amber);outline-offset:1px":""}"></i>`); }
     cols.push(`<div style="display:grid;grid-template-rows:repeat(7,14px);gap:3px">${cells.join("")}</div>`); }
