@@ -148,7 +148,7 @@ select,textarea,input[type=text]{font:inherit;color:var(--ink);background:var(--
   <footer class="foot"><span>Ghi âm và nhận dạng chạy trong trình duyệt. Tiến độ lưu trên máy này.</span><span>Phím tắt: <b>Space</b> bắt đầu / dừng ghi âm ở nút đang hiện trên màn hình. Nên dùng Chrome hoặc Edge, đeo tai nghe có micro.</span></footer>
 </div>
 
-<script src="../meetings.js"></script>
+<script src="../meetings.js?v=2"></script>
 <script src="../config.js?v=2"></script>
 <script src="../sync.js?v=10"></script>
 <script type="module">
@@ -548,12 +548,38 @@ function rToday(el){
 }
 
 /* ---------- Phrases ---------- */
+/* Term of the day (same one Listen 30 shows): say your own sentence that uses it. */
+function termDay(){ const flat=(window.L30_TERMS||[]).flatMap(g=>g.v); return flat.length?flat[today()%flat.length]:null; }
+function termDayHTML(){ const v=termDay(); if(!v) return "";
+  const done=(S.termSaid||{})[today()];
+  return `<div class="panel stack" style="gap:8px"><div class="row" style="justify-content:space-between"><span class="label">Thuật ngữ của ngày · nói một câu của bạn</span>${done?'<span class="chip ok">Đã dùng hôm nay</span>':""}</div>
+   <div><b style="font-size:19px">${esc(v.w)}</b> <span class="small muted">· ${esc(v.m)}</span></div><div class="small muted">Ví dụ: ${esc(v.x)}</div>
+   <div class="row"><button class="btn sm play" id="td-w">Nghe từ</button><button class="btn sm" id="td-x">Nghe câu ví dụ</button></div>
+   <div class="small">Tự đặt một câu về công việc của bạn có dùng <b>${esc(v.w)}</b> (ít nhất 6 từ), rồi bấm nút đỏ và nói.</div><div id="td-sp"></div></div>`; }
+function bindTermDay(el){ const v=termDay(), box=el.querySelector("#td-sp"); if(!v||!box) return;
+  el.querySelector("#td-w").onclick=()=>speak(v.w,0.9); el.querySelector("#td-x").onclick=()=>speak(v.x,1);
+  const norm=t=>t.toLowerCase().replace(/[^a-z0-9 ]+/g," ").replace(/\s+/g," ").trim(), squash=t=>norm(t).replace(/ /g,"");
+  mountSpeak(box,{onResult:(r,resEl)=>{ if(!r.text){ return; }
+    const said=norm(r.text), term=norm(v.w), n=said.split(" ").filter(Boolean).length;
+    const used=said.includes(term)||(term.length<=6&&squash(r.text).includes(squash(v.w)));
+    const copied=norm(v.x)===said;
+    let msg, ok=false;
+    if(!used) msg=`Máy chưa nghe thấy "${esc(v.w)}". ${term.length<=5?"Từ viết tắt: đọc rõ từng chữ cái.":"Nhấn rõ trọng âm của từ."} Thử lại.`;
+    else if(copied) msg="Đó là câu ví dụ. Hãy tự đặt một câu về việc của bạn.";
+    else if(n<6) msg=`Có dùng từ, nhưng câu hơi ngắn (${n} từ). Thêm chi tiết: ai, khi nào, số liệu nào.`;
+    else { ok=true; msg=`Tốt: dùng đúng thuật ngữ trong câu ${n} từ của bạn.`; }
+    if(ok){ if(!S.termSaid) S.termSaid={}; S.termSaid[today()]=v.w; save(); }
+    resEl.innerHTML=`<div class="stack" style="gap:4px"><span class="chip ${ok?"ok":"warn"}" style="align-self:flex-start">${ok?"Đạt":"Chưa đạt"}</span><div class="small">${msg}</div><div class="small muted">Máy nghe: ${esc(r.text)}</div></div>`;
+  }});
+}
 function rPhr(el){
   const weak=Object.entries(S.phr||{}).filter(([,v])=>v<70).map(([k,v])=>{ const [ci,pi]=k.split(":").map(Number); return [ci,pi,v]; }).filter(([ci,pi])=>PHRASES[ci]&&PHRASES[ci].p[pi]).sort((a,b)=>a[2]-b[2]).slice(0,12);
   if(sel.phr===-1&&!weak.length) sel.phr=0;
   el.innerHTML=`<div class="stack"><div><h2>Câu mẫu theo tình huống</h2><div class="muted small">Nghe mẫu, rồi tự nói. Thuộc những câu này là có sẵn "khung" để nói trong mọi cuộc họp.</div></div>
+   ${termDayHTML()}
    <div class="cats pick">${PHRASES.map((c,i)=>`<button class="cell" data-c="${i}" aria-current="${sel.phr===i}"><b>${esc(c.t)}</b><span class="small muted">${c.p.length} câu</span></button>`).join("")}${weak.length?`<button class="cell" data-c="-1" aria-current="${sel.phr===-1}"><b>Ôn câu yếu</b><span class="small muted">${weak.length} câu dưới 70%</span></button>`:""}</div><div id="ph-list" class="stack"></div></div>`;
   el.querySelectorAll("[data-c]").forEach(b=>b.onclick=()=>{ sel.phr=+b.dataset.c; rPhr(el); });
+  bindTermDay(el);
   const list=el.querySelector("#ph-list");
   if(sel.phr===-1){
     list.innerHTML=`<div class="small muted">Những câu bạn từng nói nhưng điểm cao nhất vẫn dưới 70%, thấp nhất ở trên. Nói lại đến khi qua 70% thì câu tự rời khỏi danh sách (lần mở sau).</div>`;

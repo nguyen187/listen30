@@ -219,3 +219,117 @@ window.L30_MEETS=[
    ["In what format will the reports go to the auditors?",["Excel","PDF","Email text","Paper only"],1],
    ["What did the auditor ask for last time?",["Photos","The source records","A presentation","A discount"],1]]}
 ];
+(function(){const V = t => t.trim().split("\n").map(l=>{const [w,m,x]=l.split("|");return {w:w.trim(),m:m.trim(),x:x.trim()}});
+window.L30_TERMS=[
+ {t:"Bảo dưỡng & kỹ thuật",v:V(`AOG|Aircraft On Ground: máy bay nằm đất chờ sửa (đọc A-O-G)|We have an AOG in Bangkok, the part is urgent.
+MRO|Maintenance, Repair and Overhaul: bảo dưỡng sửa chữa (đọc M-R-O)|The engine is at the MRO shop for three weeks.
+MEL|Minimum Equipment List: danh mục được phép bay khi hỏng (đọc M-E-L hoặc "mel")|The defect is deferred under the MEL for ten days.
+deferred defect|lỗi được hoãn sửa|There are four deferred defects on this aircraft.
+AD|Airworthiness Directive: chỉ thị bắt buộc của nhà chức trách (đọc A-D)|The AD must be complied with before the end of the year.
+SB|Service Bulletin: thông báo kỹ thuật của nhà sản xuất (đọc S-B)|Airbus released a new service bulletin for the cargo door.
+ATA chapter|chương ATA phân loại hệ thống (32 = càng đáp)|Most of the removals are in ATA chapter thirty-two.
+MSN|Manufacturer Serial Number: số sản xuất (đọc M-S-N)|Which MSN are we talking about?
+tail number|số đăng ký máy bay|Can you give me the tail number of the aircraft?
+unscheduled removal|tháo thiết bị ngoài kế hoạch|Unscheduled removals went up by twenty percent.
+NFF|No Fault Found: tháo ra kiểm tra không thấy lỗi|Almost half of these removals are no fault found.
+MTBUR|Mean Time Between Unscheduled Removals (đọc từng chữ)|The MTBUR of this valve is below the target.
+heavy check|đợt bảo dưỡng lớn (C-check)|The aircraft is in the hangar for a heavy check.
+line maintenance|bảo dưỡng tại sân đỗ|Line maintenance found a leak during the walkaround.
+repair turnaround time|thời gian sửa xong và trả lại|The repair turnaround time is about fifteen days.`)},
+ {t:"Khai thác bay (airline ops)",v:V(`OTP|On-Time Performance: tỉ lệ đúng giờ (đọc O-T-P)|Our OTP was eighty-five percent last month.
+delay code|mã nguyên nhân chậm chuyến|Most delays were coded as technical.
+block hours|giờ khối, từ lúc rời bến tới lúc vào bến|The aircraft flew about ten block hours a day.
+flight cycles|số chu kỳ cất và hạ cánh|This part is limited by flight cycles, not hours.
+utilization|mức khai thác (giờ bay mỗi ngày)|Fleet utilization is higher in the summer.
+turnaround|quay đầu chuyến tại sân bay|We have a forty-minute turnaround in Hanoi.
+slot|khung giờ được cấp (cất hạ cánh, hangar)|We lost our slot because of the delay.
+diversion|chuyển hướng hạ cánh|The flight had a diversion to Kolkata.
+MCC|Maintenance Control Centre: trung tâm điều hành kỹ thuật|Please call MCC before releasing the aircraft.
+dispatch reliability|độ tin cậy khởi hành|Dispatch reliability is above ninety-nine percent.
+wet lease|thuê máy bay kèm tổ bay|We wet leased two aircraft for the summer peak.
+redelivery|trả máy bay khi hết hợp đồng thuê|The redelivery is planned for November.
+ETOPS|bay đường dài hai động cơ (đọc "EE-tops")|This aircraft is not ETOPS certified.
+station|sân bay hoặc trạm khai thác|We don't have an engineer at that station.
+sector|chặng bay|The aircraft flew six sectors today.`)},
+ {t:"Dữ liệu & nền tảng",v:V(`ACARS|hệ thống truyền dữ liệu máy bay và mặt đất (đọc "AY-cars")|We receive ACARS messages in near real time.
+PFR|Post Flight Report: báo cáo lỗi sau chuyến (đọc P-F-R)|Can you send me the PFR for that flight?
+fault message|thông báo lỗi hệ thống|The same fault message appears on every flight.
+FDM|Flight Data Monitoring: giám sát dữ liệu bay|The FDM data comes from the QAR every day.
+health monitoring|giám sát tình trạng thiết bị|Engine health monitoring flagged a trend shift.
+data pipeline|luồng xử lý dữ liệu|The data pipeline failed last night.
+ingestion|nạp dữ liệu vào hệ thống|Ingestion takes about twenty minutes.
+schema|cấu trúc dữ liệu|The provider changed the schema without telling us.
+backfill|nạp bù dữ liệu cũ|We need to backfill the data from last week.
+data refresh|làm mới dữ liệu|Is a daily data refresh good enough?
+lineage|truy vết nguồn gốc dữ liệu|You can see the lineage of every dataset.
+false positive|cảnh báo sai|Too many false positives and nobody trusts the alerts.
+predictive maintenance|bảo dưỡng dự đoán|Predictive maintenance can prevent AOG events.
+UAT|User Acceptance Testing: người dùng kiểm thử (đọc U-A-T)|UAT starts the week after next.
+go-live|đưa vào chạy thật|The go-live is planned for March.`)},
+ {t:"Ngôn ngữ cuộc họp",v:V(`action item|việc cần làm sau họp|Let's recap the action items.
+heads-up|báo trước|Just a quick heads-up, the server will be down tonight.
+take it offline|bàn riêng sau|Let's take this offline, it's too detailed.
+align|thống nhất|We need to align with the airline first.
+stakeholder|bên liên quan|All stakeholders should be in the loop.
+escalate|đẩy lên cấp cao hơn|If it's not fixed by Friday, we'll escalate.
+sign off|phê duyệt|The SME has to sign off on the requirements.
+blocker|vật cản|Is there any blocker on your side?
+ETA|thời gian dự kiến đến hoặc xong (đọc E-T-A)|What's the ETA for the fix?
+bandwidth|khả năng, thời gian để làm thêm|I don't have the bandwidth this week.
+ballpark|con số ước chừng|Can you give me a ballpark figure?
+revert|(Ấn Độ) phản hồi lại|Kindly revert at the earliest.
+do the needful|(Ấn Độ) làm những gì cần làm|Please do the needful and close the ticket.
+prepone|(Ấn Độ) dời sớm hơn|Can we prepone the call to ten o'clock?
+actually|(người Pháp hay dùng với nghĩa "hiện tại")|Actually, we have three aircraft in the hangar.`)},
+ {t:"Dữ liệu Reliability",v:V(`removal rate|tỉ lệ tháo thiết bị (thường tính trên 1000 FH)|The removal rate is two point five per thousand flight hours.
+alert level|ngưỡng cảnh báo độ tin cậy|The pack valve is above the alert level for the third month.
+MTBF|Mean Time Between Failures: thời gian trung bình giữa hai lần hỏng|We use MTBF only for confirmed failures.
+confirmed failure|hỏng được xác nhận khi sửa ở xưởng|Only sixty percent of the removals were confirmed failures.
+shop findings|kết quả kiểm tra ở xưởng sửa chữa|We are still waiting for the shop findings from the vendor.
+pilot report|báo cáo lỗi của phi công (PIREP)|Pilot reports on ATA twenty-one doubled this month.
+maintenance report|báo cáo lỗi do kỹ thuật viên phát hiện (MAREP)|Maintenance reports are entered in the tech log.
+repetitive defect|lỗi lặp lại trên cùng máy bay|This is a repetitive defect, the third time in ten days.
+chronic defect|lỗi mãn tính, sửa mãi không dứt|The airline flagged it as a chronic defect.
+top removers|các thiết bị bị tháo nhiều nhất|Let's start with the top ten removers.
+technical delay|chậm chuyến do kỹ thuật|Technical delays per hundred departures went down.
+reliability review|cuộc họp rà soát độ tin cậy hằng tháng|We'll present the dashboard at the next reliability review.`)},
+ {t:"Bảo dưỡng theo kế hoạch",v:V(`MPD|Maintenance Planning Document: tài liệu kế hoạch bảo dưỡng của Airbus|The new MPD revision changes thirty task intervals.
+AMP|Aircraft Maintenance Programme: chương trình bảo dưỡng của airline|Each airline adapts the MPD into its own AMP.
+task card|phiếu công việc bảo dưỡng|The task card shows the access panels and the tools.
+interval|chu kỳ lặp của một task|The interval is six hundred flight hours or four months.
+threshold|ngưỡng lần thực hiện đầu tiên|The first inspection is at a threshold of twelve thousand cycles.
+whichever comes first|cái nào đến trước thì tính|Do it every two years or three thousand cycles, whichever comes first.
+due list|danh sách task sắp đến hạn|Can you export the due list for the next thirty days?
+A-check|đợt kiểm tra nhẹ định kỳ|The A-check is every seven hundred fifty flight hours.
+work package|gói công việc cho một lần vào hangar|The work package has three hundred task cards.
+ground time|thời gian máy bay nằm đất để bảo dưỡng|We only have eight hours of ground time tonight.
+interval escalation|kéo dài chu kỳ task dựa trên dữ liệu|We want to justify the interval escalation with three years of findings.
+hard time|thay thế bắt buộc theo giờ hoặc chu kỳ|This component is hard time, it must be replaced at the limit.`)},
+ {t:"Utilization (giờ bay & chu kỳ)",v:V(`FH|Flight Hours: giờ bay (đọc F-H hoặc "flight hours")|The aircraft did eleven FH yesterday.
+FC|Flight Cycles: chu kỳ bay (đọc F-C)|We record one FC per take-off and landing.
+FH to FC ratio|tỉ lệ giờ bay trên chu kỳ (độ dài chặng)|A short-haul fleet has an FH to FC ratio around one point five.
+daily utilization|giờ bay trung bình mỗi ngày|Average daily utilization is twelve point three hours.
+OOOI times|Out, Off, On, In: rời bến, cất cánh, hạ cánh, vào bến|We calculate block time from the OOOI times.
+airborne time|thời gian bay từ cất cánh tới hạ cánh|Flight hours are based on airborne time, not block time.
+tech log|sổ kỹ thuật ghi giờ bay và lỗi|The tech log is still on paper at that station.
+TSN|Time Since New: giờ từ khi mới (đọc T-S-N)|What is the TSN of this engine?
+CSN|Cycles Since New: chu kỳ từ khi mới (đọc C-S-N)|The CSN is close to the life limit.
+TSO|Time Since Overhaul: giờ từ lần đại tu gần nhất|The TSO resets after the shop visit.
+parked aircraft|máy bay để nằm, không khai thác|Exclude parked aircraft from the utilization average.
+stage length|độ dài trung bình một chặng|Longer stage length means fewer cycles per day.`)},
+ {t:"Configuration in parts",v:V(`installed base|toàn bộ thiết bị đang lắp trên đội tàu|The installed base has about forty thousand serialized parts.
+part number|mã linh kiện (P/N)|The same part number can have several serial numbers.
+serial number|số sê-ri của từng chiếc linh kiện (S/N)|Two records have the same serial number on different aircraft.
+position|vị trí lắp (trái, phải, số 1, số 2)|Engine number two is in position two, right wing.
+FIN|Functional Item Number: mã chức năng vị trí của Airbus|We join the parts on MSN and FIN.
+next higher assembly|cụm lắp cấp trên (NHA)|The valve is installed on the pack, its next higher assembly.
+effectivity|áp dụng cho những máy bay nào|Check the effectivity before you order the part.
+interchangeability|khả năng thay thế lẫn nhau (một chiều, hai chiều)|The new part number is one-way interchangeable.
+IPC|Illustrated Parts Catalog: danh mục linh kiện minh hoạ (đọc I-P-C)|The alternate part numbers are listed in the IPC.
+as-built|cấu hình lúc xuất xưởng|The as-built configuration comes from the manufacturer.
+as-maintained|cấu hình thực tế sau các lần thay|The as-maintained configuration is what is really on the aircraft.
+LLP|Life Limited Part: linh kiện giới hạn tuổi thọ (đọc L-L-P)|We track the remaining cycles of every LLP.
+rotable|linh kiện sửa được, quay vòng|Rotables go to the shop and come back to the pool.
+superseded|bị thay bằng mã mới|This part number is superseded by the dash nine.`)}
+];
+})();
